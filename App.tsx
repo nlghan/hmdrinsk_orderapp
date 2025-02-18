@@ -1,117 +1,122 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- */
+import React, {useState} from 'react';
+import {SafeAreaView, Text, TextInput, TouchableOpacity, StyleSheet, Alert, View} from 'react-native';
 
-import React from 'react';
-import type {PropsWithChildren} from 'react';
-import {
-  SafeAreaView,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  useColorScheme,
-  View,
-} from 'react-native';
+const App = () => {
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
 
-import {
-  Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
+  // Hàm xử lý đăng nhập
+  const handleLogin = async () => {
+    // Kiểm tra nếu username hoặc password rỗng
+    if (!username || !password) {
+      Alert.alert('Error', 'Please enter both username and password');
+      return;
+    }
 
-type SectionProps = PropsWithChildren<{
-  title: string;
-}>;
+    // Cấu hình body cho yêu cầu POST
+    const requestBody = JSON.stringify({
+      userName: username,
+      password: password,
+    });
 
-function Section({children, title}: SectionProps): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
-  return (
-    <View style={styles.sectionContainer}>
-      <Text
-        style={[
-          styles.sectionTitle,
-          {
-            color: isDarkMode ? Colors.white : Colors.black,
-          },
-        ]}>
-        {title}
-      </Text>
-      <Text
-        style={[
-          styles.sectionDescription,
-          {
-            color: isDarkMode ? Colors.light : Colors.dark,
-          },
-        ]}>
-        {children}
-      </Text>
-    </View>
-  );
-}
+    try {
+      // Gọi API đăng nhập
+      const response = await fetch('http://192.168.1.18:1010/api/v1/auth/authenticate', {
+        method: 'POST',
+        headers: {
+          'Accept': '*/*',
+          'Content-Type': 'application/json',
+        },
+        body: requestBody,
+      });
 
-function App(): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
-
-  const backgroundStyle = {
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
+      // Kiểm tra xem API có trả về kết quả thành công hay không
+      const responseData = await response.json();
+      
+      if (response.ok) {
+        // Nếu đăng nhập thành công
+        Alert.alert('Success', 'Logged in successfully');
+        console.log('Login success:', responseData); // Xử lý dữ liệu trả về từ API nếu cần
+      } else {
+        // Nếu có lỗi trong quá trình đăng nhập
+        Alert.alert('Error', responseData.message || 'Login failed');
+      }
+    } catch (error) {
+      // Nếu có lỗi trong quá trình gọi API
+      Alert.alert('Error', 'An error occurred while logging in');
+      console.error('Login error:', error);
+    }
   };
 
   return (
-    <SafeAreaView style={backgroundStyle}>
-      <StatusBar
-        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-        backgroundColor={backgroundStyle.backgroundColor}
-      />
-      <ScrollView
-        contentInsetAdjustmentBehavior="automatic"
-        style={backgroundStyle}>
-        <Header />
-        <View
-          style={{
-            backgroundColor: isDarkMode ? Colors.black : Colors.white,
-          }}>
-          <Section title="Step One">
-            Edit <Text style={styles.highlight}>App.tsx</Text> to change this
-            screen and then come back to see your edits.
-          </Section>
-          <Section title="See Your Changes">
-            <ReloadInstructions />
-          </Section>
-          <Section title="Debug">
-            <DebugInstructions />
-          </Section>
-          <Section title="Learn More">
-            Read the docs to discover what to do next:
-          </Section>
-          <LearnMoreLinks />
-        </View>
-      </ScrollView>
+    <SafeAreaView style={styles.container}>
+      <View style={styles.headerContainer}>
+        <Text style={styles.header}>Login</Text>
+      </View>
+      
+      <View style={styles.formContainer}>
+        {/* Ô nhập username */}
+        <TextInput
+          style={styles.input}
+          placeholder="Username"
+          value={username}
+          onChangeText={setUsername}
+        />
+        
+        {/* Ô nhập password */}
+        <TextInput
+          style={styles.input}
+          placeholder="Password"
+          value={password}
+          onChangeText={setPassword}
+          secureTextEntry={true}
+        />
+        
+        {/* Nút đăng nhập */}
+        <TouchableOpacity style={styles.button} onPress={handleLogin}>
+          <Text style={styles.buttonText}>Login</Text>
+        </TouchableOpacity>
+      </View>
     </SafeAreaView>
   );
-}
+};
 
 const styles = StyleSheet.create({
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    padding: 16,
+    backgroundColor: '#f5f5f5',
   },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
+  headerContainer: {
+    marginBottom: 20,
+    alignItems: 'center',
   },
-  sectionDescription: {
-    marginTop: 8,
+  header: {
+    fontSize: 30,
+    fontWeight: 'bold',
+  },
+  formContainer: {
+    marginTop: 20,
+  },
+  input: {
+    height: 50,
+    borderColor: '#ccc',
+    borderWidth: 1,
+    borderRadius: 8,
+    marginBottom: 16,
+    paddingLeft: 12,
+  },
+  button: {
+    backgroundColor: '#0066CC',
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  buttonText: {
+    color: '#fff',
     fontSize: 18,
-    fontWeight: '400',
-  },
-  highlight: {
-    fontWeight: '700',
+    fontWeight: '600',
   },
 });
 
