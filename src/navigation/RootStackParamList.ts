@@ -3,5 +3,6 @@ export type RootStackParamList = {
     Login: undefined;
     Register: undefined;
     ForgotPassword: undefined;
+    Main: undefined; // Thay vì Home, ta dùng Main để chứa TabNavigator
   };
   
