@@ -1,111 +1,258 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { Image, View, Text, TextInput, TouchableOpacity, Alert, StyleSheet, Animated, Easing, ActivityIndicator } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/RootStackParamList';
-import axiosInstance from '../utils/axiosInstance'; // Import axiosInstance
+import { decode as atob } from 'base-64';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import axiosInstance from '../utils/axiosInstance';
+import loginStyles from '../styles/loginStyles';
+import InAppBrowser from 'react-native-inappbrowser-reborn';
+import { Linking } from 'react-native';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Login'>;
 
 const Login: React.FC<Props> = ({ navigation }) => {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
+    const [username, setUsername] = useState('');
+    const [password, setPassword] = useState('');
+    const [loading, setLoading] = useState(false);
+    const [successMessage, setSuccessMessage] = useState('');
+    const [errorMessage, setErrorMessage] = useState('');
 
-  const handleLogin = async () => {
-    if (!username || !password) {
-      Alert.alert('Lỗi', 'Vui lòng nhập đầy đủ tài khoản và mật khẩu');
-      return;
-    }
+    const handleLogin = async () => {
+        setLoading(true);
+        setSuccessMessage('');
+        setErrorMessage('');
 
-    setLoading(true);
+        if (!username || !password) {
+            setErrorMessage('Vui lòng nhập đầy đủ tài khoản và mật khẩu');
+            return;
+        }
 
-    try {
-      const response = await axiosInstance.post('/v1/auth/authenticate', {
-        userName: username,
-        password: password,
-      });
+        try {
+            const response = await axiosInstance.post('/v1/auth/authenticate', {
+                userName: username,
+                password: password,
+            });
 
-      setLoading(false);
+            setLoading(false);
 
-      if (response.status === 200) {
-        Alert.alert('Thành công', 'Đăng nhập thành công!');
-        navigation.navigate('Home'); // Chuyển đến trang Home
-      } else {
-        Alert.alert('Lỗi', response.data.message || 'Sai tài khoản hoặc mật khẩu');
-      }
-    } catch (error: any) {
-      setLoading(false);
-      Alert.alert('Lỗi', error.response?.data?.message || 'Không thể kết nối đến máy chủ');
-    }
-  };
+            if (response.status === 200 && response.data.access_token) {
+                // Lưu token vào AsyncStorage
+                await AsyncStorage.setItem('access_token', response.data.access_token);
+                if (response.data.refresh_token) {
+                    await AsyncStorage.setItem('refresh_token', response.data.refresh_token);
+                }
 
-  return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Đăng nhập</Text>
-      
-      <TextInput
-        style={styles.input}
-        placeholder="Tên đăng nhập"
-        placeholderTextColor="#FFA07A"
-        value={username}
-        onChangeText={setUsername}
-      />
-      
-      <TextInput
-        style={styles.input}
-        placeholder="Mật khẩu"
-        placeholderTextColor="#FFA07A"
-        secureTextEntry
-        value={password}
-        onChangeText={setPassword}
-      />
+                const role = getRoleFromToken(response.data.access_token);
+                setSuccessMessage('Đăng nhập thành công!');
 
-      <TouchableOpacity style={styles.loginButton} onPress={handleLogin} disabled={loading}>
-        {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.loginText}>Đăng nhập</Text>}
-      </TouchableOpacity>
-    </View>
-  );
+                // Điều hướng theo role
+                if (role.includes('CUSTOMER')) {
+                    navigation.navigate('Home');
+                } else if (role.includes('SHIPPER')) {
+                    // navigation.navigate('ShipperHome');
+                }
+            } else {
+                setErrorMessage(response.data.message || 'Sai tài khoản hoặc mật khẩu');
+            }
+        } catch (error) {
+            setLoading(false);
+            setErrorMessage((error as any).response?.data?.message || 'Không thể kết nối đến máy chủ');
+        }
+    };
+
+    const getRoleFromToken = (token: string): string => {
+        try {
+            const payload = token.split('.')[1];
+            const decodedPayload = JSON.parse(atob(payload));
+            return decodedPayload.Roles || '';
+        } catch {
+            return '';
+        }
+    };
+    const handleLoginGG = async () => {
+        try {
+            const response = await axiosInstance.get('/v1/auth/social-login/google', {
+                headers: { 'accept': '*/*' },
+            });
+            if (response.data) {
+                const loginUrl = response.data;
+                if (await InAppBrowser.isAvailable()) {
+                    const result = await InAppBrowser.open(loginUrl, {
+                        dismissButtonStyle: 'close',
+                        preferredBarTintColor: '#FFFFFF',
+                        preferredControlTintColor: '#000000',
+                        showTitle: true,
+                        enableUrlBarHiding: true,
+                        enableDefaultShare: false,
+                    });
+                    if (result.type !== 'cancel' && result.type !== 'dismiss') {
+                        console.log('Google Login thành công:', result);
+                        navigation.navigate('Home'); // Điều hướng sau khi đăng nhập
+                    }
+                } else {
+                    console.error('InAppBrowser không khả dụng');
+                }
+            } else {
+                console.error('Không nhận được URL đăng nhập từ API');
+            }
+        } catch (error) {
+            console.error('Lỗi khi gửi yêu cầu Google login:', error);
+        }
+    };
+
+    useEffect(() => {
+        const handleDeepLink = (event: any) => {
+            const { url } = event;
+            if (url) {
+                console.log('Deep link nhận được:', url);
+                const token = extractTokenFromUrl(url);
+                if (token) {
+                    console.log('Access Token:', token);
+                    navigation.navigate('Home'); // Điều hướng sau khi login
+                }
+            }
+        };
+
+        // Thêm listener
+        const linkingListener = Linking.addEventListener('url', handleDeepLink);
+
+        return () => {
+            // Gỡ listener khi unmount
+            linkingListener.remove();
+        };
+    }, []);
+
+    const extractTokenFromUrl = (url: any) => {
+        const match = url.match(/access_token=([^&]*)/);
+        return match ? match[1] : null;
+    };
+
+    const colorAnimation = useRef(new Animated.Value(0)).current;
+
+    useEffect(() => {
+        Animated.loop(
+            Animated.sequence([
+                Animated.timing(colorAnimation, {
+                    toValue: 1,
+                    duration: 3000,
+                    easing: Easing.linear,
+                    useNativeDriver: false, // Vì animate màu sắc không dùng native driver được
+                }),
+                Animated.timing(colorAnimation, {
+                    toValue: 0,
+                    duration: 3000,
+                    easing: Easing.linear,
+                    useNativeDriver: false,
+                }),
+            ])
+        ).start();
+    }, []);
+
+    // Tạo màu sắc loang
+    const textColor = colorAnimation.interpolate({
+        inputRange: [0, 1],
+        outputRange: ['#FF4500', '#FFA07A'], // Chuyển từ cam đậm sang cam nhạt
+    });
+
+    const shadowColor = colorAnimation.interpolate({
+        inputRange: [0, 1],
+        outputRange: ['#FF7F50', '#FF4500'], // Tạo hiệu ứng bóng chuyển động
+    });
+
+    const floatingAnimation = useRef(new Animated.Value(0)).current;
+
+    useEffect(() => {
+        Animated.loop(
+            Animated.timing(floatingAnimation, {
+                toValue: 1,
+                duration: 3000,
+                easing: Easing.linear,
+                useNativeDriver: true,
+            })
+        ).start();
+    }, []);
+
+    const floatingInterpolate = floatingAnimation.interpolate({
+        inputRange: [0, 1],
+        outputRange: ["0deg", "360deg"],
+    });
+
+
+    return (
+        <View style={loginStyles.container}>
+            {/* Hiệu ứng tiêu đề */}
+            <Animated.Text style={[loginStyles.animatedTitle, { color: textColor, textShadowColor: shadowColor }]}>
+                HMDRINKS
+            </Animated.Text>
+            <Text style={loginStyles.title}>Đăng nhập</Text>
+
+            {successMessage ? <Text style={loginStyles.successText}>{successMessage}</Text> : null}
+            {errorMessage ? <Text style={loginStyles.errorText}>{errorMessage}</Text> : null}
+
+            <TextInput
+                style={loginStyles.input}
+                placeholder="Tên đăng nhập"
+                placeholderTextColor="#FFA07A"
+                value={username}
+                onChangeText={setUsername}
+            />
+
+            <TextInput
+                style={loginStyles.input}
+                placeholder="Mật khẩu"
+                placeholderTextColor="#FFA07A"
+                secureTextEntry
+                value={password}
+                onChangeText={setPassword}
+            />
+
+            <TouchableOpacity style={loginStyles.loginButton} onPress={handleLogin} disabled={loading}>
+                {loading ? <ActivityIndicator color="#fff" /> : <Text style={loginStyles.loginText}>Đăng nhập</Text>}
+            </TouchableOpacity>
+
+            <TouchableOpacity style={loginStyles.googleButton} onPress={handleLoginGG}>
+                <Image
+                    source={require('../assets/img/logoGG.png')} // Cập nhật đường dẫn đến icon của bạn
+                    style={loginStyles.googleIcon}
+                />
+                <Text style={loginStyles.googleText}>Đăng ký bằng Google</Text>
+            </TouchableOpacity>
+
+            {/* Thêm phần đăng ký */}
+            <TouchableOpacity onPress={() => navigation.navigate('Register')}>
+                <Text style={loginStyles.registerText}>
+                    Bạn chưa có tài khoản? <Text style={loginStyles.registerLink}>Đăng ký</Text>
+                </Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')}>
+                <Text style={loginStyles.registerText}>
+                    <Text style={loginStyles.registerLink}>Quên mật khẩu?</Text>
+                </Text>
+            </TouchableOpacity>
+            {/* Họa tiết động */}
+            <Animated.View
+                style={[
+                    loginStyles.floatingCircle,
+                    { transform: [{ rotate: floatingInterpolate }] },
+                ]}
+            />
+            {/* Họa tiết động */}
+            <Animated.View
+                style={[
+                    loginStyles.floatingCircle1,
+                    { transform: [{ rotate: floatingInterpolate }] },
+                ]}
+            />
+            {/* Họa tiết động */}
+            <Animated.View
+                style={[
+                    loginStyles.floatingCircle2,
+                    { transform: [{ rotate: floatingInterpolate }] },
+                ]}
+            />
+        </View>
+    );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#FFFAF0', // Màu nền trắng nhạt
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#FF4500', // Màu cam đậm
-    marginBottom: 20,
-  },
-  input: {
-    width: '80%',
-    height: 50,
-    backgroundColor: '#FFF5EE', // Màu trắng nhạt
-    borderRadius: 10,
-    paddingHorizontal: 15,
-    fontSize: 16,
-    marginBottom: 15,
-    color: '#FF4500', // Màu chữ cam
-    borderWidth: 1,
-    borderColor: '#FFA07A',
-  },
-  loginButton: {
-    width: '80%',
-    height: 50,
-    backgroundColor: '#FF4500', // Màu cam đậm
-    borderRadius: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 10,
-  },
-  loginText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#fff',
-  },
-});
 
 export default Login;
