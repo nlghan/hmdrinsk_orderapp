@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Image, View, Text, TextInput, TouchableOpacity, Alert, StyleSheet, Animated, Easing, ActivityIndicator } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -9,7 +10,12 @@ import loginStyles from '../styles/loginStyles';
 import InAppBrowser from 'react-native-inappbrowser-reborn';
 import { Linking } from 'react-native';
 
-type Props = NativeStackScreenProps<RootStackParamList, 'Login'>;
+import { useCategoryStore } from '../store/store';  // Import store
+import { Buffer } from 'buffer';
+
+
+type LoginScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Login'>;
+
 
 const Login: React.FC<Props> = ({ navigation }) => {
     const [username, setUsername] = useState('');
@@ -17,6 +23,20 @@ const Login: React.FC<Props> = ({ navigation }) => {
     const [loading, setLoading] = useState(false);
     const [successMessage, setSuccessMessage] = useState('');
     const [errorMessage, setErrorMessage] = useState('');
+    const setUserId = useCategoryStore((state) => state.setUserId);  // Lấy setUserId từ Zustand
+    
+    const getUserIdFromToken = (token: string) => {
+  try {
+    const payload = token.split('.')[1];  
+    const decodedPayload = JSON.parse(Buffer.from(payload, 'base64').toString('utf-8'));
+
+    console.log('Decoded Payload:', decodedPayload); // Kiểm tra nội dung payload
+    return parseInt(decodedPayload.UserId, 10);
+  } catch (error) {
+    console.error('Cannot decode token:', error);
+    return null;
+  }
+};
 
     const handleLogin = async () => {
         setLoading(true);
@@ -42,13 +62,20 @@ const Login: React.FC<Props> = ({ navigation }) => {
                 if (response.data.refresh_token) {
                     await AsyncStorage.setItem('refresh_token', response.data.refresh_token);
                 }
+              
+               // Lấy userId từ token và lưu vào Zustand
+        const userId = getUserIdFromToken(accessToken);
+        console.log('User ID:', userId);
+        setUserId(userId);
+
+      
 
                 const role = getRoleFromToken(response.data.access_token);
                 setSuccessMessage('Đăng nhập thành công!');
 
                 // Điều hướng theo role
                 if (role.includes('CUSTOMER')) {
-                    navigation.navigate('Home');
+                   navigation.replace('Main'); 
                 } else if (role.includes('SHIPPER')) {
                     // navigation.navigate('ShipperHome');
                 }
@@ -254,5 +281,6 @@ const Login: React.FC<Props> = ({ navigation }) => {
         </View>
     );
 };
+
 
 export default Login;
