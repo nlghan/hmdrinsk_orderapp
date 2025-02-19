@@ -77,7 +77,7 @@ const styles = StyleSheet.create({
     height: 250,
     alignItems: 'center',
     marginTop: 20,
-    marginHorizontal: 8
+    marginHorizontal: 8,
   },
   imageContainer: {
     position: 'relative',
