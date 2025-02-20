@@ -81,27 +81,32 @@ const styles = StyleSheet.create({
   },
   imageContainer: {
     position: 'relative',
-    width: width,
+    width: 350,
     height: 250,
+    borderRadius:20
   },
   image: {
-    width: '100%',
+    width: 350,
     height: '100%',
     resizeMode: 'stretch',
+    borderRadius:20
   },
   overlay: {
     position: 'absolute',
     top:0,
     left: 0,
-    width: '100%',
+    width: 350,
     backgroundColor: 'rgba(0, 0, 0, 0.74)', // Lớp phủ mờ trên ảnh
     paddingVertical: 10,
     paddingHorizontal: 15,
+    borderTopLeftRadius:20,
+    borderTopRightRadius:20
   },
   title: {
     color: '#fff',
-    fontSize: 14,
+    fontSize: 18,
     fontWeight: 'bold',
+    textAlign:'center'
     
   },
   pagination: {

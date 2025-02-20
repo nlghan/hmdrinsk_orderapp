@@ -20,6 +20,7 @@ const Home = () => {
 
   return (
     <SafeAreaView style={{ flex: 1 }}>
+      
       <LinearGradient
         colors={['#f7eee9de', '#f3ebe0']}
         style={styles.container}
@@ -35,6 +36,7 @@ const Home = () => {
               image={item.productImageResponseList[0]?.linkImage}
               name={item.proName}
               price={item.listProductVariants[0]?.price}
+              size={item.listProductVariants[0]?.size}
             />
           )}
           contentContainerStyle={{
