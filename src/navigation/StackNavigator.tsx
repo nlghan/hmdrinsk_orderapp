@@ -5,6 +5,7 @@ import Home from '../screens/Home';
 import Login from '../screens/Login'; 
 import Register from '../screens/Register';
 import ForgotPassword from '../screens/ForgotPassword';
+import Info from '../screens/Info';
 
 
 import TabNavigator from './TabNavigator'; // Import TabNavigator
@@ -14,7 +15,8 @@ export type RootStackParamList = {
   Login: undefined;
   Register: undefined;
   ForgotPassword: undefined;
-  Main: undefined; // Thay vì Home, ta dùng Main để chứa TabNavigator
+  Main: undefined; 
+  Info: undefined;
 
 };
 
@@ -28,6 +30,7 @@ const StackNavigator = () => {
       <Stack.Screen name="Register" component={Register} options={{ headerShown: false }} />
       <Stack.Screen name="ForgotPassword" component={ForgotPassword} options={{ headerShown: false }} />
       <Stack.Screen name="Main" component={TabNavigator} options={{ headerShown: false }} />
+      <Stack.Screen name="Info" component={Info} options={{ headerShown: false }} />
 
     </Stack.Navigator>
   );
