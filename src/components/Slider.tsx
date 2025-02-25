@@ -1,36 +1,48 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Image, FlatList, StyleSheet, Dimensions, Animated, Text } from 'react-native';
-import { useCategoryStore } from '../store/store'; // Import store
+import { View, Image, FlatList, StyleSheet, Dimensions, Animated, Text, TouchableOpacity } from 'react-native';
+import { useCategoryStore } from '../store/store';
+import sliderStyles from '../styles/slider';
 
-const { width } = Dimensions.get('window'); // Lấy chiều rộng màn hình
+const { width } = Dimensions.get('window');
+
+interface Post {
+  postId: number;
+  url: string;
+  title: string;
+}
+
+const AnimatedFlatList = Animated.createAnimatedComponent(FlatList<Post>);
 
 const Slider = () => {
-  const flatListRef = useRef<FlatList>(null);
+  const flatListRef = useRef<FlatList<Post>>(null);
   const scrollX = useRef(new Animated.Value(0)).current;
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [isAutoScrolling, setIsAutoScrolling] = useState(true);
 
-  const { posts, fetchPosts } = useCategoryStore(); // Lấy danh sách bài viết từ store
+  // 🔥 Lấy `posts` từ `data` trong store
+  const { data,  } = useCategoryStore();
+  const posts = data?.posts || []; // ✅ Lấy posts từ `data.posts`
+ 
 
   useEffect(() => {
-    fetchPosts(); // Fetch danh sách bài viết khi component được render lần đầu
-  }, []);
-
-  useEffect(() => {
-    if (posts.length === 0) return; // Nếu chưa có dữ liệu, không chạy interval
+    if (posts.length === 0 || !isAutoScrolling) return;
 
     const interval = setInterval(() => {
       let nextIndex = (currentIndex + 1) % posts.length;
-      flatListRef.current?.scrollToIndex({ index: nextIndex, animated: true });
       setCurrentIndex(nextIndex);
-    }, 3000); // Tự động chuyển ảnh mỗi 3 giây
+      flatListRef.current?.scrollToOffset({
+        offset: nextIndex * width,
+        animated: true,
+      });
+    }, 3000);
 
-    return () => clearInterval(interval); // Xóa interval khi component unmount
-  }, [currentIndex, posts.length]);
+    return () => clearInterval(interval);
+  }, [currentIndex, posts.length, isAutoScrolling]);
 
   return (
-    <View style={styles.container}>
-      {/* FlatList hiển thị ảnh bài viết */}
-      <FlatList
+    <View style={sliderStyles.container}>
+      {/* Hiển thị ảnh */}
+      <AnimatedFlatList
         ref={flatListRef}
         data={posts}
         horizontal
@@ -38,96 +50,59 @@ const Slider = () => {
         showsHorizontalScrollIndicator={false}
         keyExtractor={(item) => item.postId.toString()}
         renderItem={({ item }) => (
-          <View style={styles.imageContainer}>
-            <Image source={{ uri: item.url }} style={styles.image} />
-            
+          <View style={sliderStyles.imageContainer}>
+            <View style={sliderStyles.imageWrapper}>
+              <Image source={{ uri: item.url }} style={sliderStyles.image} />
+            </View>
             {/* Lớp phủ title */}
-            <View style={styles.overlay}>
-              <Text style={styles.title} numberOfLines={2}>{item.title}</Text>
+            <View style={sliderStyles.overlay}>
+              <Text style={sliderStyles.title} numberOfLines={2}>{item.title}</Text>
             </View>
           </View>
         )}
-        onScroll={Animated.event([{ nativeEvent: { contentOffset: { x: scrollX } } }], {
-          useNativeDriver: false,
-        })}
+        onScroll={Animated.event(
+          [{ nativeEvent: { contentOffset: { x: scrollX } } }],
+          { useNativeDriver: false }
+        )}
         onMomentumScrollEnd={(event) => {
-          const index = Math.floor(event.nativeEvent.contentOffset.x / width);
+          const index = Math.round(event.nativeEvent.contentOffset.x / width);
           setCurrentIndex(index);
+          setIsAutoScrolling(true);
+        }}
+        onTouchStart={() => {
+          setIsAutoScrolling(false); // 🛑 Dừng auto-scroll khi người dùng chạm vào slider
+        }}
+        onTouchEnd={() => {
+          setTimeout(() => setIsAutoScrolling(true), 5000); // 🔄 Bật lại auto-scroll sau 5s
         }}
       />
 
       {/* Dấu chấm chỉ mục */}
-      <View style={styles.pagination}>
+      <View style={sliderStyles.pagination}>
         {posts.map((_, index) => (
-          <Animated.View
+          <TouchableOpacity
             key={index}
-            style={[
-              styles.dot,
-              currentIndex === index ? styles.dotActive : styles.dotInactive,
-            ]}
-          />
+            onPress={() => {
+              setCurrentIndex(index);
+              flatListRef.current?.scrollToOffset({
+                offset: index * width,
+                animated: true,
+              });
+              setIsAutoScrolling(false);
+              setTimeout(() => setIsAutoScrolling(true), 5000);
+            }}
+          >
+            <View
+              style={[
+                sliderStyles.dot,
+                currentIndex === index ? sliderStyles.dotActive : sliderStyles.dotInactive,
+              ]}
+            />
+          </TouchableOpacity>
         ))}
       </View>
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    height: 250,
-    alignItems: 'center',
-    marginTop: 20,
-    marginHorizontal: 8,
-  },
-  imageContainer: {
-    position: 'relative',
-    width: 350,
-    height: 250,
-    borderRadius:20
-  },
-  image: {
-    width: 350,
-    height: '100%',
-    resizeMode: 'stretch',
-    borderRadius:20
-  },
-  overlay: {
-    position: 'absolute',
-    top:0,
-    left: 0,
-    width: 350,
-    backgroundColor: 'rgba(0, 0, 0, 0.74)', // Lớp phủ mờ trên ảnh
-    paddingVertical: 10,
-    paddingHorizontal: 15,
-    borderTopLeftRadius:20,
-    borderTopRightRadius:20
-  },
-  title: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: 'bold',
-    textAlign:'center'
-    
-  },
-  pagination: {
-    flexDirection: 'row',
-    position: 'absolute',
-    bottom: 2,
-  },
-  dot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    marginHorizontal: 4,
-  },
-  dotInactive: {
-    backgroundColor: '#ccc',
-  },
-  dotActive: {
-    backgroundColor: '#ff5733',
-    width: 10,
-    height: 10,
-  },
-});
 
 export default Slider;

@@ -6,10 +6,13 @@ import axiosInstance from '../utils/axiosInstance';
 import registerStyles from '../styles/registerStyles';
 import InAppBrowser from 'react-native-inappbrowser-reborn';
 import { Linking } from 'react-native';
+import { useTranslation } from 'react-i18next'; // Import hook useTranslation
+import LanguageSwitcher from '../components/LanguageSwitcher';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Register'>;
 
 const Register: React.FC<Props> = ({ navigation }) => {
+    const { t } = useTranslation();
     const [fullName, setFullName] = useState('');
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
@@ -114,69 +117,72 @@ const Register: React.FC<Props> = ({ navigation }) => {
         return match ? match[1] : null;
     };
 
-        const colorAnimation = useRef(new Animated.Value(0)).current;
-    
-        useEffect(() => {
-            Animated.loop(
-                Animated.sequence([
-                    Animated.timing(colorAnimation, {
-                        toValue: 1,
-                        duration: 3000,
-                        easing: Easing.linear,
-                        useNativeDriver: false, // Vì animate màu sắc không dùng native driver được
-                    }),
-                    Animated.timing(colorAnimation, {
-                        toValue: 0,
-                        duration: 3000,
-                        easing: Easing.linear,
-                        useNativeDriver: false,
-                    }),
-                ])
-            ).start();
-        }, []);
-    
-        // Tạo màu sắc loang
-        const textColor = colorAnimation.interpolate({
-            inputRange: [0, 1],
-            outputRange: ['#FF4500', '#FFA07A'], // Chuyển từ cam đậm sang cam nhạt
-        });
-    
-        const shadowColor = colorAnimation.interpolate({
-            inputRange: [0, 1],
-            outputRange: ['#FF7F50', '#FF4500'], // Tạo hiệu ứng bóng chuyển động
-        });
-    
-        const floatingAnimation = useRef(new Animated.Value(0)).current;
-    
-        useEffect(() => {
-            Animated.loop(
-                Animated.timing(floatingAnimation, {
+    const colorAnimation = useRef(new Animated.Value(0)).current;
+
+    useEffect(() => {
+        Animated.loop(
+            Animated.sequence([
+                Animated.timing(colorAnimation, {
                     toValue: 1,
                     duration: 3000,
                     easing: Easing.linear,
-                    useNativeDriver: true,
-                })
-            ).start();
-        }, []);
-    
-        const floatingInterpolate = floatingAnimation.interpolate({
-            inputRange: [0, 1],
-            outputRange: ["0deg", "360deg"],
-        });
+                    useNativeDriver: false, // Vì animate màu sắc không dùng native driver được
+                }),
+                Animated.timing(colorAnimation, {
+                    toValue: 0,
+                    duration: 3000,
+                    easing: Easing.linear,
+                    useNativeDriver: false,
+                }),
+            ])
+        ).start();
+    }, []);
+
+    // Tạo màu sắc loang
+    const textColor = colorAnimation.interpolate({
+        inputRange: [0, 1],
+        outputRange: ['#FF4500', '#FFA07A'], // Chuyển từ cam đậm sang cam nhạt
+    });
+
+    const shadowColor = colorAnimation.interpolate({
+        inputRange: [0, 1],
+        outputRange: ['#FF7F50', '#FF4500'], // Tạo hiệu ứng bóng chuyển động
+    });
+
+    const floatingAnimation = useRef(new Animated.Value(0)).current;
+
+    useEffect(() => {
+        Animated.loop(
+            Animated.timing(floatingAnimation, {
+                toValue: 1,
+                duration: 3000,
+                easing: Easing.linear,
+                useNativeDriver: true,
+            })
+        ).start();
+    }, []);
+
+    const floatingInterpolate = floatingAnimation.interpolate({
+        inputRange: [0, 1],
+        outputRange: ["0deg", "360deg"],
+    });
 
     return (
         <View style={registerStyles.container}>
+            <View style={registerStyles.languageContainer}>
+                <LanguageSwitcher />
+            </View>
             <Animated.Text style={[registerStyles.animatedTitle, { color: textColor, textShadowColor: shadowColor }]}>
                 HMDRINKS
             </Animated.Text>
-            <Text style={registerStyles.title}>Đăng ký</Text>
+            <Text style={registerStyles.title}>{t('signUp')}</Text>
 
             {successMessage ? <Text style={registerStyles.successText}>{successMessage}</Text> : null}
             {errorMessage ? <Text style={registerStyles.errorText}>{errorMessage}</Text> : null}
 
             <TextInput
                 style={registerStyles.input}
-                placeholder="Họ và tên"
+                placeholder={t('fullName')}
                 placeholderTextColor="#FFA07A"
                 value={fullName}
                 onChangeText={setFullName}
@@ -184,7 +190,7 @@ const Register: React.FC<Props> = ({ navigation }) => {
 
             <TextInput
                 style={registerStyles.input}
-                placeholder="Tên đăng nhập"
+                placeholder={t('userName')}
                 placeholderTextColor="#FFA07A"
                 value={username}
                 onChangeText={setUsername}
@@ -192,7 +198,7 @@ const Register: React.FC<Props> = ({ navigation }) => {
 
             <TextInput
                 style={registerStyles.input}
-                placeholder="Email"
+                placeholder={t('email')}
                 placeholderTextColor="#FFA07A"
                 keyboardType="email-address"
                 value={email}
@@ -201,7 +207,7 @@ const Register: React.FC<Props> = ({ navigation }) => {
 
             <TextInput
                 style={registerStyles.input}
-                placeholder="Mật khẩu"
+                placeholder={t('password')}
                 placeholderTextColor="#FFA07A"
                 secureTextEntry
                 value={password}
@@ -209,7 +215,7 @@ const Register: React.FC<Props> = ({ navigation }) => {
             />
 
             <TouchableOpacity style={registerStyles.registerButton} onPress={handleRegister} disabled={loading}>
-                {loading ? <ActivityIndicator color="#fff" /> : <Text style={registerStyles.registerText}>Đăng ký</Text>}
+                {loading ? <ActivityIndicator color="#fff" /> : <Text style={registerStyles.registerText}>{t('signUp')}</Text>}
             </TouchableOpacity>
 
             <TouchableOpacity style={registerStyles.googleButton} onPress={handleLoginGG}>
@@ -217,12 +223,12 @@ const Register: React.FC<Props> = ({ navigation }) => {
                     source={require('../assets/img/logoGG.png')} // Cập nhật đường dẫn đến icon của bạn
                     style={registerStyles.googleIcon}
                 />
-                <Text style={registerStyles.googleText}>Đăng ký bằng Google</Text>
+                <Text style={registerStyles.googleText}>{t('gg')}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity onPress={() => navigation.navigate('Login')}>
                 <Text style={registerStyles.loginText1}>
-                    Đã có tài khoản? <Text style={registerStyles.loginLink}>Đăng nhập</Text>
+                {t('haveAcc')} <Text style={registerStyles.loginLink}>{t('login')}</Text>
                 </Text>
             </TouchableOpacity>
             {/* Họa tiết động */}

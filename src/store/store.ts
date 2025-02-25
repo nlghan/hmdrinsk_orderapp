@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import axiosInstance from '../utils/axiosInstance';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import i18n from '../i18n/i18n';
 
 interface UserInfo {
   userId: number;
@@ -24,7 +25,7 @@ interface Post {
   url: string;
 }
 
-interface Category {
+export interface Category {
   cateId: number;
   cateName: string;
   cateImg: string;
@@ -54,95 +55,142 @@ interface Product {
   deleted: boolean;
 }
 
+interface DataStore {
+  categories?: Category[];
+  products?: Product[];
+  posts?: Post[];
+  userInfo?: UserInfo;
+  userCoin?: number;
+}
+
 interface CategoryStore {
-  categories: Category[];
-  products: Product[];
-  posts: Post[];
+  data: DataStore;
   userId: number | null;
-  userInfo: UserInfo | null;
+  language: string;
   setUserId: (id: number | null) => void;
-  fetchCategories: () => Promise<void>;
-  fetchUserInfo: () => Promise<void>;
-  fetchProducts: () => Promise<void>;
-  fetchPosts: () => Promise<void>;
+  setLanguage: (lang: string) => void;
 }
 
 export const useCategoryStore = create<CategoryStore>()(
   persist(
-    (set, get) => ({
-      categories: [],
-      products: [],
-      posts: [], 
-      userId: null,
-      userInfo: null,
-
-      setUserId: async (id) => {
-        set({ userId: id });
-
-        if (id !== null) {
-          await get().fetchUserInfo(); // Fetch user info khi userId thay đổi
-        }
-      },
-
-      fetchCategories: async () => {
+    (set, get) => {
+      const fetchCategories = async () => {
         try {
-          const response = await axiosInstance.get('/cate/list-category?page=1&limit=100&language=VN');
-          set({ categories: response.data.categoryResponseList || [] });
+          const lang = get().language;
+          console.log(`🌍 [fetchCategories] Fetching with language: ${lang}`);
+          const response = await axiosInstance.get(`/cate/list-category?page=1&limit=100&language=${lang}`);
+          set((state) => ({
+            data: { ...state.data, categories: response.data.categoryResponseList || [] },
+          }));
+          console.log("✅ [After Fetch] Categories:", response.data.categoryResponseList);
         } catch (error) {
-          console.error('Lỗi khi tải danh mục:', error);
+          console.error("❌ [fetchCategories] Error fetching categories:", error);
         }
-      },
+      };
 
-      fetchPosts: async () => {
+      const fetchPosts = async () => {
         try {
-          const response = await axiosInstance.get('/post/view/all/desc?page=1&limit=3&language=VN');
-          set({ posts: response.data.listPosts || [] });
-          console.log('Danh sách bài viết:', response.data.listPosts);
+          const lang = get().language;
+          console.log(`🌍 [fetchPosts] Fetching with language: ${lang}`);
+          const response = await axiosInstance.get(`/post/view/all/desc?page=1&limit=4&language=${lang}`);
+          set((state) => ({
+            data: { ...state.data, posts: response.data.listPosts || [] },
+          }));
+          console.log("✅ [After Fetch] Posts:", response.data.listPosts);
         } catch (error) {
-          console.error('Lỗi khi lấy danh sách bài viết:', error);
+          console.error("❌ [fetchPosts] Error fetching posts:", error);
         }
-      },
+      };
 
-      fetchProducts: async () => {
+      const fetchProducts = async () => {
         try {
-         
-          const response = await axiosInstance.get('/product/list-product?page=1&limit=6&language=VN');
-
-          set({ products: response.data.productResponses || [] });
-
-          console.log('Danh sách sản phẩm:', response.data.productResponses);
+          const lang = get().language;
+          console.log(`🌍 [fetchProducts] Fetching with language: ${lang}`);
+          const response = await axiosInstance.get(`/product/list-product?page=1&limit=6&language=${lang}`);
+          set((state) => ({
+            data: { ...state.data, products: response.data.productResponses || [] },
+          }));
+          console.log("✅ [After Fetch] Products:", response.data.productResponses);
         } catch (error) {
-          console.error('Lỗi khi lấy danh sách sản phẩm:', error);
+          console.error("❌ [fetchProducts] Error fetching products:", error);
         }
-      },
+      };
 
-      fetchUserInfo: async () => {
+      const fetchUserCoin = async () => {
         const userId = get().userId;
         if (!userId) return;
 
         try {
-          const accessToken = await AsyncStorage.getItem('access_token');
-          if (!accessToken) {
-            console.error('Không tìm thấy accessToken');
-            return;
-          }
+          const accessToken = await AsyncStorage.getItem("access_token");
+          if (!accessToken) return;
+
+          const response = await axiosInstance.post(
+            "/user-coin/get-coin",
+            { id: userId },
+            { headers: { Authorization: `Bearer ${accessToken}` } }
+          );
+
+          set((state) => ({
+            data: { ...state.data, userCoin: response.data.body.pointCoin },
+          }));
+
+          console.log("✅ [After Fetch] User Coin:", response.data.body.pointCoin);
+        } catch (error) {
+          console.error("❌ [fetchUserCoin] Error fetching user coin:", error);
+        }
+      };
+
+      const fetchUserInfo = async () => {
+        const userId = get().userId;
+        if (!userId) return;
+
+        try {
+          const accessToken = await AsyncStorage.getItem("access_token");
+          if (!accessToken) return;
 
           const response = await axiosInstance.get(`/user/info/${userId}`, {
-            headers: {
-              Authorization: `Bearer ${accessToken}`,
-            },
+            headers: { Authorization: `Bearer ${accessToken}` },
           });
 
-          set({ userInfo: response.data });
-
-          console.log('Thông tin user:', response.data);
+          set((state) => ({
+            data: { ...state.data, userInfo: response.data },
+          }));
         } catch (error) {
-          console.error('Lỗi khi lấy thông tin user:', error);
+          console.error("❌ [fetchUserInfo] Error fetching user info:", error);
         }
-      },
-    }),
+      };
+
+      return {
+        data: {},
+        userId: null,
+        language: 'VN',
+
+        setUserId: async (id) => {
+          set({ userId: id });
+          if (id !== null) {
+            await fetchUserInfo();
+            await fetchUserCoin();
+          }
+        },
+
+        setLanguage: async (lang) => {
+          try {
+            set({ language: lang });
+            await AsyncStorage.setItem("language", lang);
+            await i18n.changeLanguage(lang);
+
+            console.log("🌍 Language changed to:", lang);
+
+            // ✅ Fetch lại dữ liệu theo ngôn ngữ mới
+            await Promise.all([fetchCategories(), fetchProducts(), fetchPosts()]);
+          } catch (error) {
+            console.error("❌ Error updating language:", error);
+          }
+        },
+      };
+    },
     {
-      name: 'category-store', // Tên lưu trữ trong AsyncStorage
+      name: "category-store",
       storage: createJSONStorage(() => AsyncStorage),
     }
   )

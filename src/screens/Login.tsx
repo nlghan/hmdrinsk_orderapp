@@ -11,6 +11,7 @@ import { Linking } from 'react-native';
 import { useCategoryStore } from '../store/store';  // Import store
 import { Buffer } from 'buffer';
 import LanguageSwitcher from '../components/LanguageSwitcher';
+import { useTranslation } from 'react-i18next'; // Import hook useTranslation
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Login'>;
 const getUserIdFromToken = (token: string) => {
@@ -27,6 +28,7 @@ const getUserIdFromToken = (token: string) => {
 };
 
 const Login: React.FC<Props> = ({ navigation }) => {
+  const { t } = useTranslation();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -35,7 +37,7 @@ const Login: React.FC<Props> = ({ navigation }) => {
   const setUserId = useCategoryStore((state) => state.setUserId);  // Lấy setUserId từ Zustand
 
   const handleLogin = async () => {
-    
+    setLoading(true);
     setSuccessMessage('');
     setErrorMessage('');
 
@@ -51,42 +53,38 @@ const Login: React.FC<Props> = ({ navigation }) => {
         password: password,
       });
 
-      setLoading(false);
-
       if (response.status === 200 && response.data.access_token) {
-        // Lưu token vào AsyncStorage
         await AsyncStorage.setItem('access_token', response.data.access_token);
         if (response.data.refresh_token) {
           await AsyncStorage.setItem('refresh_token', response.data.refresh_token);
         }
 
         const role = getRoleFromToken(response.data.access_token);
-        const accessToken = response.data.access_token;
-
-        const userId = getUserIdFromToken(accessToken);
-        console.log('User ID:', userId);
+        const userId = getUserIdFromToken(response.data.access_token);
         setUserId(userId);
-
 
         setSuccessMessage('Đăng nhập thành công!');
 
-        // Điều hướng theo role
+        setLoading(false); // 🔥 Đặt loading về false ngay trước khi điều hướng
+
         if (role.includes('CUSTOMER')) {
           setLoading(false);
-          navigation.navigate('Main');
-          
+          navigation.replace('Main'); // 🔄 replace() để tránh quay lại màn hình login
         } else if (role.includes('SHIPPER')) {
-          // navigation.navigate('ShipperHome');
+          // navigation.replace('ShipperHome');
         }
       } else {
-        
         setErrorMessage(response.data.message || 'Sai tài khoản hoặc mật khẩu');
+        setLoading(false); // 🔥 Đảm bảo loading tắt khi lỗi
       }
-    } catch (error) {
-      
+    } catch (error) {     
       setErrorMessage((error as any).response?.data?.message || 'Không thể kết nối đến máy chủ');
+      setLoading(false); 
+    }finally{
+      setLoading(false)
     }
-  };
+};
+
 
 
   const getRoleFromToken = (token: string): string => {
@@ -98,6 +96,7 @@ const Login: React.FC<Props> = ({ navigation }) => {
       return '';
     }
   };
+  
 
   const handleLoginGG = async () => {
     try {
@@ -217,14 +216,14 @@ const Login: React.FC<Props> = ({ navigation }) => {
       <Animated.Text style={[loginStyles.animatedTitle, { color: textColor, textShadowColor: shadowColor }]}>
         HMDRINKS
       </Animated.Text>
-      <Text style={loginStyles.title}>Đăng nhập</Text>
+      <Text style={loginStyles.title}>{t('login')}</Text>
 
       {successMessage ? <Text style={loginStyles.successText}>{successMessage}</Text> : null}
       {errorMessage ? <Text style={loginStyles.errorText}>{errorMessage}</Text> : null}
 
       <TextInput
         style={loginStyles.input}
-        placeholder="Tên đăng nhập"
+        placeholder={t('userName')}
         placeholderTextColor="#FFA07A"
         value={username}
         onChangeText={setUsername}
@@ -232,7 +231,7 @@ const Login: React.FC<Props> = ({ navigation }) => {
 
       <TextInput
         style={loginStyles.input}
-        placeholder="Mật khẩu"
+        placeholder={t('password')}
         placeholderTextColor="#FFA07A"
         secureTextEntry
         value={password}
@@ -240,7 +239,7 @@ const Login: React.FC<Props> = ({ navigation }) => {
       />
 
       <TouchableOpacity style={loginStyles.loginButton} onPress={handleLogin} disabled={loading}>
-        {loading ? <ActivityIndicator color="#fff" /> : <Text style={loginStyles.loginText}>Đăng nhập</Text>}
+        {loading ? <ActivityIndicator color="#fff" /> : <Text style={loginStyles.loginText}>{t('login')}</Text>}
       </TouchableOpacity>
 
       <TouchableOpacity style={loginStyles.googleButton} onPress={handleLoginGG}>
@@ -248,18 +247,18 @@ const Login: React.FC<Props> = ({ navigation }) => {
           source={require('../assets/img/logoGG.png')} // Cập nhật đường dẫn đến icon của bạn
           style={loginStyles.googleIcon}
         />
-        <Text style={loginStyles.googleText}>Đăng ký bằng Google</Text>
+        <Text style={loginStyles.googleText}>{t('gg')}</Text>
       </TouchableOpacity>
 
       {/* Thêm phần đăng ký */}
       <TouchableOpacity onPress={() => navigation.navigate('Register')}>
         <Text style={loginStyles.registerText}>
-          Bạn chưa có tài khoản? <Text style={loginStyles.registerLink}>Đăng ký</Text>
+        {t('noAcc')} <Text style={loginStyles.registerLink}>{t('signUp')}</Text>
         </Text>
       </TouchableOpacity>
       <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')}>
         <Text style={loginStyles.registerText}>
-          <Text style={loginStyles.registerLink}>Quên mật khẩu?</Text>
+          <Text style={loginStyles.registerLink}>{t('forget')}</Text>
         </Text>
       </TouchableOpacity>
       {/* Họa tiết động */}

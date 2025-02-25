@@ -1,27 +1,19 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useCategoryStore } from "../store/store";
 
 const LanguageSwitcher = () => {
-  const [language, setLanguage] = useState("VN");
-
-  useEffect(() => {
-    const loadLanguage = async () => {
-      const savedLang = await AsyncStorage.getItem("language");
-      if (savedLang) {
-        setLanguage(savedLang);
-      }
-      console.log("🔹 Loaded language from AsyncStorage:", savedLang); // Log ra để kiểm tra
-    };
-    loadLanguage();
-  }, []);
+  const { language, setLanguage } = useCategoryStore();
 
   const toggleLanguage = async () => {
     const newLang = language === "VN" ? "EN" : "VN";
-    setLanguage(newLang);
-    await AsyncStorage.setItem("language", newLang);
-    console.log("🔄 Switched language to:", newLang); // Log khi đổi ngôn ngữ
+    console.log("🛠 Đang chuyển đổi ngôn ngữ sang:", newLang);
+  
+    await setLanguage(newLang);
+  
+    console.log("✅ Đã chuyển đổi ngôn ngữ sang:", newLang);
   };
+  
 
   return (
     <TouchableOpacity onPress={toggleLanguage} style={styles.button}>

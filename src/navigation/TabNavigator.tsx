@@ -76,7 +76,7 @@ const TabNavigator = () => {
       tabBarLabel: 'Khác',
       tabBarIcon: ({ focused }) => (
         <Icon
-          name="notifications"
+          name="menu"
           size={26}
           color={focused ? COLORS.primaryGreenHex : COLORS.primaryGray}
         />
