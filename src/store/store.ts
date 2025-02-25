@@ -121,7 +121,7 @@ export const useCategoryStore = create<CategoryStore>()(
         if (!userId) return;
 
         try {
-          const accessToken = await AsyncStorage.getItem('accessToken');
+          const accessToken = await AsyncStorage.getItem('access_token');
           if (!accessToken) {
             console.error('Không tìm thấy accessToken');
             return;

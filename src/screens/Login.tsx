@@ -60,7 +60,8 @@ const Login: React.FC<Props> = ({ navigation }) => {
 
                 const role = getRoleFromToken(response.data.access_token);
                 const userId = getUserIdFromToken(response.data.access_token);
-
+                await AsyncStorage.setItem('userId', userId ? userId.toString() : "0");
+                setUserId(userId);  // Lưu userId vào store
                 setSuccessMessage('Đăng nhập thành công!');
 
                 // Điều hướng theo role
