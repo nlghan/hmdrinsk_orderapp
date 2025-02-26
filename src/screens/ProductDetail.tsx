@@ -24,13 +24,13 @@ const ProductDetail = () => {
     const route = useRoute<ProductDetailRouteProp>();
     const { product } = route.params;
     const { t } = useTranslation();
-    
+
     // ✅ Lấy các hàm từ store
     const { fetchProductReviews, data, insertFavoriteItem, userId } = useCategoryStore();
 
     const [expanded, setExpanded] = useState(false);
     const [isFavorite, setIsFavorite] = useState(false);
-    
+
     // ⭐ State cho size và giá
     const [selectedSize, setSelectedSize] = useState(product.listProductVariants[0]?.size);
     const [selectedPrice, setSelectedPrice] = useState(product.listProductVariants[0]?.price);
@@ -42,8 +42,16 @@ const ProductDetail = () => {
 
     // ✅ Lấy rating từ store thay vì gọi API
     const productFromStore = data.products?.find((p) => p.proId === product.proId);
-    const avgRating = productFromStore?.avgRating || 0;
-    const totalReviews = productFromStore?.totalReviews || 0;
+    const [avgRating, setAvgRating] = useState(0);
+    const [totalReviews, setTotalReviews] = useState(0);
+
+    useEffect(() => {
+        const productFromStore = data.products?.find((p) => p.proId === product.proId);
+        if (productFromStore) {
+            setAvgRating(productFromStore.avgRating || 0);
+            setTotalReviews(productFromStore.totalReviews || 0);
+        }
+    }, [data.products]);
 
     const formatPrice = (price: number) => price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 

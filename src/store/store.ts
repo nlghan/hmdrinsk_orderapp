@@ -101,7 +101,7 @@ interface CategoryStore {
   setUserId: (id: number | null) => void;
   setLanguage: (lang: string) => void;
   fetchProductReviews: (proId: number, page?: number, limit?: number) => Promise<void>;
-  addReviewToProduct: (proId: number, review: Omit<ProductReview, 'reviewId' | 'isDelete' | 'dateDeleted' | 'dateUpdated' | 'dateCreated'>) => Promise<void>; 
+  addReviewToProduct: (proId: number, review: Omit<ProductReview, 'reviewId' | 'isDelete' | 'dateDeleted' | 'dateUpdated' | 'dateCreated'>) => Promise<void>;
   insertFavoriteItem: (favId: number, proId: number, size: string) => Promise<void>; // ✅ Thêm hàm insertFavoriteItem
 }
 
@@ -285,28 +285,38 @@ export const useCategoryStore = create<CategoryStore>()(
       const fetchProductRating = async (proId: number) => {
         try {
           console.log(`🔍 [fetchProductRating] Fetching rating for product ID: ${proId}`);
-
+      
           const response = await axiosInstance.get(`/product/list-rating`);
+          console.log("📥 API Response:", response.data);
+      
           const ratingList = response.data.list || [];
-
-          // Lọc ra rating của sản phẩm có proId tương ứng
-          const foundRating = ratingList.find((r: { proId: number }) => r.proId === proId);
-          const avgRating = foundRating ? foundRating.avgRating : 0;
-
+          
+          if (!Array.isArray(ratingList)) {
+            throw new Error("Invalid rating list format");
+          }
+      
+          // Kiểm tra xem API có trả về đúng key không
+          const foundRating = ratingList.find((r: { proId?: number; productId?: number }) => 
+            r.proId === proId || r.productId === proId
+          );
+      
+          const avgRating = foundRating ? foundRating.avgRating ?? 0 : 0;
+      
           set((state) => ({
             data: {
               ...state.data,
               products: state.data.products?.map((product) =>
                 product.proId === proId ? { ...product, avgRating } : product
-              ),
+              ) || [], // Đảm bảo không bị lỗi nếu products là undefined
             },
           }));
-
+      
           console.log(`✅ [fetchProductRating] Updated avgRating for product ${proId}: ${avgRating}`);
         } catch (error) {
           console.error(`❌ [fetchProductRating] Error fetching rating for product ${proId}:`, error);
         }
       };
+      
 
       const addReviewToProduct = async (proId: number, review: Omit<ProductReview, 'reviewId' | 'isDelete' | 'dateDeleted' | 'dateUpdated' | 'dateCreated'>) => {
         try {
@@ -370,21 +380,21 @@ export const useCategoryStore = create<CategoryStore>()(
             console.error("❌ [insertFavoriteItem] User not logged in");
             return;
           }
-      
+
           const accessToken = await AsyncStorage.getItem("access_token");
           if (!accessToken) {
             console.error("❌ [insertFavoriteItem] Missing access token");
             return;
           }
-      
+
           const response = await axiosInstance.post(
             "/fav-item/insert",
             { userId, favId, proId, size },
             { headers: { Authorization: `Bearer ${accessToken}` } }
           );
-      
+
           const newFavoriteItem: FavoriteItem = response.data;
-      
+
           // Cập nhật store với mục yêu thích mới
           set((state) => ({
             data: {
@@ -392,13 +402,13 @@ export const useCategoryStore = create<CategoryStore>()(
               favoriteItems: [...(state.data.favoriteItems || []), newFavoriteItem],
             },
           }));
-      
+
           console.log("✅ [insertFavoriteItem] Added favorite item:", newFavoriteItem);
         } catch (error) {
           console.error("❌ [insertFavoriteItem] Error adding favorite item:", error);
         }
       };
-      
+
 
 
       return {
@@ -441,7 +451,7 @@ export const useCategoryStore = create<CategoryStore>()(
         },
       };
 
-      
+
     },
     {
       name: "category-store",
