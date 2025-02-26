@@ -58,13 +58,11 @@ const Login: React.FC<Props> = ({ navigation }) => {
         if (response.data.refresh_token) {
           await AsyncStorage.setItem('refresh_token', response.data.refresh_token);
         }
-
         const role = getRoleFromToken(response.data.access_token);
         const userId = getUserIdFromToken(response.data.access_token);
         setUserId(userId);
 
         setSuccessMessage('Đăng nhập thành công!');
-
         setLoading(false); // 🔥 Đặt loading về false ngay trước khi điều hướng
 
         if (role.includes('CUSTOMER')) {

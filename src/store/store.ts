@@ -147,7 +147,6 @@ export const useCategoryStore = create<CategoryStore>()(
         try {
           const accessToken = await AsyncStorage.getItem("access_token");
           if (!accessToken) return;
-
           const response = await axiosInstance.get(`/user/info/${userId}`, {
             headers: { Authorization: `Bearer ${accessToken}` },
           });
