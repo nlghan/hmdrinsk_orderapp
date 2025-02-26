@@ -43,9 +43,10 @@ const styles = StyleSheet.create({
     marginRight: 6,
   },
   title: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: 'bold',
     color: '#7B614F',
+    textTransform:'uppercase'
   },
   points: {
     fontSize: 16,

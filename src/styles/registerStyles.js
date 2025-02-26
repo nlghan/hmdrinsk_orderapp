@@ -8,6 +8,13 @@ const registerStyles = StyleSheet.create({
         backgroundColor: '#F8F8FF',
         padding: 20,
     },
+    languageContainer: {
+        position: "absolute",
+        top: 10,
+        right: 20,
+        zIndex: 10, // Đảm bảo hiển thị trên các thành phần khác
+        
+    },
     title: {
         fontSize: 26,
         fontWeight: 'bold',
