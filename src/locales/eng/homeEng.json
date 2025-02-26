@@ -246,6 +246,7 @@
     "messLogin2": "You need to log in to add products to your cart."
   },
   "buy": "Order",
+  "buy1": "Order",
   "contactUs": "Contact Us",
   "infoContact": "Contact Information",
   "phoneNow": "Call now",
@@ -388,7 +389,9 @@
     "mark": "Mark all read",
     "noNoti": "There are no new notifications.",
     "proList":"List of products",
-    "greet":"Dear friend, Coffee!"
+    "greet":"Dear friend, Coffee!",
+    "chooseLanguage":"Choose language",
+    "listComment": "All of reviews"
   },
   "productContent": {
     "page": "Page",

@@ -3,6 +3,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import StackNavigator from './src/navigation/StackNavigator';
 import './src/i18n/i18n';
 
+
 const App = () => {
   return (
     <NavigationContainer>

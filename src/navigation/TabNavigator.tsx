@@ -8,83 +8,85 @@ import { COLORS } from '../theme/theme';
 import { BlurView } from '@react-native-community/blur';
 import { StyleSheet } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import { useTranslation } from 'react-i18next';
 
 const Tab = createBottomTabNavigator();
 
 const TabNavigator = () => {
+  const { t } = useTranslation(); // ✅ Lấy function `t`
+
   return (
     <Tab.Navigator
-  screenOptions={{
-    tabBarHideOnKeyboard: true,
-    headerShown: false,
-    tabBarShowLabel: true,
-    tabBarStyle: styles.tabBarStyle,
-    tabBarActiveTintColor: COLORS.primaryGreenHex, // Màu chữ khi focus
-    tabBarInactiveTintColor: COLORS.primaryGray, // Màu chữ khi không focus
-    tabBarLabelStyle: styles.labelStyle, // Style cho label
-    tabBarBackground: () => (
-      <BlurView overlayColor="" blurAmount={15} style={styles.blurStyle} />
-    ),
-  }}
->
-  <Tab.Screen
-    name="Home"
-    component={Home}
-    options={{
-      tabBarLabel: 'Trang chủ', // Chỉ truyền string
-      tabBarIcon: ({ focused }) => (
-        <Icon
-          name="home"
-          size={26}
-          color={focused ? COLORS.primaryGreenHex : COLORS.primaryGray}
-        />
-      ),
-    }}
-  />
-  <Tab.Screen
-    name="Order"
-    component={Order}
-    options={{
-      tabBarLabel: 'Đặt hàng',
-      tabBarIcon: ({ focused }) => (
-        <Icon
-          name="shopping-bag"
-          size={26}
-          color={focused ? COLORS.primaryGreenHex : COLORS.primaryGray}
-        />
-      ),
-    }}
-  />
-  <Tab.Screen
-    name="Favorite"
-    component={Favourite}
-    options={{
-      tabBarLabel: 'Yêu thích',
-      tabBarIcon: ({ focused }) => (
-        <Icon
-          name="favorite"
-          size={26}
-          color={focused ? COLORS.primaryGreenHex : COLORS.primaryGray}
-        />
-      ),
-    }}
-  />
-  <Tab.Screen
-    name="Orther"
-    component={Orther}
-    options={{
-      tabBarLabel: 'Khác',
-      tabBarIcon: ({ focused }) => (
-        <Icon
-          name="menu"
-          size={26}
-          color={focused ? COLORS.primaryGreenHex : COLORS.primaryGray}
-        />
-      ),
-    }}
-  />
-</Tab.Navigator>
-
+      screenOptions={{
+        tabBarHideOnKeyboard: true,
+        headerShown: false,
+        tabBarShowLabel: true,
+        tabBarStyle: styles.tabBarStyle,
+        tabBarActiveTintColor: COLORS.primaryGreenHex,
+        tabBarInactiveTintColor: COLORS.primaryGray,
+        tabBarLabelStyle: styles.labelStyle,
+        tabBarBackground: () => (
+          <BlurView overlayColor="" blurAmount={15} style={styles.blurStyle} />
+        ),
+      }}
+    >
+      <Tab.Screen
+        name="Home"
+        component={Home}
+        options={{
+          tabBarLabel: t('home1'), // ✅ Sử dụng trực tiếp `t('home1')`
+          tabBarIcon: ({ focused }) => (
+            <Icon
+              name="home"
+              size={26}
+              color={focused ? COLORS.primaryGreenHex : COLORS.primaryGray}
+            />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="Order"
+        component={Order}
+        options={{
+          tabBarLabel: t('buy1'), // ✅ Dùng t() để lấy từ khóa dịch
+          tabBarIcon: ({ focused }) => (
+            <Icon
+              name="shopping-bag"
+              size={26}
+              color={focused ? COLORS.primaryGreenHex : COLORS.primaryGray}
+            />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="Favorite"
+        component={Favourite}
+        options={{
+          tabBarLabel: t('favourite.title'), // ✅ Dịch "Yêu thích"
+          tabBarIcon: ({ focused }) => (
+            <Icon
+              name="favorite"
+              size={26}
+              color={focused ? COLORS.primaryGreenHex : COLORS.primaryGray}
+            />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="Orther"
+        component={Orther}
+        options={{
+          tabBarLabel: t('information.other'), // ✅ Dịch "Khác"
+          tabBarIcon: ({ focused }) => (
+            <Icon
+              name="menu"
+              size={26}
+              color={focused ? COLORS.primaryGreenHex : COLORS.primaryGray}
+            />
+          ),
+        }}
+      />
+    </Tab.Navigator>
   );
 };
 

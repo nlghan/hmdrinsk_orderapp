@@ -6,7 +6,7 @@ import axiosInstance from '../utils/axiosInstance';
 import registerStyles from '../styles/registerStyles';
 import InAppBrowser from 'react-native-inappbrowser-reborn';
 import { Linking } from 'react-native';
-import { useTranslation } from 'react-i18next'; // Import hook useTranslation
+import { useTranslation } from 'react-i18next';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Register'>;

@@ -10,74 +10,75 @@ const Other = () => {
   const navigation = useNavigation<NavigationProps>();
   return (
     <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
-    <View style={styles.container}>
-      {/* Tiện ích */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Tiện ích</Text>
-        <View style={styles.grid}>
-          <TouchableOpacity style={styles.box}>
-            <MaterialIcons name="history" style={styles.iconOrange} size={24} />
-            <Text>Lịch sử đơn hàng</Text>            
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.box}>
-            <MaterialIcons name="description" style={styles.iconPurple} size={24} />
-            <Text>Điều khoản</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={[styles.box, styles.fullWidth]}>
-            <MaterialIcons name="description" style={styles.iconPurple} size={24} />
-            <Text>Điều khoản VNPAY</Text>
-          </TouchableOpacity>
+      <View style={styles.container}>
+        {/* Tiện ích */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Tiện ích</Text>
+          <View style={styles.grid}>
+            <TouchableOpacity style={styles.box}>
+              <MaterialIcons name="history" style={styles.iconOrange} size={24} />
+              <Text>Lịch sử đơn hàng</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.box}>
+              <MaterialIcons name="description" style={styles.iconPurple} size={24} />
+              <Text>Điều khoản</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.box, styles.fullWidth]}>
+              <MaterialIcons name="description" style={styles.iconPurple} size={24} />
+              <Text>Điều khoản VNPAY</Text>
+            </TouchableOpacity>
+          </View>
         </View>
-      </View>
 
-      {/* Hỗ trợ */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Hỗ trợ</Text>
-        <View style={styles.list}>
-          <TouchableOpacity style={styles.listItem}>
-            <MaterialIcons name="star" style={styles.icon} size={24} />
-            <Text>Đánh giá đơn hàng</Text>
-            <MaterialIcons name="arrow-forward-ios" style={styles.iconrow} size={18} />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.listItem}>
-            <MaterialIcons name="comment" style={styles.icon} size={24} />
-            <Text>Liên hệ và góp ý</Text>
-            <MaterialIcons name="arrow-forward-ios" style={styles.iconrow} size={18} />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.listItem}>
-            <MaterialIcons name="receipt" style={styles.icon} size={24} />
-            <Text>Hướng dẫn xuất hóa đơn GTGT</Text>
-            <MaterialIcons name="arrow-forward-ios" style={styles.iconrow} size={18} />
-          </TouchableOpacity>
+        {/* Hỗ trợ */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Hỗ trợ</Text>
+          <View style={styles.list}>
+            <TouchableOpacity style={styles.listItem}>
+              <MaterialIcons name="star" style={styles.icon} size={24} />
+              <Text>Đánh giá đơn hàng</Text>
+              <MaterialIcons name="arrow-forward-ios" style={styles.iconrow} size={18} />
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.listItem}>
+              <MaterialIcons name="comment" style={styles.icon} size={24} />
+              <Text>Liên hệ và góp ý</Text>
+              <MaterialIcons name="arrow-forward-ios" style={styles.iconrow} size={18} />
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.listItem}>
+              <MaterialIcons name="receipt" style={styles.icon} size={24} />
+              <Text>Hướng dẫn xuất hóa đơn GTGT</Text>
+              <MaterialIcons name="arrow-forward-ios" style={styles.iconrow} size={18} />
+            </TouchableOpacity>
+          </View>
         </View>
-      </View>
 
-      {/* Tài khoản */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Tài khoản</Text>
-        <View style={styles.list}>
-          <TouchableOpacity style={styles.listItem} onPress={() => navigation.navigate('Info')}>
-            <MaterialIcons name="person" style={styles.icon} size={24} />
-            <Text>Thông tin cá nhân</Text>
-            <MaterialIcons name="arrow-forward-ios" style={styles.iconrow} size={18} />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.listItem}>
-            <MaterialIcons name="bookmark" style={styles.icon} size={24} />
-            <Text>Địa chỉ đã lưu</Text>
-            <MaterialIcons name="arrow-forward-ios" style={styles.iconrow} size={18} />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.listItem}>
-            <MaterialIcons name="settings" style={styles.icon} size={24} />
-            <Text>Cài đặt</Text>
-            <MaterialIcons name="arrow-forward-ios" style={styles.iconrow} size={18} />
-          </TouchableOpacity>
-          <TouchableOpacity style={[styles.listItem, styles.logout]}>
-            <MaterialIcons name="logout" style={styles.icon} size={24} />
-            <Text style={{ color: "red" }}>Đăng xuất</Text>
-          </TouchableOpacity>
+        {/* Tài khoản */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Tài khoản</Text>
+          <View style={styles.list}>
+            <TouchableOpacity style={styles.listItem} onPress={() => navigation.navigate('Info')}>
+              <MaterialIcons name="person" style={styles.icon} size={24} />
+              <Text>Thông tin cá nhân</Text>
+              <MaterialIcons name="arrow-forward-ios" style={styles.iconrow} size={18} />
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.listItem}>
+              <MaterialIcons name="bookmark" style={styles.icon} size={24} />
+              <Text>Địa chỉ đã lưu</Text>
+              <MaterialIcons name="arrow-forward-ios" style={styles.iconrow} size={18} />
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.listItem} onPress={() => navigation.navigate('LanguageChange')}>
+              <MaterialIcons name="settings" style={styles.icon} size={24} />
+              <Text>Ngôn ngữ</Text>
+              <MaterialIcons name="arrow-forward-ios" style={styles.iconrow} size={18} />
+            </TouchableOpacity>
+
+            <TouchableOpacity style={[styles.listItem, styles.logout]}>
+              <MaterialIcons name="logout" style={styles.icon} size={24} />
+              <Text style={{ color: "red" }}>Đăng xuất</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
-    </View>
     </ScrollView>
   );
 };

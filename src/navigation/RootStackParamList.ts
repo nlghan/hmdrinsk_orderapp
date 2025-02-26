@@ -7,5 +7,8 @@ export type RootStackParamList = {
     ForgotPassword: undefined;
     Main: undefined; // Thay vì Home, ta dùng Main để chứa TabNavigator
     ProductDetail: { product: Product };
+    LanguageChange:  undefined;
+    AllReviews: { productId: number };  // 👈 Thêm dòng này
+    AddReview: { productId: number };
   };
   

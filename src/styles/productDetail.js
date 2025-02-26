@@ -8,8 +8,9 @@ const styles = StyleSheet.create({
         height: '100%',
     },
     scrollContainer: {
-        paddingHorizontal: 20,
-        paddingBottom: 100, // Giúp tránh bị che bởi phần giá
+        paddingHorizontal: 8,
+       
+
     },
     backButton: {
         position: 'absolute',
@@ -43,6 +44,7 @@ const styles = StyleSheet.create({
         color: '#666',
         textAlign: 'left',
         paddingHorizontal: 10,
+        textAlign: 'justify'
     },
     readMore: {
         color: COLORS.primaryGreenHex,
@@ -51,7 +53,7 @@ const styles = StyleSheet.create({
     sizeContainer: {
         width: '100%',
         marginTop: 20,
-        marginBottom: 20, // 👈 Giữ khoảng cách 30px với phần bottom
+        marginBottom: 10, // 👈 Giữ khoảng cách 30px với phần bottom
     },
     sizeLabel: {
         fontSize: 18,
@@ -78,16 +80,15 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        position: 'absolute',
-        bottom: 0,
-        left: 0,
-        right: 0,
         backgroundColor: '#fff',
         paddingVertical: 15,
         paddingHorizontal: 20,
         borderTopWidth: 1,
         borderTopColor: '#ddd',
+        elevation: 5,
+        position: 'relative', // 👈 Đổi từ absolute thành relative nếu cần
     },
+    
     price: {
         fontSize: 22,
         fontWeight: 'bold',
@@ -108,6 +109,117 @@ const styles = StyleSheet.create({
         backgroundColor: COLORS.primaryGreenHex,
         borderColor: COLORS.primaryGreenHex,
     },
+    topButtons: {
+        position: 'absolute',
+        top: 15,
+        left: 10,
+        right: 10,
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        zIndex: 2,
+    },
+    favoriteButton: {
+        position: 'absolute',
+        top: 30,
+        right: 30,
+        zIndex: 10,
+        backgroundColor: 'rgba(255, 255, 255, 0.7)',
+        padding: 10,
+        borderRadius: 50,
+        elevation: 3,
+    },
+    reviewContainer: {
+        paddingHorizontal: 8,
+        paddingBottom: 10
+    },
+
+    reviewTitle: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        
+    },
+
+    noReviews: {
+        fontSize: 14,
+        color: '#888',
+        textAlign: 'center',
+        marginVertical: 10,
+    },
+    reviewItem: {
+        flexDirection: 'row',
+        paddingHorizontal:20,
+        paddingVertical: 10,
+        borderBottomWidth: 1,
+        borderBottomColor: '#ddd',
+    },
+    reviewContent: {
+        flex: 1,
+    },
+    userName: {
+        fontWeight: 'bold',
+        fontSize: 16,
+    },
+    reviewText: {
+        fontSize: 14,
+        color: '#555',
+        marginTop: 4,
+    },
+    reviewDate: {
+        fontSize: 12,
+        color: '#888',
+        marginTop: 2,
+    },
+    loadMoreButton: {
+        alignSelf: 'center',
+        marginTop: 10,
+        paddingVertical: 8,
+        paddingHorizontal: 16,
+        backgroundColor: '#007bff',
+        borderRadius: 5,
+    },
+    loadMoreText: {
+        color: '#fff',
+        fontSize: 14,
+    },
+    reviewHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginTop: 10,
+       
+        
+    },
+    
+    viewAllReviewsButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    
+    viewAllReviewsText: {
+        fontSize: 16,
+        color: '#007BFF',
+        fontWeight: 'bold',
+        marginRight: 5,
+    },
+    ratingContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginVertical: 6,
+        marginBottom:6
+
+    },
+    ratingText: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        color: '#FFD700',
+        marginRight: 5,
+    },
+    reviewCount: {
+        fontSize: 14,
+        color: '#666',
+    },
+    
+    
 });
 
 export default styles;

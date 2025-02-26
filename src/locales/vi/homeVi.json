@@ -246,6 +246,7 @@
         "messLogin2": "Bạn cần đăng nhập để thêm sản phẩm vào giỏ hàng."
     },
     "buy": "Đặt mua",
+    "buy1": "Đặt hàng",
     "contactUs": "Gửi Thư Cho Chúng Tôi",
     "infoContact": "Thông Tin Liên Hệ",
     "phoneNow": "Gọi ngay",
@@ -388,7 +389,9 @@
         "mark": "Đánh dấu đã đọc tất cả",
         "noNoti": "Không có thông báo mới.",
         "proList":"Danh sách sản phẩm",
-        "greet":"Bạn ơi, Cà Phê nhé!"
+        "greet":"Bạn ơi, Cà Phê nhé!",
+        "chooseLanguage":"Chọn ngôn ngữ",
+        "listComment": "Tất cả đánh giá"
     },
     "productContent": {
         "page": "Trang",
