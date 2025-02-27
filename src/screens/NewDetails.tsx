@@ -96,8 +96,8 @@ const NewDetails = () => {
     const userId = await AsyncStorage.getItem('userId');
     console.log('Claiming voucher:', voucherId, userId, token);
     const payload = { 
-      userId: parseInt(userId, 10),    // Chuyển userId thành số nguyên
-      voucherId: parseInt(voucherId, 10) // Chuyển voucherId thành số nguyên
+      userId: parseInt(userId || "", 10),    // Chuyển userId thành số nguyên
+      voucherId: voucherId, // Chuyển voucherId thành số nguyên
     };
     console.log('typetype:', typeof payload.userId, typeof payload.voucherId);
     try {

@@ -8,6 +8,13 @@ const styles = StyleSheet.create({
         backgroundColor: '#F8F8FF', // Màu nền nhẹ nhàng
         padding: 20,
     },
+    languageContainer: {
+        position: "absolute",
+        top: 10,
+        right: 20,
+        zIndex: 10, // Đảm bảo hiển thị trên các thành phần khác
+        
+    },
     animatedTitle: {
         fontSize: 50,
         fontWeight: 'bold',
