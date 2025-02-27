@@ -7,11 +7,15 @@ import Login from '../screens/Login';
 import Register from '../screens/Register';
 import ForgotPassword from '../screens/ForgotPassword';
 import Info from '../screens/Info';
-import ProductDetail, { Product } from '../screens/ProductDetail';
+import ProductDetail from '../screens/ProductDetail';
+import News from '../screens/News';
+import NewDetails from '../screens/NewDetails';
 import AllReviewsScreen from '../screens/AllReviews';
 import AddReviewScreen from '../screens/AddReview';
-import TabNavigator from './TabNavigator';
 import LanguageChange from '../screens/LanguagChange';
+
+import TabNavigator from './TabNavigator'; // Import TabNavigator
+import { Product } from '../screens/ProductDetail';
 
 // ✅ Định nghĩa kiểu cho danh sách các màn hình
 export type RootStackParamList = {
@@ -21,9 +25,12 @@ export type RootStackParamList = {
   Main: undefined;
   Info: undefined;
   ProductDetail: { product: Product };
+  News: undefined;
+  NewDetails: undefined;
   LanguageChange: undefined;
   AllReviews: { productId: number };
   AddReview: { productId: number };
+
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -34,14 +41,30 @@ const StackNavigator = () => {
   return (
     <Stack.Navigator initialRouteName="Login">
       <Stack.Screen name="Login" component={Login} options={{ headerShown: false }} />
+
       <Stack.Screen name="Register" component={Register} options={{ headerShown: false }} />
       <Stack.Screen name="ForgotPassword" component={ForgotPassword} options={{ headerShown: false }} />
-      <Stack.Screen name="Main" component={TabNavigator} options={{ headerShown: false, animation: 'slide_from_right' as const }} />
-      <Stack.Screen name="Info" component={Info} options={{ headerShown: false, animation: 'slide_from_right' as const }} />
-      <Stack.Screen name="ProductDetail" component={ProductDetail} options={{ headerShown: false, animation: 'slide_from_right' as const }} />
-      <Stack.Screen name="LanguageChange" component={LanguageChange} options={{ title: t('common.selectLanguage'), headerShown: false, animation: 'slide_from_right' as const }} />
+      <Stack.Screen
+        name="Main"
+        component={TabNavigator}
+        options={{
+          headerShown: false,
+          animation: 'slide_from_right'  // Thử đổi thành 'slide_from_right' hoặc 'fade'
+        }}
+      />
+
+      <Stack.Screen name="Info" component={Info} options={{ headerShown: false }} />
+      <Stack.Screen name="ProductDetail" component={ProductDetail}  options={{
+          headerShown: false,
+          animation: 'slide_from_right'  // Thử đổi thành 'slide_from_right' hoặc 'fade'
+        }} />
+        <Stack.Screen name="News" component={News} options={{ headerShown: false, animation: 'slide_from_right' }} />
+        <Stack.Screen name="NewDetails" component={NewDetails} options={{ headerShown: false, animation: 'slide_from_right' }} />
+        <Stack.Screen name="LanguageChange" component={LanguageChange} options={{ title: t('common.selectLanguage'), headerShown: false, animation: 'slide_from_right' as const }} />
       <Stack.Screen name="AllReviews" component={AllReviewsScreen} options={{ title: t('common.allReviews'), headerShown: false, animation: 'slide_from_right' as const }} />
       <Stack.Screen name="AddReview" component={AddReviewScreen} options={{ title: t('common.addReview'), headerShown: false, animation: 'slide_from_right' as const }} />
+
+
     </Stack.Navigator>
   );
 };

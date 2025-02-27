@@ -4,6 +4,7 @@ import Home from '../screens/Home';
 import Favourite from '../screens/Favourite';
 import Order from '../screens/Order';
 import Orther from '../screens/Orther';
+import News from '../screens/News';
 import { COLORS } from '../theme/theme';
 import { BlurView } from '@react-native-community/blur';
 import { StyleSheet } from 'react-native';
@@ -38,7 +39,7 @@ const TabNavigator = () => {
           tabBarIcon: ({ focused }) => (
             <Icon
               name="home"
-              size={26}
+              size={24}
               color={focused ? COLORS.primaryGreenHex : COLORS.primaryGray}
             />
           ),
@@ -52,7 +53,7 @@ const TabNavigator = () => {
           tabBarIcon: ({ focused }) => (
             <Icon
               name="shopping-bag"
-              size={26}
+              size={24}
               color={focused ? COLORS.primaryGreenHex : COLORS.primaryGray}
             />
           ),
@@ -66,7 +67,21 @@ const TabNavigator = () => {
           tabBarIcon: ({ focused }) => (
             <Icon
               name="favorite"
-              size={26}
+              size={24}
+          color={focused ? COLORS.primaryGreenHex : COLORS.primaryGray}
+        />
+      ),
+    }}
+  />
+    <Tab.Screen
+    name="News"
+    component={News}
+    options={{
+      tabBarLabel: 'Tin tức',
+      tabBarIcon: ({ focused }) => (
+        <Icon
+          name="library-books"
+          size={24}
               color={focused ? COLORS.primaryGreenHex : COLORS.primaryGray}
             />
           ),
@@ -79,8 +94,8 @@ const TabNavigator = () => {
           tabBarLabel: t('information.other'), // ✅ Dịch "Khác"
           tabBarIcon: ({ focused }) => (
             <Icon
-              name="menu"
-              size={26}
+              name="notifications"
+              size={24}
               color={focused ? COLORS.primaryGreenHex : COLORS.primaryGray}
             />
           ),
