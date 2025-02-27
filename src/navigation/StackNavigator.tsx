@@ -6,7 +6,8 @@ import Login from '../screens/Login';
 import Register from '../screens/Register';
 import ForgotPassword from '../screens/ForgotPassword';
 import Info from '../screens/Info';
-
+import News from '../screens/News';
+import NewDetails from '../screens/NewDetails';
 
 import TabNavigator from './TabNavigator'; // Import TabNavigator
 
@@ -17,7 +18,8 @@ export type RootStackParamList = {
   ForgotPassword: undefined;
   Main: undefined; 
   Info: undefined;
-
+  News: undefined;
+  NewDetails: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -31,6 +33,8 @@ const StackNavigator = () => {
       <Stack.Screen name="ForgotPassword" component={ForgotPassword} options={{ headerShown: false }} />
       <Stack.Screen name="Main" component={TabNavigator} options={{ headerShown: false }} />
       <Stack.Screen name="Info" component={Info} options={{ headerShown: false }} />
+      <Stack.Screen name="News" component={News} options={{ headerShown: false }} />
+      <Stack.Screen name="NewDetails" component={NewDetails} options={{ headerShown: false }} />
 
     </Stack.Navigator>
   );
