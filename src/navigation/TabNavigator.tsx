@@ -77,7 +77,7 @@ const TabNavigator = () => {
     name="News"
     component={News}
     options={{
-      tabBarLabel: 'Tin tức',
+      tabBarLabel: t('posts1'),
       tabBarIcon: ({ focused }) => (
         <Icon
           name="library-books"
@@ -94,7 +94,7 @@ const TabNavigator = () => {
           tabBarLabel: t('information.other'), // ✅ Dịch "Khác"
           tabBarIcon: ({ focused }) => (
             <Icon
-              name="notifications"
+              name="menu"
               size={24}
               color={focused ? COLORS.primaryGreenHex : COLORS.primaryGray}
             />

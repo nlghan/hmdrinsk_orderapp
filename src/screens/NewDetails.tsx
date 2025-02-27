@@ -4,6 +4,8 @@ import { RouteProp, useRoute } from '@react-navigation/native';
 import axiosInstance from '../utils/axiosInstance';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { RootStackParamList } from '../navigation/RootStackParamList';
+import { useCategoryStore } from '../store/store';
+import { useTranslation } from 'react-i18next';
 
 export type NewDetailsRouteProp = RouteProp<RootStackParamList, 'NewDetails'>;
 
@@ -31,12 +33,14 @@ const NewDetails = () => {
 
   const route = useRoute<NewDetailsRouteProp>();
   const { postId } = route.params;
+  const { t } = useTranslation();
   const [post, setPost] = useState<Post | null>(null);
   const [voucher, setVoucher] = useState<Voucher | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const language = 'VN';
+  
   const [isVoucherClaimed, setIsVoucherClaimed] = useState(false);
+  const { language,userId } = useCategoryStore();
 
   useEffect(() => {
     const fetchPostDetails = async () => {
@@ -70,7 +74,6 @@ const NewDetails = () => {
   const checkUserVoucher = async (voucherId?: number) => {
     if (!voucherId) return;
     const token = await AsyncStorage.getItem('access_token');
-    const userId = await AsyncStorage.getItem('userId');
     
     try {
       const headers = {
@@ -93,12 +96,11 @@ const NewDetails = () => {
 
   const claimVoucher = async (voucherId: number) => {
     const token = await AsyncStorage.getItem('access_token');
-    const userId = await AsyncStorage.getItem('userId');
     console.log('Claiming voucher:', voucherId, userId, token);
     const payload = { 
-      userId: parseInt(userId || "", 10),    // Chuyển userId thành số nguyên
-      voucherId: voucherId, // Chuyển voucherId thành số nguyên
-    };
+      userId: parseInt(String(userId), 10),  // Đảm bảo luôn là chuỗi trước khi parse
+      voucherId: voucherId,
+    };    
     console.log('typetype:', typeof payload.userId, typeof payload.voucherId);
     try {
       console.log('Payload gửi đi:', payload);
@@ -123,13 +125,13 @@ const NewDetails = () => {
         <View>
           {post.url ? <Image source={{ uri: post.url }} style={styles.image} /> : <Text>Hình ảnh không có sẵn</Text>}
           <Text style={styles.title}>{post.title}</Text>
-          <Text style={styles.date}>Ngày tạo: {post.dateCreated}</Text>
+          <Text style={styles.date}>{t('common.dateCreate')}: {post.dateCreated}</Text>
           <Text style={styles.description}>{post.shortDescription}</Text>
           <Text style={styles.description}>{post.description}</Text>
 
           {voucher && (
             <View style={styles.voucherSection}>
-              <Text style={styles.voucherTitle}>🎉 Voucher Khuyến Mãi 🎉</Text>
+              <Text style={styles.voucherTitle}>🎉 {t('postContent.infoVoucher')} 🎉</Text>
 
               <FlatList
                 data={voucher ? [voucher] : []}
@@ -146,20 +148,20 @@ const NewDetails = () => {
                   console.log('Ngày kết thúc:', endDate);
                   return (
                     <View style={styles.voucherCard}>
-                      <Text style={styles.voucherCode}>🎟 Mã: {item.key}</Text>
-                      <Text style={styles.voucherText}>🔻 Giảm: {item.discount} VNĐ</Text>
-                      <Text style={styles.voucherText}>📦 Số lượng: {item.number}</Text>
-                      <Text style={styles.voucherText}>📆 Bắt đầu: {item.startDate}</Text>
-                      <Text style={styles.voucherText}>⌛ Hết hạn: {item.endDate}</Text>
+                      <Text style={styles.voucherCode}>🎟 {t('information.code')}: {item.key}</Text>
+                      <Text style={styles.voucherText}>🔻 {t('order.discount')}: {item.discount} VNĐ</Text>
+                      <Text style={styles.voucherText}>📦 {t('quantity')}: {item.number}</Text>
+                      <Text style={styles.voucherText}>📆 {t('postContent.startDate')}: {item.startDate}</Text>
+                      <Text style={styles.voucherText}>⌛{t('postContent.endDate')}: {item.endDate}</Text>
                       {isVoucherClaimed ? (
-                        <Text style={styles.voucherButton}>✅ Đã thu thập Voucher</Text>
+                        <Text style={styles.voucherButton}>✅ {t('newsDetail.voucher.status5')}</Text>
                       ) : startDate > currentDate ? (
-                        <Text style={styles.voucherButton}>Chưa tới hạn thu thập Voucher</Text>
+                        <Text style={styles.voucherButton}>{t('newsDetail.voucher.status2')}</Text>
                       ) : endDate < currentDate ? (
-                        <Text style={styles.voucherButton}>Đã qua hạn thu thập Voucher</Text>
+                        <Text style={styles.voucherButton}>{t('newsDetail.voucher.status3')}</Text>
                       ) : (
                         <TouchableOpacity onPress={() => claimVoucher(item.voucherId)}>
-                          <Text style={styles.voucherButton}>🔗 Nhận Voucher</Text>
+                          <Text style={styles.voucherButton}>🔗 {t('newsDetail.voucher.status6')}</Text>
                         </TouchableOpacity>
                       )}
                     </View>
@@ -172,7 +174,7 @@ const NewDetails = () => {
           {post.isDeleted && <Text style={styles.deleted}>⚠ Bài viết đã bị xóa</Text>}
         </View>
       ) : (
-        <Text>Đang tải...</Text>
+        <Text>{t('loading')}</Text>
       )}
     </ScrollView>
   );
@@ -210,13 +212,15 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginBottom: 40,
     margin: 5,
-    width: "100%",
+    width: "100%",  // Chiếm 90% chiều rộng để cách đều hai bên
     shadowColor: "#000",
     shadowOffset: { width: 2, height: 2 },
     shadowOpacity: 0.3,
     shadowRadius: 5,
     elevation: 3,
+    alignSelf: "center", // Giúp căn giữa card
   },
+  
   voucherCode: {
     fontSize: 16,
     fontWeight: "bold",

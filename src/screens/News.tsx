@@ -4,6 +4,7 @@ import axiosInstance from '../utils/axiosInstance';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../navigation/RootStackParamList';
+import { useCategoryStore } from '../store/store';
 
 interface Post {
   postId: number;
@@ -19,9 +20,9 @@ const News = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(false);
-  const language = 'VN';
   const postsPerPage = 10;
   const navigation = useNavigation<NavigationProp>();
+  const { language, userId } = useCategoryStore();
 
   const fetchPosts = async (page: number) => {
     try {
