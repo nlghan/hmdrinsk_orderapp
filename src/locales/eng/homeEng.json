@@ -391,7 +391,8 @@
     "proList":"List of products",
     "greet":"Dear friend, Coffee!",
     "chooseLanguage":"Choose language",
-    "listComment": "All of reviews"
+    "listComment": "All of reviews",
+    "addCmt":"Add reviews"
   },
   "productContent": {
     "page": "Page",
@@ -456,6 +457,7 @@
     "searchVoucher": "Search voucher...",
     "info": "News Information",
     "upload": "Upload content from Word file",
+    "uploadImg": "Upload image",
     "shortDes": "Short description",
     "infoVoucher": "Voucher Information",
     "active": "Active",

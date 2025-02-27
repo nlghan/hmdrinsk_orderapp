@@ -391,7 +391,8 @@
         "proList":"Danh sách sản phẩm",
         "greet":"Bạn ơi, Cà Phê nhé!",
         "chooseLanguage":"Chọn ngôn ngữ",
-        "listComment": "Tất cả đánh giá"
+        "listComment": "Tất cả đánh giá",
+        "addCmt":"Thêm đánh giá"
     },
     "productContent": {
         "page": "Trang",
@@ -456,6 +457,7 @@
         "searchVoucher": "Tìm kiếm voucher...",
         "info": "Thông tin bài viết",
         "upload": "Tải nội dung từ file Word",
+        "uploadImg": "Tải ảnh lên",
         "shortDes": "Mô tả ngắn",
         "infoVoucher": "Thông tin Voucher",
         "active": "Kích hoạt",

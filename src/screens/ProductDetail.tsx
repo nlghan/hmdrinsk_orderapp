@@ -13,6 +13,7 @@ export interface Product {
     description: string;
     proId: number;
     proName: string;
+    isFavourited: boolean;
     productImageResponseList: { linkImage: string }[];
     listProductVariants: { price: number; size: string }[];
 }
@@ -24,13 +25,12 @@ const ProductDetail = () => {
     const route = useRoute<ProductDetailRouteProp>();
     const { product } = route.params;
     const { t } = useTranslation();
-    
+
     // ✅ Lấy các hàm từ store
     const { fetchProductReviews, data, insertFavoriteItem, userId } = useCategoryStore();
 
     const [expanded, setExpanded] = useState(false);
-    const [isFavorite, setIsFavorite] = useState(false);
-    
+
     // ⭐ State cho size và giá
     const [selectedSize, setSelectedSize] = useState(product.listProductVariants[0]?.size);
     const [selectedPrice, setSelectedPrice] = useState(product.listProductVariants[0]?.price);
@@ -44,6 +44,12 @@ const ProductDetail = () => {
     const productFromStore = data.products?.find((p) => p.proId === product.proId);
     const avgRating = productFromStore?.avgRating || 0;
     const totalReviews = productFromStore?.totalReviews || 0;
+    const [isFavorite, setIsFavorite] = useState(product.isFavourited);
+
+
+    console.log("🔍 Product from store:", productFromStore);
+    console.log("⭐ avgRating:", productFromStore?.avgRating);
+
 
     const formatPrice = (price: number) => price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 
@@ -68,19 +74,25 @@ const ProductDetail = () => {
             return;
         }
 
+        // Lật trạng thái yêu thích ngay lập tức để cập nhật UI
         setIsFavorite((prev) => !prev);
 
-        if (!isFavorite) {
-            try {
-                await insertFavoriteItem(1, product.proId, selectedSize); // Thay `1` bằng favId thực tế nếu có
+        try {
+            if (!isFavorite) {
+                await insertFavoriteItem(1, product.proId, selectedSize);
                 console.log("✅ Added to favorites");
-            } catch (error) {
-                console.error("❌ Error adding to favorites:", error);
+            } else {
+                // await removeFavoriteItem(product.proId, selectedSize);
+                // console.log("🗑 Removed from favorites");
             }
-        } else {
-            console.log("🗑 Remove from favorites logic here");
+        } catch (error) {
+            console.error("❌ Error updating favorite state:", error);
+            // Nếu API thất bại, hoàn tác trạng thái
+            setIsFavorite((prev) => !prev);
         }
     };
+
+
 
     return (
         <View style={productDetail.container}>
@@ -105,8 +117,14 @@ const ProductDetail = () => {
                         <Icon name="arrow-back" size={24} color="#000" />
                     </TouchableOpacity>
                     <TouchableOpacity onPress={handleFavoritePress} style={productDetail.favoriteButton}>
-                        <Icon name={isFavorite ? "favorite" : "favorite-border"} size={24} color={isFavorite ? "red" : "#000"} />
+                        <Icon
+                            name="favorite"
+                            size={24}
+                            color={isFavorite ? "red" : "gray"}
+                        />
                     </TouchableOpacity>
+
+
                 </View>
 
                 <Image source={{ uri: product.productImageResponseList[0]?.linkImage }} style={productDetail.image} />
@@ -154,7 +172,7 @@ const ProductDetail = () => {
                         onPress={() => navigation.navigate('AllReviews', { productId: product.proId })}
                     >
                         <View style={productDetail.ratingContainer}>
-                            <Text style={productDetail.ratingText}>{avgRating.toFixed(1)} ★</Text>
+                            <Text style={productDetail.ratingText}>{avgRating.toFixed(2)} ★</Text>
                             <Text style={productDetail.reviewCount}>({totalReviews} {t('reviews')})</Text>
                         </View>
                         <Icon name="chevron-right" size={22} color="#000" />

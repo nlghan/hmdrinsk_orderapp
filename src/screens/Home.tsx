@@ -20,9 +20,8 @@ import Header from '../components/Header';
 import { Product } from './ProductDetail';
 import { Category } from '../store/store'; // Điều chỉnh đường dẫn phù hợp với dự án của bạn
 
-
 const Home = () => {
-  const { data, language } = useCategoryStore();
+  const { data, insertFavoriteItem } = useCategoryStore();
   const { categories, userInfo, products, userCoin } = data;
   const { t } = useTranslation();
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
@@ -31,49 +30,48 @@ const Home = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<number | null>(null);
 
-  // 🟢 Fetch data khi component mount
-  
-  
-  // 🟢 Lắng nghe sự thay đổi của `data` → Nếu có dữ liệu, tắt loading
+  // 🟢 Xử lý dữ liệu sản phẩm để tránh lỗi undefined
+  const fixedProducts: Product[] = Array.isArray(products)
+  ? products.map((product) => ({
+      ...product,
+      isFavourited: product.isFavourited ?? false,
+    }))
+  : []; // Nếu products không phải mảng, gán giá trị rỗng
+
+
   useEffect(() => {
     if (categories && products && userInfo !== undefined && userCoin !== undefined) {
       setLoading(false);
     }
   }, [categories, products, userInfo, userCoin]);
-  
-  // 🟢 Hàm xử lý Pull-to-Refresh
+
   const onRefresh = async () => {
     console.log("🔄 Refreshing...");
     setRefreshing(true);
     await Promise.all([
-      useCategoryStore.getState().setLanguage(useCategoryStore.getState().language), // Gọi lại fetch dữ liệu
+      useCategoryStore.getState().setLanguage(useCategoryStore.getState().language),
     ]);
     setTimeout(() => setRefreshing(false), 500);
   };
 
-  // 🔹 Tạo `renderItem` với `useCallback` để tránh re-render không cần thiết
+
+
   const renderProductItem = useCallback(({ item }: { item: Product }) => (
     <ProductCard
-      image={item.productImageResponseList[0]?.linkImage}
-      name={item.proName}
-      price={item.listProductVariants[0]?.price}
-      size={item.listProductVariants[0]?.size}
-      onLongPress={() =>
-        setSelectedProduct(prev => (prev === item.proId ? null : item.proId))
-      }
-      onPress={() => {
-        console.log('Navigating to ProductDetail with:', item);
-        navigation.navigate('ProductDetail', { product: item });
-        setSelectedProduct(null);
-      }}
+      image={item.productImageResponseList?.[0]?.linkImage || 'https://via.placeholder.com/150'}
+      name={item.proName || 'No name'}
+      price={item.listProductVariants?.[0]?.price || 0}
+      size={item.listProductVariants?.[0]?.size || 'N/A'}
+      onLongPress={() => setSelectedProduct(prev => (prev === item.proId ? null : item.proId))}
+      onPress={() => navigation.navigate('ProductDetail', { product: item })}
       isSelected={selectedProduct === item.proId}
+      isFavourited={item.isFavourited ?? false}
+      insertFavoriteItem={insertFavoriteItem} // ✅ Đảm bảo hàm đã được định nghĩa
     />
   ), [selectedProduct, navigation]);
 
-  // 🔹 Header của `FlatList` - Dùng useCallback để tránh render lại
   const renderListHeader = useCallback(() => (
     <>
-
       <MemberCard userInfo={userInfo} />
       <View style={homeStyles.rewardsContainer}>
         <RewardCard icon="confirmation-number" title={t('cart.voucher')} points={0} />
@@ -99,27 +97,19 @@ const Home = () => {
     </>
   ), [userInfo, userCoin, categories, t]);
 
-  // 🔹 Render danh mục sản phẩm - Dùng `useCallback`
   const renderCategoryItem: ListRenderItem<Category> = useCallback(({ item }) => (
     <ServiceItem image={item.cateImg} text={item.cateName} />
   ), []);
 
-
-
   return (
     <SafeAreaView style={{ flex: 1 }}>
-      {/* 🟢 Header với Background Gradient */}
-      <View >
+      <View>
         <LinearGradient
-          colors={[ '#f3ebe0', '#f7eee9de']} // 🎨 Gradient từ cam sang đỏ
-          
+          colors={['#f3ebe0', '#f7eee9de']}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
         >
-         <Header style={{
-                paddingHorizontal: 14,
-                paddingTop: 10,
-            }} />
+          <Header style={{ paddingHorizontal: 14, paddingTop: 10 }} />
         </LinearGradient>
       </View>
 
@@ -137,15 +127,15 @@ const Home = () => {
             </View>
           ) : (
             <FlatList
-              data={products}
+              data={fixedProducts.slice(0, 8)} // ✅ Chỉ lấy 8 sản phẩm đầu
               numColumns={2}
               keyExtractor={(item) => item.proId.toString()}
               renderItem={renderProductItem}
-              initialNumToRender={6} // ✅ Chỉ render 6 sản phẩm đầu tiên
-              maxToRenderPerBatch={8} // ✅ Render thêm tối đa 8 sản phẩm khi cần
-              windowSize={5} // ✅ Giữ 5 màn hình trong bộ nhớ để cuộn mượt hơn
+              initialNumToRender={8}
+              maxToRenderPerBatch={8}
+              windowSize={5}
               getItemLayout={(_, index) => ({
-                length: 250, // ✅ Cố định chiều cao mỗi item giúp tối ưu cuộn
+                length: 250,
                 offset: 250 * index,
                 index,
               })}
@@ -160,6 +150,7 @@ const Home = () => {
               showsVerticalScrollIndicator={false}
               ListHeaderComponent={renderListHeader}
             />
+
           )}
         </LinearGradient>
       </TouchableWithoutFeedback>

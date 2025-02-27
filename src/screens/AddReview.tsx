@@ -6,10 +6,12 @@ import { RootStackParamList } from '../navigation/RootStackParamList';
 import { useCategoryStore } from '../store/store';
 import reviewStyles from '../styles/reviewStyles';
 import Header from '../components/Header';
+import { useTranslation } from 'react-i18next';
 
 type AddReviewRouteProp = RouteProp<RootStackParamList, 'AddReview'>;
 
 const AddReview = () => {
+    const { t } = useTranslation();
     const navigation = useNavigation();
     const route = useRoute<AddReviewRouteProp>();
     const { productId } = route.params;
@@ -21,41 +23,45 @@ const AddReview = () => {
     const [content, setContent] = useState('');
 
     const handleSubmit = async () => {
-        if ( rating === 0 || !content) {
-            Alert.alert("Lỗi", "Vui lòng nhập đầy đủ thông tin!");
+        const { language } = useCategoryStore.getState(); // Lấy ngôn ngữ từ store
+        const isEnglish = language === "EN"; // Kiểm tra nếu là tiếng Anh
+
+        if (rating === 0 || !content) {
+            Alert.alert(isEnglish ? "Error" : "Lỗi", isEnglish ? "Please fill in all fields!" : "Vui lòng nhập đầy đủ thông tin!");
             return;
         }
-    
+
         const userId = useCategoryStore.getState().userId; // Lấy userId từ store
         if (!userId) {
-            Alert.alert("Lỗi", "Bạn cần đăng nhập để đánh giá!");
+            Alert.alert(isEnglish ? "Error" : "Lỗi", isEnglish ? "You need to log in to leave a review!" : "Bạn cần đăng nhập để đánh giá!");
             return;
         }
-    
+
         const newReview = {
-            userId, // ✅ Bổ sung userId
-            proId: productId, // ✅ Bổ sung proId
+            userId,
+            proId: productId,
             fullName,
             ratingStart: rating,
             content,
         };
-    
+
         await addReviewToProduct(productId, newReview);
-        Alert.alert("Thành công", "Đánh giá của bạn đã được gửi!");
+        Alert.alert(isEnglish ? "Success" : "Thành công", isEnglish ? "Your review has been submitted!" : "Đánh giá của bạn đã được gửi!");
         navigation.goBack();
     };
-    
-    
+
+
+
 
     const renderStars = () => (
         <View style={{ flexDirection: 'row' }}>
             {[1, 2, 3, 4, 5].map((num) => (
                 <TouchableOpacity key={num} onPress={() => setRating(num)}>
-                    <Icon 
-                        name={num <= rating ? "star" : "star-border"} 
-                        size={30} 
-                        color="#FFD700" 
-                        style={{ marginHorizontal: 3 }} 
+                    <Icon
+                        name={num <= rating ? "star" : "star-border"}
+                        size={30}
+                        color="#FFD700"
+                        style={{ marginHorizontal: 3 }}
                     />
                 </TouchableOpacity>
             ))}
@@ -78,28 +84,32 @@ const AddReview = () => {
                     elevation: 5, // Dành cho Android
                 }}
             />
-            <View style={reviewStyles.header}>
-                <TouchableOpacity onPress={() => navigation.goBack()} style={reviewStyles.backButton}>
-                    <Icon name="arrow-back" size={20} color="#000" />
+            <View style={reviewStyles.nestedContainer}>
+                <View style={reviewStyles.header}>
+                    <TouchableOpacity onPress={() => navigation.goBack()} style={reviewStyles.backButton}>
+                        <Icon name="arrow-back" size={20} color="#000" />
+                    </TouchableOpacity>
+                    <Text style={reviewStyles.headerTitle}>{t('common.addCmt')}</Text>
+                </View>
+
+                <Text style={reviewStyles.label}>{t('products.rating')}:</Text>
+                {renderStars()}
+
+                <Text style={reviewStyles.label}>{t('responseContent.content')}:</Text>
+                <TextInput
+                    style={[reviewStyles.input, { height: 100 }]}
+                    placeholder=""
+                    value={content}
+                    onChangeText={setContent}
+                    multiline
+                />
+
+                <TouchableOpacity style={reviewStyles.submitButton} onPress={handleSubmit}>
+                    <Text style={reviewStyles.submitButtonText}>{t('send')}</Text>
                 </TouchableOpacity>
-                <Text style={reviewStyles.headerTitle}>Thêm đánh giá</Text>
+
             </View>
 
-            <Text style={reviewStyles.label}>Đánh giá:</Text>
-            {renderStars()}
-
-            <Text style={reviewStyles.label}>Nội dung đánh giá:</Text>
-            <TextInput 
-                style={[reviewStyles.input, { height: 100 }]} 
-                placeholder="Nhập nội dung đánh giá" 
-                value={content} 
-                onChangeText={setContent} 
-                multiline 
-            />
-
-            <TouchableOpacity style={reviewStyles.submitButton} onPress={handleSubmit}>
-                <Text style={reviewStyles.submitButtonText}>Gửi đánh giá</Text>
-            </TouchableOpacity>
         </View>
     );
 };

@@ -8,6 +8,9 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { Picker } from '@react-native-picker/picker';
 import Icon from "react-native-vector-icons/MaterialIcons";
 import { useNavigation } from '@react-navigation/native';
+import { useCategoryStore } from "../store/store";
+import Header from "../components/Header";
+import { useTranslation } from 'react-i18next';
 
 type NavigationProps = {
   navigate: (screen: string) => void;
@@ -30,6 +33,7 @@ const Info: React.FC = () => {
     type: string;
     name: string;
   };
+   const { t } = useTranslation();
 
   const [selectedFile, setSelectedFile] = useState<SelectedFile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -50,6 +54,7 @@ const Info: React.FC = () => {
   const [isModalVisibleV, setModalVisibleV] = useState(false);
   const [voucherList, setVoucherList] = useState<Voucher[]>([]);
   const navigation = useNavigation<NavigationProps>();
+  const { userId } = useCategoryStore();
 
   interface Province {
     provinceId: number;
@@ -69,38 +74,63 @@ const Info: React.FC = () => {
 
   const fetchUserInfo = async () => {
     try {
+      setLoading(true); // Bắt đầu hiển thị loading
+
+      // Lấy token & userId từ AsyncStorage
       const token = await AsyncStorage.getItem("access_token");
-      if (!token) {
+      console.log("🔍 Token lấy từ AsyncStorage:", token, typeof token);
+
+      console.log("🔍 UserID từ store:", userId);
+
+      if (!token || token === "null" || token === "undefined") {
         setError("Bạn cần đăng nhập để xem thông tin này.");
         setLoading(false);
         return;
       }
 
-      const userId = await AsyncStorage.getItem("userId");
       if (!userId) {
-        setError("Không thể lấy userId từ token.");
+        setError("Không thể lấy userId từ store.");
         setLoading(false);
         return;
       }
 
+      // Gửi request lấy thông tin người dùng
       const response = await axiosInstance.get(`/user/info/${userId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
+      // Log phản hồi từ API
+      console.log("📌 Dữ liệu trả về từ API:", response.data);
+
       const userInfo = response.data;
-      let addressParts = (userInfo.address || "").split(",").map((part: string) => part.trim());
-      const [street, ward, district, city] = addressParts.map((part: string) => (part && part !== "None" && part !== "null" ? part : ""));
+
+      let addressParts = (userInfo.address || "")
+        .split(",")
+        .map((part: string) => part.trim());
+
+      const [street, ward, district, city] = addressParts.map((part: string) =>
+        part && part !== "None" && part !== "null" ? part : ""
+      );
 
       const formattedBirthDay = userInfo.birth_date
-        ? new Date(userInfo.birth_date).toISOString().split('T')[0]
+        ? new Date(userInfo.birth_date).toISOString().split("T")[0]
         : "";
 
-      const sexMapping: Record<string, string> = {
-        MALE: "Nam",
-        FEMALE: "Nữ",
-        OTHER: "Khác",
-      };
+      // Log thông tin đã xử lý
+      console.log("📍 Thông tin đã xử lý:", {
+        email: userInfo.email,
+        fullName: userInfo.fullName,
+        phoneNumber: userInfo.phone,
+        avatar: userInfo.avatar,
+        sex: userInfo.sex,
+        birthDay: formattedBirthDay,
+        street,
+        ward,
+        district,
+        city,
+      });
 
+      // Cập nhật state
       setFormData({
         email: userInfo.email || "",
         fullName: userInfo.fullName || "",
@@ -113,27 +143,29 @@ const Info: React.FC = () => {
         district,
         city,
       });
+
       setEditedData({
         email: userInfo.email || "",
         fullName: userInfo.fullName || "",
         phoneNumber: userInfo.phone || "",
         avatar: userInfo.avatar || "",
-        sex: userInfo.sex || "", // Tránh lỗi khi sex là null
+        sex: userInfo.sex || "",
         birthDay: formattedBirthDay,
         street,
         ward,
         district,
         city,
       });
-      setPreviewImage(userInfo.avatar || "");
 
+      setPreviewImage(userInfo.avatar || "");
     } catch (err) {
-      console.error("Lỗi khi lấy thông tin người dùng:", err);
+      console.error("❌ Lỗi khi lấy thông tin người dùng:", err);
       setError("Không thể lấy thông tin người dùng.");
     } finally {
       setLoading(false);
     }
   };
+
 
   useEffect(() => {
     fetchUserInfo();
@@ -218,7 +250,7 @@ const Info: React.FC = () => {
 
   const handleCityChange = async (selectedCity: string) => {
     const selectedProvince = provinces.find((province) => province.provinceName === selectedCity);
-    
+
     setEditedData({ ...editedData, city: selectedCity }); // Lưu tên thành phố/tỉnh
 
     if (selectedProvince) {
@@ -256,7 +288,7 @@ const Info: React.FC = () => {
 
   const handleSubmitImg = async () => {
     const token = await AsyncStorage.getItem('access_token');
-    const userId = await AsyncStorage.getItem('userId');
+    4
     if (!token || !userId) {
       setError('Bạn cần đăng nhập để thực hiện thao tác này.');
       return;
@@ -348,7 +380,7 @@ const Info: React.FC = () => {
 
   const handleUpdate = async () => {
     const token = await AsyncStorage.getItem('access_token');
-    const userId = await AsyncStorage.getItem('userId');
+    4
 
     if (!token || !userId) {
       setError("Bạn cần đăng nhập.");
@@ -416,7 +448,7 @@ const Info: React.FC = () => {
     setLoading(true);
     try {
       const token = await AsyncStorage.getItem('access_token');
-      const userId = await AsyncStorage.getItem('userId');
+      4
 
       if (!token || !userId) {
         console.error("Bạn cần đăng nhập để thực hiện thao tác này.");
@@ -471,18 +503,32 @@ const Info: React.FC = () => {
   }, [isModalVisibleV]);
 
 
-  if (loading) return <Text style={styles.loading}>Đang tải...</Text>;
+  if (loading) return <Text style={styles.loading}>{t('loading')}</Text>;
   if (error) return <Text style={styles.error}>{error}</Text>;
   if (success) return <Text style={styles.success}>{success}</Text>;
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
+      <Header
+                style={{
+                    paddingHorizontal: 14,
+                    paddingTop: 10,
+                    paddingBottom: 10,
+                    marginBottom: 10,
+                    backgroundColor: 'white',
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: 2 },
+                    shadowOpacity: 0.2,
+                    shadowRadius: 4,
+                    elevation: 5,
+                }}
+            />
       <View style={styles.card}>
         <TouchableOpacity style={styles.editIcon} onPress={() => setModalVisibleV(true)}>
           <Icon name="confirmation-num" size={24} color="#FF9800" />
         </TouchableOpacity>
         <TouchableOpacity style={styles.backIcon} onPress={() => navigation.navigate('Main')}>
-          <Icon name="arrow-back-ios-new" size={22} color="#FF9800" />
+        <Icon name="arrow-back" size={20} color="#FF9800" />
         </TouchableOpacity>
         {/* Modal Voucher */}
         <Modal visible={isModalVisibleV} animationType="slide" transparent={true}>
@@ -504,7 +550,7 @@ const Info: React.FC = () => {
                           { color: item.status === "USED" ? "red" : "green" },
                         ]}
                       >
-                        {item.status === "USED" ? "Đã sử dụng" : "Chưa sử dụng"}
+                        {item.status === "USED" ? t('information.used') : t('information.inactive')}
                       </Text>
                     </View>
                   )}
@@ -513,7 +559,7 @@ const Info: React.FC = () => {
               )}
 
               <TouchableOpacity style={styles.closeButton} onPress={() => setModalVisibleV(false)}>
-                <Text style={styles.closeButtonText}>Đóng</Text>
+                <Text style={styles.closeButtonText}>{t('close')}</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -534,7 +580,7 @@ const Info: React.FC = () => {
             </View>
           )}
           <TouchableOpacity style={styles.updateButton}>
-            <Text style={styles.buttonText} onPress={pickImage} disabled={isUploading} >Tải ảnh lên
+            <Text style={styles.buttonText} onPress={pickImage} disabled={isUploading} >{t('postContent.uploadImg')}
             </Text>
           </TouchableOpacity>
         </View>
@@ -543,33 +589,33 @@ const Info: React.FC = () => {
         {/* Thông tin người dùng */}
         <View style={styles.infoContainer}>
           <View style={styles.infoRow}>
-            <Text style={styles.label}>Họ và Tên:</Text>
+            <Text style={styles.label}>{t('fullName')}:</Text>
             <Text style={styles.value}>{formData.fullName}</Text>
           </View>
           <View style={styles.infoRow}>
-            <Text style={styles.label}>Email:</Text>
+            <Text style={styles.label}>{t('email')}:</Text>
             <Text style={styles.value}>{formData.email}</Text>
           </View>
           <View style={styles.infoRow}>
-            <Text style={styles.label}>Số Điện Thoại:</Text>
+            <Text style={styles.label}>{t('phone')}:</Text>
             <Text style={styles.value}>{formData.phoneNumber}</Text>
           </View>
           <View style={styles.infoRow}>
-            <Text style={styles.label}>Giới Tính:</Text>
+            <Text style={styles.label}>{t('information.gender')}:</Text>
             <Text style={styles.value}>{convertSexToFrontend(formData.sex)}</Text>
           </View>
           <View style={styles.infoRow}>
-            <Text style={styles.label}>Ngày Sinh:</Text>
+            <Text style={styles.label}>{t('information.birthday')}:</Text>
             <Text style={styles.value}>{formData.birthDay}</Text>
           </View>
           <View style={styles.infoRow}>
-            <Text style={styles.label}>Địa Chỉ:</Text>
+            <Text style={styles.label}>{t('address')}:</Text>
             <Text style={styles.value}>
               {formData.street}, {formData.ward}, {formData.district}, {formData.city}
             </Text>
           </View>
           <TouchableOpacity style={styles.updateButton} onPress={toggleModal}>
-            <Text style={styles.buttonText}>Cập nhật thông tin</Text>
+            <Text style={styles.buttonText}>{t('updateBtn')}</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -577,12 +623,12 @@ const Info: React.FC = () => {
       <Modal visible={isModalVisible} animationType="slide" transparent={true}>
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Chỉnh sửa thông tin</Text>
+            <Text style={styles.modalTitle}>{t('userContent.update')}</Text>
 
             {/* Họ và tên */}
             <TextInput
               style={styles.input}
-              placeholder="Họ và tên"
+              placeholder={t('fullName')}
               placeholderTextColor="gray"
               value={editedData.fullName}
               onChangeText={(text) => setEditedData({ ...editedData, fullName: text })}
@@ -591,7 +637,7 @@ const Info: React.FC = () => {
             {/* Email */}
             <TextInput
               style={styles.input}
-              placeholder="Email"
+              placeholder={t('email')}
               placeholderTextColor="gray"
               value={editedData.email}
               textAlign="left" // Giữ nội dung căn trá
@@ -601,7 +647,7 @@ const Info: React.FC = () => {
             {/* Số điện thoại */}
             <TextInput
               style={styles.input}
-              placeholder="Số điện thoại"
+              placeholder={t('phone')}
               placeholderTextColor="gray"
               keyboardType="phone-pad"
               value={editedData.phoneNumber}
@@ -611,7 +657,7 @@ const Info: React.FC = () => {
             <View style={styles.rowContainer}>
               {/* Giới tính */}
               <View style={styles.pickerContainer}>
-                <Text style={styles.label}>Giới tính:</Text>
+                <Text style={styles.label}>{t('information.gender')}:</Text>
                 <Picker
                   selectedValue={formData.sex}
                   style={styles.picker}
@@ -623,15 +669,15 @@ const Info: React.FC = () => {
                   }
                   }
                 >
-                  <Picker.Item label="Nam" value="MALE" />
-                  <Picker.Item label="Nữ" value="FEMALE" />
-                  <Picker.Item label="Khác" value="OTHER" />
+                  <Picker.Item label={t('information.male')} value="MALE" />
+                  <Picker.Item label={t('information.female')} value="FEMALE" />
+                  <Picker.Item label={t('information.other')} value="OTHER" />
                 </Picker>
               </View>
 
               {/* Ngày sinh */}
               <View style={styles.dateContainer}>
-                <Text style={styles.label}>Ngày Sinh:</Text>
+                <Text style={styles.label}>{t('information.birthday')}:</Text>
                 <TouchableOpacity onPress={() => setShowDatePicker(true)} style={styles.datePickerButton}>
                   <Text style={styles.dateText}>{editedData.birthDay || "Chọn ngày sinh"}</Text>
                 </TouchableOpacity>
@@ -654,7 +700,7 @@ const Info: React.FC = () => {
             {/* Địa chỉ */}
             <TextInput
               style={styles.input}
-              placeholder="Số nhà, đường"
+              placeholder={t('information.detailAddress')}
               placeholderTextColor="gray"
               value={editedData.street}
               onChangeText={(text) => setEditedData({ ...editedData, street: text })}
@@ -664,7 +710,7 @@ const Info: React.FC = () => {
               onValueChange={(itemValue) => handleCityChange(itemValue)}
               style={styles.pickerAd}
             >
-              <Picker.Item label="Chọn Thành phố/Tỉnh" value="" />
+              <Picker.Item label={t('information.selectCity')} value="" />
               {provinces.map((province) => (
                 <Picker.Item key={province.provinceId} label={province.provinceName} value={province.provinceName} />
               ))}
@@ -672,11 +718,11 @@ const Info: React.FC = () => {
 
             <Picker
               selectedValue={editedData.district}
-              onValueChange={(itemValue) => {handleDistrictChange(itemValue)}}
+              onValueChange={(itemValue) => { handleDistrictChange(itemValue) }}
               style={styles.pickerAd}
               enabled={districts.length > 0}
             >
-              <Picker.Item label="Chọn Quận/Huyện" value="" />
+              <Picker.Item label={t('information.selectDistrict')} value="" />
               {districts.map((district) => (
                 <Picker.Item key={district.districtId} label={district.districtName} value={district.districtName} />
               ))}
@@ -688,7 +734,7 @@ const Info: React.FC = () => {
               style={styles.pickerAd}
               enabled={wards.length > 0}
             >
-              <Picker.Item label="Chọn Phường/Xã" value="" />
+              <Picker.Item label={t('information.selectWard')} value="" />
               {wards.map((ward) => (
                 <Picker.Item key={ward.wardId} label={ward.wardName} value={ward.wardName} />
               ))}
@@ -697,10 +743,10 @@ const Info: React.FC = () => {
 
             <View style={styles.buttonRow}>
               <TouchableOpacity style={styles.modalButton} onPress={handleUpdate}>
-                <Text style={styles.buttonText}>Lưu</Text>
+                <Text style={styles.buttonText}>{t('updateBtn')}</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.modalButton} onPress={toggleModal}>
-                <Text style={styles.buttonText}>Hủy</Text>
+                <Text style={styles.buttonText}>{t('order.orderDetail.cancel')}</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -714,7 +760,6 @@ const Info: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
-    padding: 15,
     backgroundColor: "#FFF5E1",
   },
   editIcon: {
@@ -869,6 +914,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 55,
+    marginHorizontal:8
   },
   avatarContainer: { alignItems: "center", marginBottom: 20, position: "relative" },
   avatarWrapper: {

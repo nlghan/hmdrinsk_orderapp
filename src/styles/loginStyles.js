@@ -127,6 +127,7 @@ const styles = StyleSheet.create({
         bottom: -180,
         right: -80,
     },
+    
 
 });
 

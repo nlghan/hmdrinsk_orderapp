@@ -3,7 +3,8 @@ import { StyleSheet } from 'react-native';
 const reviewStyles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#fff',
+        backgroundColor: "#FFF",
+
     },
     header: {
         flexDirection: 'row',
@@ -11,7 +12,7 @@ const reviewStyles = StyleSheet.create({
         padding: 16,
         borderBottomWidth: 1,
         borderBottomColor: '#ddd',
-        gap:60
+        gap: 60
     },
     backButton: {
         padding: 8,
@@ -19,13 +20,20 @@ const reviewStyles = StyleSheet.create({
     headerTitle: {
         fontSize: 18,
         fontWeight: 'bold',
-        marginLeft: 10,
+        
     },
     reviewItem: {
-        padding: 16,
-        borderBottomWidth: 1,
-        borderBottomColor: '#eee',
+        backgroundColor: '#fff',
+        padding: 10,
+        borderRadius: 8,
+        marginBottom: 10, // 👈 Đảm bảo có khoảng cách với phần dưới
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 3,
     },
+    
     userName: {
         fontWeight: 'bold',
         fontSize: 16,
@@ -61,7 +69,7 @@ const reviewStyles = StyleSheet.create({
         borderWidth: 1, // 👈 Thêm viền
         borderColor: '#ccc', // 👈 Màu viền (có thể chỉnh sửa theo ý muốn)
     },
-    
+
     addReviewText: {
         color: '#FFF',
         fontSize: 16,
@@ -97,10 +105,22 @@ const reviewStyles = StyleSheet.create({
         color: '#FFF',
         fontSize: 16,
         fontWeight: 'bold',
-        
+
+    },
+    nestedContainer: {
+        backgroundColor: "#FFFFFF",
+        padding: 20,
+        borderRadius: 12,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 5,
+        marginHorizontal: 8,
+       height:'90%'
     },
     
-    
+
 });
 
 export default reviewStyles;

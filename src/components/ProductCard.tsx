@@ -8,12 +8,20 @@ interface ProductCardProps {
     price: number;
     size: string;
     onLongPress: () => void;
-    onPress: () => void;  
+    onPress: () => void;
     isSelected: boolean;
-}
+    isFavourited: boolean;
+    insertFavoriteItem: (favId: number, proId: number, size: string) => Promise<void>; // ✅ Thêm dòng này
+  }
+  
 
-const ProductCard: React.FC<ProductCardProps> = ({ image, name, price, size, onLongPress, onPress, isSelected }) => {
-    const [isFavorite, setIsFavorite] = useState(false); // ✅ State lưu trạng thái yêu thích
+const ProductCard: React.FC<ProductCardProps> = ({ image, name, price, size, onLongPress, onPress, isSelected, isFavourited, insertFavoriteItem }) => {
+    const [isFavorite, setIsFavorite] = useState(isFavourited); 
+
+    // ✅ Cập nhật `isFavorite` mỗi khi `isFavourited` thay đổi từ props
+    useEffect(() => {
+        setIsFavorite(isFavourited);
+    }, [isFavourited]);
 
     const formatPrice = (price: number) => {
         return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
@@ -52,9 +60,28 @@ const ProductCard: React.FC<ProductCardProps> = ({ image, name, price, size, onL
         }
     }, [isSelected]);
 
+    useEffect(() => {
+        setIsFavorite(isFavourited);
+    }, [isFavourited]);
+
+    const handleFavoritePress = async () => {
+        try {
+            const favId = 1; // 🔹 Giả sử có `favId` (cần lấy giá trị thực tế)
+            const proId = 123; // 🔹 Lấy từ dữ liệu thực tế của sản phẩm
+
+            setIsFavorite((prev) => !prev); // Lật trạng thái UI trước để có phản hồi nhanh
+
+            await insertFavoriteItem(favId, proId, size);
+
+            console.log("✅ Cập nhật yêu thích thành công!");
+        } catch (error) {
+            console.error("❌ Lỗi khi cập nhật yêu thích:", error);
+            setIsFavorite((prev) => !prev); // Hoàn tác nếu có lỗi
+        }
+    };
+
     return (
-        <TouchableOpacity style={styles.card} onLongPress={onLongPress} delayLongPress={100} activeOpacity={0.8} onPress={onPress}>
-            
+        <TouchableOpacity style={styles.card} onLongPress={onLongPress} delayLongPress={150} activeOpacity={0.8} onPress={onPress}>
             <Image source={{ uri: image }} style={styles.image} />
             <Text style={styles.name}>{name}</Text>
             <View style={styles.priceContainer}>
@@ -73,12 +100,12 @@ const ProductCard: React.FC<ProductCardProps> = ({ image, name, price, size, onL
                 {/* ❤️ Nút yêu thích */}
                 <TouchableOpacity 
                     style={styles.heartButton}
-                    onPress={() => setIsFavorite(!isFavorite)} // ✅ Toggle trạng thái
+                   
                 >
                     <Icon 
                         name="favorite" 
                         size={24} 
-                        color={isFavorite ? "red" : "gray"} // ✅ Đổi màu theo trạng thái
+                        color={isFavorite ? "red" : "gray"} 
                     />
                 </TouchableOpacity>
 
@@ -138,7 +165,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         position: 'absolute',
         alignSelf: 'center',
-        top: '50%',
+        top: '45%',
         zIndex: 1,
     },
     heartButton: {

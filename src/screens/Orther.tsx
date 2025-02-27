@@ -2,12 +2,14 @@ import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from "react-native";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 import { useNavigation } from '@react-navigation/native';
+import { useTranslation } from 'react-i18next';
 
 type NavigationProps = {
   navigate: (screen: string) => void;
 };
 const Other = () => {
   const navigation = useNavigation<NavigationProps>();
+  const { t } = useTranslation();
   return (
     <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
       <View style={styles.container}>
@@ -17,64 +19,64 @@ const Other = () => {
           <View style={styles.grid}>
             <TouchableOpacity style={styles.box}>
               <MaterialIcons name="history" style={styles.iconOrange} size={24} />
-              <Text>Lịch sử đơn hàng</Text>
+              <Text>{t('order.title6')}</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.box}>
               <MaterialIcons name="description" style={styles.iconPurple} size={24} />
-              <Text>Điều khoản</Text>
+              <Text>{t('term')}</Text>
             </TouchableOpacity>
             <TouchableOpacity style={[styles.box, styles.fullWidth]}>
               <MaterialIcons name="description" style={styles.iconPurple} size={24} />
-              <Text>Điều khoản VNPAY</Text>
+              <Text>{t('security')}</Text>
             </TouchableOpacity>
           </View>
         </View>
 
         {/* Hỗ trợ */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Hỗ trợ</Text>
+          <Text style={styles.sectionTitle}>{t('features.support')}</Text>
           <View style={styles.list}>
             <TouchableOpacity style={styles.listItem}>
               <MaterialIcons name="star" style={styles.icon} size={24} />
-              <Text>Đánh giá đơn hàng</Text>
+              <Text>{t('about.stat4')}</Text>
               <MaterialIcons name="arrow-forward-ios" style={styles.iconrow} size={18} />
             </TouchableOpacity>
             <TouchableOpacity style={styles.listItem}>
               <MaterialIcons name="comment" style={styles.icon} size={24} />
-              <Text>Liên hệ và góp ý</Text>
+              <Text>{t('contact1')}</Text>
               <MaterialIcons name="arrow-forward-ios" style={styles.iconrow} size={18} />
             </TouchableOpacity>
-            <TouchableOpacity style={styles.listItem}>
+            {/* <TouchableOpacity style={styles.listItem}>
               <MaterialIcons name="receipt" style={styles.icon} size={24} />
               <Text>Hướng dẫn xuất hóa đơn GTGT</Text>
               <MaterialIcons name="arrow-forward-ios" style={styles.iconrow} size={18} />
-            </TouchableOpacity>
+            </TouchableOpacity> */}
           </View>
         </View>
 
         {/* Tài khoản */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Tài khoản</Text>
+          <Text style={styles.sectionTitle}>{t('user')}</Text>
           <View style={styles.list}>
             <TouchableOpacity style={styles.listItem} onPress={() => navigation.navigate('Info')}>
               <MaterialIcons name="person" style={styles.icon} size={24} />
-              <Text>Thông tin cá nhân</Text>
+              <Text>{t('personalInfo')}</Text>
               <MaterialIcons name="arrow-forward-ios" style={styles.iconrow} size={18} />
             </TouchableOpacity>
-            <TouchableOpacity style={styles.listItem}>
+            {/* <TouchableOpacity style={styles.listItem}>
               <MaterialIcons name="bookmark" style={styles.icon} size={24} />
               <Text>Địa chỉ đã lưu</Text>
               <MaterialIcons name="arrow-forward-ios" style={styles.iconrow} size={18} />
-            </TouchableOpacity>
+            </TouchableOpacity> */}
             <TouchableOpacity style={styles.listItem} onPress={() => navigation.navigate('LanguageChange')}>
               <MaterialIcons name="settings" style={styles.icon} size={24} />
-              <Text>Ngôn ngữ</Text>
+              <Text>{t('language')}</Text>
               <MaterialIcons name="arrow-forward-ios" style={styles.iconrow} size={18} />
             </TouchableOpacity>
 
             <TouchableOpacity style={[styles.listItem, styles.logout]}>
               <MaterialIcons name="logout" style={styles.icon} size={24} />
-              <Text style={{ color: "red" }}>Đăng xuất</Text>
+              <Text style={{ color: "red" }}>{t('logout')}</Text>
             </TouchableOpacity>
           </View>
         </View>

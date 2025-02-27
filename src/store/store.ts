@@ -69,8 +69,10 @@ interface Product {
   deleted: boolean;
   reviews?: ProductReview[];
   avgRating?: number;
-  totalReviews?: number; // 👈 Thêm trường này
+  totalReviews?: number;
+  isFavourited?: boolean; // ✅ Thêm trường này
 }
+
 
 interface DataStore {
   categories?: Category[];
@@ -103,8 +105,9 @@ interface CategoryStore {
   fetchProductReviews: (proId: number, page?: number, limit?: number) => Promise<void>;
   addReviewToProduct: (proId: number, review: Omit<ProductReview, 'reviewId' | 'isDelete' | 'dateDeleted' | 'dateUpdated' | 'dateCreated'>) => Promise<void>; 
   insertFavoriteItem: (favId: number, proId: number, size: string) => Promise<void>; // ✅ Thêm hàm insertFavoriteItem
+  deleteAllFavItem: (favId: number) => Promise<void>; // ✅ Thêm hàm insertFavoriteItem
+  fetchProducts: (page?: number, limit?: number) => Promise<void>;
 }
-
 
 export const useCategoryStore = create<CategoryStore>()(
   persist(
@@ -181,33 +184,95 @@ export const useCategoryStore = create<CategoryStore>()(
         }
       };
 
-
-
-      const fetchProducts = async () => {
+      // const fetchProducts = async (page: number = 1, limit: number = 6) => {
+      //   try {
+      //     const lang = get().language;
+      //     console.log(`🌍 [fetchProducts] Fetching page ${page} with language: ${lang}`);
+      
+      //     const response = await axiosInstance.get(`/product/list-product?page=${page}&limit=${limit}&language=${lang}`);
+          
+      //     const { productResponses = [], totalPage } = response.data; // ✅ Lấy totalPage từ response
+      
+      //     if (!totalPage) {
+      //       console.warn("⚠️ [fetchProducts] totalPage is missing from response");
+      //       return;
+      //     }
+      
+      //     // Lưu totalPage vào state
+      //     set((state) => ({
+      //       data: { ...state.data, totalPage } // ✅ Cập nhật totalPage
+      //     }));
+      
+      //     console.log(`✅ [fetchProducts] Total pages: ${totalPage}`);
+      
+      //     const existingProducts = get().data.products || [];
+      //     const favoriteItems = get().data.favoriteItems || [];
+      
+      //     let newProducts = productResponses.map((product: { proId: number }) => ({
+      //       ...product,
+      //       isFavourited: favoriteItems.some((fav) => fav.proId === product.proId),
+      //     }));
+      
+      //     const mergedProducts = Array.from(
+      //       new Map([...existingProducts, ...newProducts].map((p) => [p.proId, p])).values()
+      //     );
+      
+      //     set((state) => ({
+      //       data: { ...state.data, products: mergedProducts },
+      //     }));
+      
+      //     console.log(`✅ [fetchProducts] Page ${page} loaded. Total products: ${mergedProducts.length}`);
+      
+      //     for (const product of newProducts) {
+      //       await fetchProductRating(product.proId);
+      //     }
+      
+      //   } catch (error) {
+      //     console.error("❌ [fetchProducts] Error fetching products:", error);
+      //   }
+      // };
+      
+      const fetchProducts = async (page: number = 1, limit: number = 6) => {
         try {
           const lang = get().language;
-          console.log(`🌍 [fetchProducts] Fetching with language: ${lang}`);
-
-          const response = await axiosInstance.get(`/product/list-product?page=1&limit=6&language=${lang}`);
-          const products = response.data.productResponses || [];
-
-          set((state) => ({
-            data: { ...state.data, products },
+          console.log(`🌍 [fetchProducts] Fetching page ${page} with language: ${lang}`);
+      
+          const response = await axiosInstance.get(`/product/list-product?page=${page}&limit=${limit}&language=${lang}`);
+          let newProducts = response.data.productResponses || [];
+      
+          // Lấy danh sách sản phẩm hiện tại trong store
+          const existingProducts = get().data.products || [];
+      
+          // Lấy danh sách sản phẩm yêu thích hiện tại
+          const favoriteItems = get().data.favoriteItems || [];
+      
+          // Gán thêm thuộc tính `isFavourited` cho sản phẩm mới
+          newProducts = newProducts.map((product: { proId: number }) => ({
+            ...product,
+            isFavourited: favoriteItems.some((fav) => fav.proId === product.proId),
           }));
-
-          console.log("✅ [After Fetch] Products:", products);
-
-          // Fetch rating cho từng sản phẩm sau khi lấy danh sách sản phẩm
-          for (const product of products) {
+      
+          // Gộp danh sách sản phẩm cũ và mới rồi loại bỏ sản phẩm trùng proId
+          const mergedProducts = Array.from(
+            new Map([...existingProducts, ...newProducts].map((p) => [p.proId, p])).values()
+          );
+      
+          // Cập nhật store
+          set((state) => ({
+            data: { ...state.data, products: mergedProducts },
+          }));
+      
+          console.log(`✅ [fetchProducts] Page ${page} loaded. Total products: ${mergedProducts.length}`);
+      
+          // Fetch rating cho từng sản phẩm mới lấy về
+          for (const product of newProducts) {
             await fetchProductRating(product.proId);
           }
         } catch (error) {
           console.error("❌ [fetchProducts] Error fetching products:", error);
         }
       };
-
-
-
+      
       const fetchUserCoin = async () => {
         const userId = get().userId;
         if (!userId) return;
@@ -254,33 +319,72 @@ export const useCategoryStore = create<CategoryStore>()(
 
       const fetchFavoriteItems = async () => {
         const userId = get().userId;
-        console.log(`🔍 [fetchFavoriteItems] userId:`, userId); // Log userId
-
         if (!userId) return;
-
+      
         try {
           const language = get().language;
           const accessToken = await AsyncStorage.getItem("access_token");
           if (!accessToken) return;
-
-          console.log(`🌍 [fetchFavoriteItems] Fetching favorites with language: ${language}`);
-
-          const response = await axiosInstance.get<FavoriteResponse>(
-            `/fav/list-favItem/${userId}?language=${language}`,
-            {
-              headers: { Authorization: `Bearer ${accessToken}` },
-            }
+      
+          console.log(`🌍 [fetchFavoriteItems] Checking favorite list for user: ${userId}`);
+      
+          // Kiểm tra xem user đã có danh sách yêu thích chưa
+          const checkFavResponse = await axiosInstance.get(`/fav/list-fav/${userId}`, {
+            headers: { Authorization: `Bearer ${accessToken}` },
+          });
+      
+          let favId = checkFavResponse.data?.favId || null;
+      
+          if (!favId) {
+            console.log(`🆕 [fetchFavoriteItems] Favorite list not found. Creating new favorite for user: ${userId}`);
+      
+            // Nếu chưa có, tạo mới
+            const createFavResponse = await axiosInstance.post(
+              `/fav/create`,
+              { userId },
+              { headers: { Authorization: `Bearer ${accessToken}` } }
+            );
+      
+            favId = createFavResponse.data.body.favId;
+            console.log(`✅ [fetchFavoriteItems] Created new favorite list with ID: ${favId}`);
+          }
+      
+          // Lấy danh sách mục yêu thích
+          console.log(`📥 [fetchFavoriteItems] Fetching favorite items for favId: ${favId}`);
+      
+          const favItemsResponse = await axiosInstance.get<FavoriteResponse>(
+            `/fav/list-favItem/${favId}?language=${language}`,
+            { headers: { Authorization: `Bearer ${accessToken}` } }
           );
-
-          set((state) => ({
-            data: { ...state.data, favoriteItems: response.data.favouriteItemResponseList || [] },
+      
+          const favoriteItems = favItemsResponse.data.favouriteItemResponseList || [];
+      
+          // Lấy danh sách sản phẩm hiện có trong store
+          const products = get().data.products || [];
+      
+          // Cập nhật isFavourited cho từng sản phẩm
+          const updatedProducts = products.map((product) => ({
+            ...product,
+            isFavourited: favoriteItems.some((favItem) => favItem.proId === product.proId),
           }));
-
-          console.log("✅ [After Fetch] Favorite Items:", response.data.favouriteItemResponseList);
+      
+          // Cập nhật lại state
+          set((state) => ({
+            data: {
+              ...state.data,
+              favoriteItems,
+              products: updatedProducts, // ✅ Cập nhật trạng thái sản phẩm
+            },
+          }));
+      
+          console.log("✅ [After Fetch] Favorite Items:", favoriteItems);
+          console.log("✅ [Updated Products] Products with isFavourited:", updatedProducts);
         } catch (error) {
           console.error("❌ [fetchFavoriteItems] Error fetching favorite items:", error);
         }
       };
+      
+           
 
       const fetchProductRating = async (proId: number) => {
         try {
@@ -377,30 +481,63 @@ export const useCategoryStore = create<CategoryStore>()(
             return;
           }
       
+          console.log("📤 Sending request with:", { userId, favId, proId, size });
+      
           const response = await axiosInstance.post(
             "/fav-item/insert",
             { userId, favId, proId, size },
             { headers: { Authorization: `Bearer ${accessToken}` } }
           );
       
-          const newFavoriteItem: FavoriteItem = response.data;
+          console.log("✅ [insertFavoriteItem] Success:", response.data);
       
-          // Cập nhật store với mục yêu thích mới
+          // 🆕 Fetch lại danh sách yêu thích ngay sau khi thêm
+          await fetchFavoriteItems();
+      
+        } catch (error: any) {
+          console.error("❌ [insertFavoriteItem] Error:", error.response?.status, error.response?.data || error.message);
+        }
+      };         
+
+      const deleteAllFavItem = async (favId: number) => {
+        try {
+          const userId = get().userId;
+          if (!userId) {
+            console.error("❌ [deleteAllFavItem] User not logged in");
+            return;
+          }
+      
+          const accessToken = await AsyncStorage.getItem("access_token");
+          if (!accessToken) {
+            console.error("❌ [deleteAllFavItem] Missing access token");
+            return;
+          }
+      
+          await axiosInstance.delete(`/fav/delete-allItem/${favId}`, {
+            headers: { Authorization: `Bearer ${accessToken}` },
+            data: { userId, favId }, // Gửi dữ liệu trong body
+          });
+      
+          // Cập nhật store: Xóa danh sách yêu thích và cập nhật trạng thái sản phẩm
           set((state) => ({
             data: {
               ...state.data,
-              favoriteItems: [...(state.data.favoriteItems || []), newFavoriteItem],
+              favoriteItems: [],
+              products: state.data.products?.map((product) => ({
+                ...product,
+                isFavourited: false,
+              })),
             },
           }));
       
-          console.log("✅ [insertFavoriteItem] Added favorite item:", newFavoriteItem);
+          console.log("✅ [deleteAllFavItem] Deleted all favorite items successfully");
         } catch (error) {
-          console.error("❌ [insertFavoriteItem] Error adding favorite item:", error);
+          console.error("❌ [deleteAllFavItem] Error deleting all favorite items:", error);
         }
       };
       
-
-
+      
+      
       return {
         data: {},
         userId: null,
@@ -408,6 +545,8 @@ export const useCategoryStore = create<CategoryStore>()(
         fetchProductReviews,
         addReviewToProduct,
         insertFavoriteItem,
+        deleteAllFavItem,
+        fetchProducts,
 
 
         setUserId: async (id) => {
@@ -417,8 +556,9 @@ export const useCategoryStore = create<CategoryStore>()(
               fetchUserInfo(),
               fetchUserCoin(),
               fetchFavoriteItems(), // Gọi thêm hàm này khi user đăng nhập
+              fetchProducts(),
             ]);
-          }
+          }0
         },
 
         setLanguage: async (lang) => {
@@ -449,5 +589,3 @@ export const useCategoryStore = create<CategoryStore>()(
     }
   )
 );
-
-

@@ -81,37 +81,44 @@ const AllReviews = () => {
                     elevation: 5, // Dành cho Android
                 }}
             />
-            <View style={reviewStyles.header}>
-                <TouchableOpacity onPress={() => navigation.goBack()} style={reviewStyles.backButton}>
-                    <Icon name="arrow-back" size={20} color="#000" />
-                </TouchableOpacity>
-                <Text style={reviewStyles.headerTitle}>{t('common.listComment')}</Text>
+            <View style={reviewStyles.nestedContainer}>
+                <View style={reviewStyles.header}>
+                    <TouchableOpacity onPress={() => navigation.goBack()} style={reviewStyles.backButton}>
+                        <Icon name="arrow-back" size={20} color="#000" />
+                    </TouchableOpacity>
+                    <Text style={reviewStyles.headerTitle}>{t('common.listComment')}</Text>
 
-                {/* 🔥 Nút Thêm Đánh Giá */}
-                <TouchableOpacity onPress={navigateToAddReview} style={reviewStyles.addReviewButton}>
-                    <Icon name="add" size={16} color="#FF8247" />
+                    {/* 🔥 Nút Thêm Đánh Giá */}
+                    <TouchableOpacity onPress={navigateToAddReview} style={reviewStyles.addReviewButton}>
+                        <Icon name="add" size={16} color="#FF8247" />
 
-                </TouchableOpacity>
+                    </TouchableOpacity>
+                </View>
+
+                <FlatList
+                    data={reviews}
+                    keyExtractor={(item) => item.reviewId.toString()}
+                    renderItem={({ item }) => (
+                        <View style={reviewStyles.reviewItem}>
+                            <Text style={reviewStyles.userName}>{item.fullName}</Text>
+                            {renderStars(item.ratingStart)}
+                            <Text style={reviewStyles.reviewText}>{item.content}</Text>
+                            <Text style={reviewStyles.reviewDate}>{item.dateCreated}</Text>
+                        </View>
+                    )}
+                    ListFooterComponent={() => (
+                        <View style={{ height: 5 }} /> // 👈 Tạo khoảng trống để tránh bị khuất
+                    )}
+                    onEndReached={loadMoreReviews}
+                    onEndReachedThreshold={0.2}
+                    showsVerticalScrollIndicator
+                    keyboardShouldPersistTaps="handled" // 👈 Cho phép cuộn khi bàn phím hiển thị 
+                />
+
+
+
             </View>
 
-            <FlatList
-                data={reviews}
-                keyExtractor={(item) => item.reviewId.toString()}
-                renderItem={({ item }) => (
-                    <View style={reviewStyles.reviewItem}>
-                        <Text style={reviewStyles.userName}>{item.fullName}</Text>
-                        {renderStars(item.ratingStart)}
-                        <Text style={reviewStyles.reviewText}>{item.content}</Text>
-                        <Text style={reviewStyles.reviewDate}>{item.dateCreated}</Text>
-                    </View>
-                )}
-                ListFooterComponent={() =>
-                    loading ? <ActivityIndicator size="small" color="#000" style={{ marginVertical: 10 }} /> : null
-                }
-                onEndReached={loadMoreReviews}
-                onEndReachedThreshold={0.2}
-                showsVerticalScrollIndicator
-            />
         </View>
     );
 };
