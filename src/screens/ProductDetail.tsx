@@ -172,7 +172,7 @@ const ProductDetail = () => {
                         onPress={() => navigation.navigate('AllReviews', { productId: product.proId })}
                     >
                         <View style={productDetail.ratingContainer}>
-                            <Text style={productDetail.ratingText}>{avgRating.toFixed(2)} ★</Text>
+                            <Text style={productDetail.ratingText}>{avgRating} ★</Text>
                             <Text style={productDetail.reviewCount}>({totalReviews} {t('reviews')})</Text>
                         </View>
                         <Icon name="chevron-right" size={22} color="#000" />

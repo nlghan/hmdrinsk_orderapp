@@ -16,6 +16,10 @@ const Header = ({ style }: { style?: object }) => {
 
             <View style={homeStyles.headerIcons}>
                 <TouchableOpacity style={homeStyles.iconButton}>
+                    <Icon name="shopping-cart" size={20} color={COLORS.primaryGreenHex} />
+                    <Text style={homeStyles.iconText}>12</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={homeStyles.iconButton}>
                     <Text>
                         <Icon name="notifications" size={20} color={COLORS.blackAlpha} />
                     </Text>

@@ -142,126 +142,110 @@ export const useCategoryStore = create<CategoryStore>()(
         }
       };
 
+      const fetchProducts = async () => {
+        try {
+          const lang = get().language;
+          const response = await axiosInstance.get(`/product/list-product-android?language=${lang}`);
+      
+          console.log("📥 [fetchProducts] Raw API response:", response.data);
+      
+          const favoriteItems = get().data.favoriteItems || [];
+          const newProducts = (response.data.productResponses || []).map((product: { 
+            proId: number;
+            avgRating: number; // ✅ Lấy trực tiếp từ API
+            cateId: number;
+            proName: string;
+            description: string;
+            deleted: boolean;
+            productImageResponseList: { id: number; linkImage: string }[];
+            listProductVariants: { varId: number; size: string; price: number; stock: number; deleted: boolean }[];
+          }) => ({
+            proId: product.proId,
+            cateId: product.cateId,
+            proName: product.proName,
+            description: product.description,
+            deleted: product.deleted,
+            avgRating: product.avgRating ?? 0, // ✅ Luôn có giá trị `number`
+            productImageResponseList: product.productImageResponseList?.map(({ id, linkImage }) => ({ id, linkImage })) || [],
+            listProductVariants: product.listProductVariants?.map(({ varId, size, price, stock, deleted }) => ({
+              varId, proId: product.proId, size, price, stock, deleted,
+            })) || [],
+            isFavourited: favoriteItems.some((fav) => fav.proId === product.proId),
+          }));
+      
+          console.log("✅ [fetchProducts] Processed products:", newProducts);
+      
+          set((state) => ({
+            data: { ...state.data, products: newProducts },
+          }));
+      
+          console.log("✅ [fetchProducts] Successfully updated store.");
+          
+          // ❌ Không cần fetchProductRating nữa
+      
+        } catch (error) {
+          console.error("❌ [fetchProducts] Error:", error);
+        }
+      };
+      
+      
+      const fetchProductRating = async (proId: number) => {
+        try {
+          console.log(`🔍 [fetchProductRating] Fetching rating for product ID: ${proId}`);
+
+          const response = await axiosInstance.get(`/product/list-rating`);
+          const ratingList = response.data.list || [];
+
+          // Lọc ra rating của sản phẩm có proId tương ứng
+          const foundRating = ratingList.find((r: { proId: number }) => r.proId === proId);
+          const avgRating = foundRating ? foundRating.avgRating : 0;
+
+          set((state) => ({
+            data: {
+              ...state.data,
+              products: state.data.products?.map((product) =>
+                product.proId === proId ? { ...product, avgRating } : product
+              ),
+            },
+          }));
+
+          console.log(`✅ [fetchProductRating] Updated avgRating for product ${proId}: ${avgRating}`);
+        } catch (error) {
+          console.error(`❌ [fetchProductRating] Error fetching rating for product ${proId}:`, error);
+        }
+      };
+      
       const fetchProductReviews = async (proId: number, page: number = 1, limit: number = 5) => {
         try {
           const response = await axiosInstance.get(`/product/list-review?proId=${proId}&page=${page}&limit=${limit}`);
           const { listReviews, total } = response.data;
-
+      
           set((state) => {
             const product = state.data.products?.find((p) => p.proId === proId);
             if (!product) return state;
-
-            // 🛑 Tránh lỗi undefined
+      
             const existingReviews = product.reviews || [];
-
-            // 🔹 Gộp danh sách và loại bỏ review trùng
-            const uniqueReviews = Array.from(
-              new Map([...existingReviews, ...listReviews].map((r) => [r.reviewId, r])).values()
-            );
-
-            // 🔍 Debug: Kiểm tra keys trước khi cập nhật
-            const reviewKeys = uniqueReviews.map((r) => r.reviewId);
-            console.log("✅ Unique Review Keys:", reviewKeys);
-
+            const reviewMap = new Map(existingReviews.map((r) => [r.reviewId, r]));
+            listReviews.forEach((review: ProductReview) => reviewMap.set(review.reviewId, review));
+      
             return {
               data: {
                 ...state.data,
                 products: state.data.products?.map((p) =>
                   p.proId === proId
-                    ? {
-                      ...p,
-                      reviews: uniqueReviews, // ✅ Không còn trùng key
-                      totalReviews: total,
-                    }
+                    ? { ...p, reviews: Array.from(reviewMap.values()), totalReviews: total }
                     : p
                 ),
               },
             };
           });
-
+      
           console.log(`✅ [fetchProductReviews] Loaded page ${page} for product ${proId}. Total reviews: ${total}`);
         } catch (error) {
-          console.error(`❌ [fetchProductReviews] Error fetching reviews for product ${proId}:`, error);
+          console.error(`❌ [fetchProductReviews] Error for product ${proId}:`, error);
         }
       };
-
-      const fetchProducts = async () => {
-        try {
-          const lang = get().language;
-
-          // Gọi API lấy danh sách sản phẩm
-          const response = await axiosInstance.get(`/product/list-product-android?language=${lang}`);
-
-          console.log("📥 Raw API response:", response.data);
-
-          let newProducts = response.data.productResponses || [];
-          const favoriteItems = get().data.favoriteItems || [];
-
-          // ✅ Chuẩn hóa dữ liệu sản phẩm từ API
-          newProducts = newProducts.map((product: {
-            proId: number;
-            cateId: number;
-            proName: string;
-            description: string;
-            productImageResponseList?: { id: number; linkImage: string }[];
-            listProductVariants?: { varId: number; size: string; price: number; stock: number; deleted: boolean }[];
-            deleted: boolean;
-          }): Product => {
-            console.log("🔄 Mapping product:", product.proId);
-
-            return {
-              proId: product.proId,
-              cateId: product.cateId,
-              proName: product.proName,
-              description: product.description,
-              deleted: product.deleted,
-
-              // ✅ Đảm bảo ánh xạ dữ liệu `productImageResponseList` theo interface `ProductImage`
-              productImageResponseList: Array.isArray(product.productImageResponseList)
-                ? product.productImageResponseList.map((img) => ({
-                  id: img.id,
-                  linkImage: img.linkImage
-                }))
-                : [],
-
-              // ✅ Đảm bảo ánh xạ dữ liệu `listProductVariants` theo interface `ProductVariant`
-              listProductVariants: Array.isArray(product.listProductVariants)
-                ? product.listProductVariants.map((variant) => ({
-                  varId: variant.varId,
-                  proId: product.proId,
-                  size: variant.size,
-                  price: variant.price,
-                  stock: variant.stock,
-                  deleted: variant.deleted
-                }))
-                : [],
-
-              isFavourited: favoriteItems.some((fav) => fav.proId === product.proId),
-            };
-          });
-
-          console.log("✅ Processed products:", newProducts);
-
-          // ✅ Cập nhật vào store Zustand với interface chuẩn
-          set((state) => {
-            console.log("✅ Updating store with products:", newProducts);
-            return {
-              data: { ...state.data, products: newProducts },
-            };
-          });
-
-          console.log("✅ [fetchProducts] Successfully fetched products:", newProducts.length);
-
-          // ✅ Fetch rating cho từng sản phẩm
-          for (const product of newProducts) {
-            await fetchProductRating(product.proId);
-          }
-        } catch (error) {
-          console.error("❌ [fetchProducts] Error fetching products:", error);
-        }
-      };
-
-
+      
 
       const fetchUserCoin = async () => {
         const userId = get().userId;
@@ -376,31 +360,7 @@ export const useCategoryStore = create<CategoryStore>()(
 
 
 
-      const fetchProductRating = async (proId: number) => {
-        try {
-          console.log(`🔍 [fetchProductRating] Fetching rating for product ID: ${proId}`);
-
-          const response = await axiosInstance.get(`/product/list-rating`);
-          const ratingList = response.data.list || [];
-
-          // Lọc ra rating của sản phẩm có proId tương ứng
-          const foundRating = ratingList.find((r: { proId: number }) => r.proId === proId);
-          const avgRating = foundRating ? foundRating.avgRating : 0;
-
-          set((state) => ({
-            data: {
-              ...state.data,
-              products: state.data.products?.map((product) =>
-                product.proId === proId ? { ...product, avgRating } : product
-              ),
-            },
-          }));
-
-          console.log(`✅ [fetchProductRating] Updated avgRating for product ${proId}: ${avgRating}`);
-        } catch (error) {
-          console.error(`❌ [fetchProductRating] Error fetching rating for product ${proId}:`, error);
-        }
-      };
+      
 
       const addReviewToProduct = async (proId: number, review: Omit<ProductReview, 'reviewId' | 'isDelete' | 'dateDeleted' | 'dateUpdated' | 'dateCreated'>) => {
         try {
