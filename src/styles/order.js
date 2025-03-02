@@ -98,7 +98,7 @@ const styles = StyleSheet.create({
     color: "#333",
   },
   productPrice: {
-    color: "#b12704",
+    color: 'green',
     fontWeight: "bold",
     marginTop: 5,
   },

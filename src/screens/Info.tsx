@@ -33,7 +33,7 @@ const Info: React.FC = () => {
     type: string;
     name: string;
   };
-   const { t } = useTranslation();
+  const { t } = useTranslation();
 
   const [selectedFile, setSelectedFile] = useState<SelectedFile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -380,7 +380,6 @@ const Info: React.FC = () => {
 
   const handleUpdate = async () => {
     const token = await AsyncStorage.getItem('access_token');
-    4
 
     if (!token || !userId) {
       setError("Bạn cần đăng nhập.");
@@ -388,7 +387,6 @@ const Info: React.FC = () => {
     }
 
     if (!validateForm()) return;
-
 
     const updatedData = {
       userId,
@@ -401,7 +399,7 @@ const Info: React.FC = () => {
       address: `${editedData.street}, ${editedData.ward}, ${editedData.district}, ${editedData.city}`,
     };
 
-    console.log("updatedData", updatedData.address);
+    console.log("Dữ liệu gửi lên API:", updatedData);
 
     try {
       await axiosInstance.put(`/user/info-update`, updatedData, {
@@ -411,14 +409,21 @@ const Info: React.FC = () => {
         }
       });
 
+      console.log("Cập nhật thành công!");
       fetchUserInfo();
       setLoading(false);
       toggleModal(); // Đóng modal sau khi cập nhật thành công
     } catch (error) {
-      console.error("Lỗi cập nhật:", error);
+      if (error instanceof Error) {
+        console.error("Lỗi cập nhật:", error.message);
+      } else {
+        console.error("Lỗi không xác định:", error);
+      }
       setError("Không thể cập nhật thông tin.");
     }
+
   };
+
 
 
   const convertSexToBackend = (sex: string): string => {
@@ -510,25 +515,25 @@ const Info: React.FC = () => {
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <Header
-                style={{
-                    paddingHorizontal: 14,
-                    paddingTop: 10,
-                    paddingBottom: 10,
-                    marginBottom: 10,
-                    backgroundColor: 'white',
-                    shadowColor: '#000',
-                    shadowOffset: { width: 0, height: 2 },
-                    shadowOpacity: 0.2,
-                    shadowRadius: 4,
-                    elevation: 5,
-                }}
-            />
+        style={{
+          paddingHorizontal: 14,
+          paddingTop: 10,
+          paddingBottom: 10,
+          marginBottom: 10,
+          backgroundColor: 'white',
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.2,
+          shadowRadius: 4,
+          elevation: 5,
+        }}
+      />
       <View style={styles.card}>
         <TouchableOpacity style={styles.editIcon} onPress={() => setModalVisibleV(true)}>
           <Icon name="confirmation-num" size={24} color="#FF9800" />
         </TouchableOpacity>
         <TouchableOpacity style={styles.backIcon} onPress={() => navigation.navigate('Main')}>
-        <Icon name="arrow-back" size={20} color="#FF9800" />
+          <Icon name="arrow-back" size={20} color="#FF9800" />
         </TouchableOpacity>
         {/* Modal Voucher */}
         <Modal visible={isModalVisibleV} animationType="slide" transparent={true}>
@@ -914,7 +919,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 55,
-    marginHorizontal:8
+    marginHorizontal: 8
   },
   avatarContainer: { alignItems: "center", marginBottom: 20, position: "relative" },
   avatarWrapper: {

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, useCallback, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useRef } from "react";
 import {
   View,
   Text,
@@ -15,15 +15,15 @@ import { useCategoryStore } from "../store/store";
 import homeStyles from "../styles/order";
 import LinearGradient from "react-native-linear-gradient";
 import Header from "../components/Header";
-import { useTranslation } from 'react-i18next';
-import { useNavigation } from "@react-navigation/native"; // Import useNavigation
+import { useTranslation } from "react-i18next";
+import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { RootStackParamList } from "../navigation/RootStackParamList";
 
 // 🔹 Component hiển thị danh mục dịch vụ
 const ServiceItem: React.FC<{ image: string; text?: string; onPress: () => void; isSelected: boolean }> = ({
   image,
-  text = "",  // Đảm bảo text luôn có giá trị
+  text = "",
   onPress,
   isSelected,
 }) => (
@@ -33,89 +33,75 @@ const ServiceItem: React.FC<{ image: string; text?: string; onPress: () => void;
       {isSelected && <View style={homeStyles.overlay} />}
     </View>
     <Text style={[homeStyles.serviceOrderText, isSelected && homeStyles.serviceOrderTextSelected]}>
-      {String(text) || "No Name"}
+      {text || "No Name"}
     </Text>
   </TouchableOpacity>
 );
 
 const OrderScreen = () => {
   const { data, fetchProducts } = useCategoryStore();
-  const { categories = [] } = data;
+  const { categories = [], products = [] } = data;
   const { t } = useTranslation();
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
 
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
-  const [page, setPage] = useState(1);
-  const [loading, setLoading] = useState(false);
+  const [visibleProducts, setVisibleProducts] = useState(6); // Hiển thị 6 sản phẩm ban đầu
   const [refreshing, setRefreshing] = useState(false);
 
   const scrollX = useRef(new Animated.Value(0)).current;
   const scrollViewRef = useRef<ScrollView>(null);
-  const isFetched = useRef(false);
 
   useEffect(() => {
-    if (!isFetched.current) {
-      fetchProducts(page);
-      isFetched.current = true;
-    }
-  }, [page]);
+    fetchProducts(); // Fetch danh sách sản phẩm một lần duy nhất
+  }, []);
 
-  const loadMoreProducts = useCallback(async () => {
-    if (loading) return;
-    setLoading(true);
-    await fetchProducts(page + 1);
-    setPage((prev) => prev + 1);
-    setLoading(false);
-  }, [loading, page]);
-
-  const onRefresh = async () => {
-    if (refreshing) return;
-    setRefreshing(true);
-    setPage(1);
-    await fetchProducts(1);
-    setRefreshing(false);
-  };
-
-  const groupedCategories = categories.reduce((acc: any[][], curr: { cateId: { toString: () => any } }, index: number) => {
-    if (index % 2 === 0) {
-      acc.push([{ ...curr, cateId: curr.cateId.toString() }]);
-    } else {
-      acc[acc.length - 1].push({ ...curr, cateId: curr.cateId.toString() });
-    }
-    return acc;
-  }, [] as Array<Array<{ cateId: string; cateImg: string; cateName: string }>>);
-
+  // ✅ Lọc sản phẩm theo danh mục
   const filteredProducts = useMemo(() => {
     return selectedCategory
-      ? data.products?.filter((product) => product.cateId === selectedCategory)
-      : data.products;
-  }, [selectedCategory, data.products]);
+      ? products.filter((product) => product.cateId === selectedCategory)
+      : products;
+  }, [selectedCategory, products]);
+
+  // ✅ Chia danh mục thành từng nhóm 2 cái
+  const groupedCategories = useMemo(() => {
+    return categories.reduce((acc: any[][], curr, index) => {
+      if (index % 2 === 0) {
+        acc.push([curr]);
+      } else {
+        acc[acc.length - 1].push(curr);
+      }
+      return acc;
+    }, []);
+  }, [categories]);
+
+  // ✅ Tải thêm sản phẩm khi cuộn xuống
+  const loadMoreProducts = () => {
+    if (visibleProducts < filteredProducts.length) {
+      setVisibleProducts((prev) => prev + 6);
+    }
+  };
+
+  // ✅ Làm mới danh sách sản phẩm
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchProducts();
+    setVisibleProducts(6); // Reset về 6 sản phẩm
+    setRefreshing(false);
+  };
 
   return (
     <SafeAreaView style={{ flex: 1 }}>
       <LinearGradient colors={["#fff", "#fff"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
-        <Header
-          style={{
-            paddingHorizontal: 14,
-            paddingTop: 10,
-            paddingBottom: 10,
-            backgroundColor: 'white',
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 2 },
-            shadowOpacity: 0.2,
-            shadowRadius: 4,
-            elevation: 5,
-          }}
-        />
+        <Header style={{ paddingHorizontal: 14, paddingTop: 10, paddingBottom: 10, backgroundColor: "white" }} />
       </LinearGradient>
 
       <FlatList
-        data={filteredProducts}
+        data={filteredProducts.slice(0, visibleProducts)} // Chỉ hiển thị sản phẩm cần thiết
         keyExtractor={(item) => item.proId.toString()}
         contentContainerStyle={{ paddingVertical: 10, paddingHorizontal: 10 }}
         ListHeaderComponent={
           <View style={homeStyles.categoryOrderContainer}>
-            <Text style={homeStyles.categoryTitle}>{t('category')}</Text>
+            <Text style={homeStyles.categoryTitle}>{t("category")}</Text>
             <ScrollView
               ref={scrollViewRef}
               horizontal
@@ -129,15 +115,15 @@ const OrderScreen = () => {
             >
               <View style={{ flexDirection: "row", flexWrap: "nowrap" }}>
                 {groupedCategories.map((group, index) => (
-                  <View key={index} style={{ flexDirection: "column", marginRight: 16 }}>
+                  <View key={index} style={homeStyles.serviceOrderItem}>
                     {group.map((item) => (
                       <ServiceItem
                         key={item.cateId}
                         image={item.cateImg}
                         text={item.cateName}
-                        isSelected={selectedCategory === parseInt(item.cateId)}
+                        isSelected={selectedCategory === item.cateId}
                         onPress={() =>
-                          setSelectedCategory(selectedCategory === parseInt(item.cateId) ? null : parseInt(item.cateId))
+                          setSelectedCategory(selectedCategory === item.cateId ? null : item.cateId)
                         }
                       />
                     ))}
@@ -146,6 +132,7 @@ const OrderScreen = () => {
               </View>
             </ScrollView>
 
+            {/* 🔹 Thanh cuộn (Scroll Bar) */}
             <View style={homeStyles.scrollBarContainer}>
               <Animated.View
                 style={[
@@ -169,7 +156,11 @@ const OrderScreen = () => {
         renderItem={({ item }) => (
           <TouchableOpacity
             style={homeStyles.productItem}
-            onPress={() => navigation.navigate("ProductDetail", { product: { ...item, isFavourited: item.isFavourited ?? false } })}
+            onPress={() =>
+              navigation.navigate("ProductDetail", {
+                product: { ...item, isFavourited: item.isFavourited ?? false },
+              })
+            }
           >
             <Image source={{ uri: item.productImageResponseList[0]?.linkImage }} style={homeStyles.productImage} />
             <View style={homeStyles.productInfo}>
@@ -177,16 +168,22 @@ const OrderScreen = () => {
               <Text style={homeStyles.productPrice}>{item.listProductVariants[0]?.price} đ</Text>
               <TouchableOpacity
                 style={homeStyles.addToCartButton}
-                onPress={() => navigation.navigate("ProductDetail", { product: { ...item, isFavourited: item.isFavourited ?? false } })}
+                onPress={() =>
+                  navigation.navigate("ProductDetail", {
+                    product: { ...item, isFavourited: item.isFavourited ?? false },
+                  })
+                }
               >
-                <Text style={homeStyles.addToCartText}>{t('detail')}</Text>
+                <Text style={homeStyles.addToCartText}>{t("detail")}</Text>
               </TouchableOpacity>
             </View>
           </TouchableOpacity>
         )}
-        ListFooterComponent={loading ? <ActivityIndicator size="large" color="blue" /> : null}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-        onEndReached={loadMoreProducts}
+        ListFooterComponent={
+          visibleProducts < filteredProducts.length ? <ActivityIndicator size="large" color="blue" /> : null
+        }
+       
+        onEndReached={loadMoreProducts} // Cuộn xuống để tải thêm 6 sản phẩm
         onEndReachedThreshold={0.5}
         showsVerticalScrollIndicator={false}
       />

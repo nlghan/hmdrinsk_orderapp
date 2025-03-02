@@ -3,13 +3,22 @@ import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from "react-nati
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 import { useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
+import { useCategoryStore } from "../store/store";
+import { StackNavigationProp } from "@react-navigation/stack";
+import { RootStackParamList } from "../navigation/RootStackParamList";
 
-type NavigationProps = {
-  navigate: (screen: string) => void;
-};
+
 const Other = () => {
-  const navigation = useNavigation<NavigationProps>();
+  const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
   const { t } = useTranslation();
+  const logout = useCategoryStore((state) => state.logout); 
+  const handleLogout = () => {
+    logout(); // Xóa dữ liệu đăng nhập
+    navigation.reset({
+      index: 0,
+      routes: [{ name: 'Login' }], // Chuyển về trang đăng nhập
+    });
+  };
   return (
     <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
       <View style={styles.container}>
@@ -74,7 +83,7 @@ const Other = () => {
               <MaterialIcons name="arrow-forward-ios" style={styles.iconrow} size={18} />
             </TouchableOpacity>
 
-            <TouchableOpacity style={[styles.listItem, styles.logout]}>
+            <TouchableOpacity style={[styles.listItem, styles.logout]} onPress={handleLogout}>
               <MaterialIcons name="logout" style={styles.icon} size={24} />
               <Text style={{ color: "red" }}>{t('logout')}</Text>
             </TouchableOpacity>

@@ -5,6 +5,7 @@ import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../navigation/RootStackParamList';
 import { useCategoryStore } from '../store/store';
+import { useTranslation } from 'react-i18next';
 
 interface Post {
   postId: number;
@@ -23,6 +24,7 @@ const News = () => {
   const postsPerPage = 10;
   const navigation = useNavigation<NavigationProp>();
   const { language, userId } = useCategoryStore();
+  const { t } = useTranslation();
 
   const fetchPosts = async (page: number) => {
     try {
@@ -56,7 +58,7 @@ const News = () => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>Tin Tức</Text>
+      <Text style={styles.header}>{t('posts1')}</Text>
       <FlatList
         data={posts}
         keyExtractor={(item) => item.postId.toString()}
@@ -68,7 +70,7 @@ const News = () => {
               <Text style={styles.title}>{item.title}</Text>
               <Text style={styles.description}>{item.shortDescription}</Text>
               <TouchableOpacity style={styles.button} onPress={() => handlePressPost(item.postId)}>
-                <Text style={styles.buttonText}>Chi tiết</Text>
+                <Text style={styles.buttonText}>{t('detail')}</Text>
               </TouchableOpacity>
             </View>
           </TouchableOpacity>
