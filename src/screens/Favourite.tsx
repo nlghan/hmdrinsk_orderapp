@@ -38,9 +38,10 @@ const Favourite = () => {
   // Hàm xóa tất cả sản phẩm yêu thích
   const removeAllFavorites = async () => {
     if (!userId || favoriteItems.length === 0) return;
-  
+    const favId: number = data.favoriteItems?.length ? data.favoriteItems[0].favId : 0;
+
     try {
-      await deleteAllFavItem(userId);
+      await deleteAllFavItem(favId);
       console.log("✅ Deleted all favorite items");
     } catch (error) {
       console.error("❌ Error deleting all favorite items:", error);

@@ -16,6 +16,9 @@ import LanguageChange from '../screens/LanguagChange';
 
 import TabNavigator from './TabNavigator'; // Import TabNavigator
 import { Product } from '../screens/ProductDetail';
+import OrderScreen from '../screens/Order';
+import Cart from '../screens/Cart'
+import ListVoucher from '../screens/ListVoucher';
 
 // ✅ Định nghĩa kiểu cho danh sách các màn hình
 export type RootStackParamList = {
@@ -27,9 +30,12 @@ export type RootStackParamList = {
   ProductDetail: { product: Product };
   News: undefined;
   NewDetails: undefined;
+  Order:undefined;
   LanguageChange: undefined;
   AllReviews: { productId: number };
   AddReview: { productId: number };
+  Cart:undefined;
+  ListVoucher: undefined
 
 };
 
@@ -58,12 +64,18 @@ const StackNavigator = () => {
           headerShown: false,
           animation: 'slide_from_right'  // Thử đổi thành 'slide_from_right' hoặc 'fade'
         }} />
+         <Stack.Screen name="Cart" component={Cart}  options={{
+          headerShown: false,
+          animation: 'slide_from_right'  // Thử đổi thành 'slide_from_right' hoặc 'fade'
+        }} />
         <Stack.Screen name="News" component={News} options={{ headerShown: false, animation: 'slide_from_right' }} />
+
+        <Stack.Screen name="Order" component={OrderScreen} options={{ headerShown: false, animation: 'slide_from_right' }} />
         <Stack.Screen name="NewDetails" component={NewDetails} options={{ headerShown: false, animation: 'slide_from_right' }} />
         <Stack.Screen name="LanguageChange" component={LanguageChange} options={{ title: t('common.selectLanguage'), headerShown: false, animation: 'slide_from_right' as const }} />
       <Stack.Screen name="AllReviews" component={AllReviewsScreen} options={{ title: t('common.allReviews'), headerShown: false, animation: 'slide_from_right' as const }} />
       <Stack.Screen name="AddReview" component={AddReviewScreen} options={{ title: t('common.addReview'), headerShown: false, animation: 'slide_from_right' as const }} />
-
+      <Stack.Screen name="ListVoucher" component={ListVoucher} options={{ title: t('common.addReview'), headerShown: false, animation: 'slide_from_right' as const }} />
 
     </Stack.Navigator>
   );

@@ -4,8 +4,14 @@ import homeStyles from '../styles/home';
 import { COLORS } from '../theme/theme';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useTranslation } from 'react-i18next';
+import { useNavigation } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { RootStackParamList } from '../navigation/RootStackParamList';
+import { useCartStore } from '../store/useCartStore';
 
 const Header = ({ style }: { style?: object }) => {
+    const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
+    const { cartTotal } = useCartStore();
     const { t } = useTranslation();
     return (
         <View style={[homeStyles.header, style]}>
@@ -15,9 +21,12 @@ const Header = ({ style }: { style?: object }) => {
             </View>
 
             <View style={homeStyles.headerIcons}>
-                <TouchableOpacity style={homeStyles.iconButton}>
+                <TouchableOpacity style={homeStyles.iconButton} onPress={() => {
+                     // ✅ Hủy chọn khi chuyển trang
+                    navigation.navigate('Cart');
+                }}>
                     <Icon name="shopping-cart" size={20} color={COLORS.primaryGreenHex} />
-                    <Text style={homeStyles.iconText}>12</Text>
+                    <Text style={homeStyles.iconText}>{cartTotal}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={homeStyles.iconButton}>
                     <Text>

@@ -4,6 +4,7 @@ const styles = StyleSheet.create({
     container: {
       flex: 1,
       opacity: 1,
+      backgroundColor:'fff'
     },
     loadingContainer: {
       flex: 1,
@@ -83,7 +84,8 @@ const styles = StyleSheet.create({
       flexDirection: 'row',
       justifyContent: 'space-between',
       marginVertical: 8,
-      alignItems: 'center'
+      alignItems: 'center',
+      marginBottom:30
     },
     productTitle: {
       fontSize: 20,
