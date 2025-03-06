@@ -6,12 +6,17 @@ import { useTranslation } from 'react-i18next';
 import { useCategoryStore } from "../store/store";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { RootStackParamList } from "../navigation/RootStackParamList";
-
+import { useOrderStore, useOrderStorePending, useOrderStoreCancelled, useOrderStoreWaiting, useOrderStoreRefund } from "../store/countStore";
 
 const Other = () => {
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
   const { t } = useTranslation();
   const logout = useCategoryStore((state) => state.logout); 
+  const { orderCount } = useOrderStore();
+  const { orderCountPending } = useOrderStorePending();
+  const { orderCountCancelled } = useOrderStoreCancelled();
+  const { orderCountWaiting } = useOrderStoreWaiting();
+  const { orderCountRefund } = useOrderStoreRefund();
   const handleLogout = () => {
     logout(); // Xóa dữ liệu đăng nhập
     navigation.reset({
@@ -24,19 +29,63 @@ const Other = () => {
       <View style={styles.container}>
         {/* Tiện ích */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Tiện ích</Text>
-          <View style={styles.grid}>
+          <Text style={styles.sectionTitle}>{t('features')}</Text>
+          <View style={styles.centered}>
             <TouchableOpacity style={styles.box}>
+              <MaterialIcons name="description" style={styles.iconPurple} size={24} />
+              <Text>{t('terms')}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.box} onPress={() => navigation.navigate('HistoryOrders')}>
               <MaterialIcons name="history" style={styles.iconOrange} size={24} />
-              <Text>{t('order.title6')}</Text>
+              <Text>{t('history.history')}</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.box}>
-              <MaterialIcons name="description" style={styles.iconPurple} size={24} />
-              <Text>{t('term')}</Text>
+          </View>
+
+          {/* 5 trạng thái đơn hàng */}
+          <View style={styles.row}>
+            <TouchableOpacity style={styles.box} onPress={() => navigation.navigate('DeliveringOrders')}>
+              <MaterialIcons name="local-shipping" style={styles.iconBlue} size={24} />
+              {orderCount > 0 && (
+                  <View style={styles.badge}>
+                    <Text style={styles.badgeText}>{orderCount}</Text>
+                  </View>
+                )}
             </TouchableOpacity>
-            <TouchableOpacity style={[styles.box, styles.fullWidth]}>
-              <MaterialIcons name="description" style={styles.iconPurple} size={24} />
-              <Text>{t('security')}</Text>
+
+            <TouchableOpacity style={styles.box} onPress={() => navigation.navigate('WaitingOrders')}>
+              <MaterialIcons name="schedule" style={styles.iconYellow} size={24} />
+              {orderCountWaiting > 0 && (
+                <View style={styles.badge}>
+                  <Text style={styles.badgeText}>{orderCountWaiting}</Text>
+                </View>
+                )}
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.box} onPress={() => navigation.navigate('CancelledOrders')}>
+              <MaterialIcons name="cancel" style={styles.iconRed} size={24} />
+              {orderCountCancelled > 0 && (
+                  <View style={styles.badge}>
+                    <Text style={styles.badgeText}>{orderCountCancelled}</Text>
+                  </View>
+                )}
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.box} onPress={() => navigation.navigate('PendingOrders')}>
+              <MaterialIcons name="payment" style={styles.iconGreen} size={24} />
+              {orderCountPending > 0 && (
+                  <View style={styles.badge}>
+                    <Text style={styles.badgeText}>{orderCountPending}</Text>
+                  </View>
+                )}
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.box} onPress={() => navigation.navigate('RefundOrders')}>
+              <MaterialIcons name="account-balance-wallet" style={styles.iconPurple} size={24} />
+              {orderCountRefund > 0 && (
+                <View style={styles.badge}>
+                  <Text style={styles.badgeText}>{orderCountRefund}</Text>
+                </View>
+                )}
             </TouchableOpacity>
           </View>
         </View>
@@ -93,11 +142,55 @@ const Other = () => {
     </ScrollView>
   );
 };
+export default Other;
 
 const styles = StyleSheet.create({
   scrollContainer: {
     flexGrow: 1,
     paddingBottom: 20,
+  },
+  row: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    flexWrap: "wrap",
+    gap: 6,
+    backgroundColor: "#fff",
+    borderRadius: 8,
+  },
+  centered: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 5,
+    flexWrap: "wrap",
+    gap: 6,
+  },
+  badge: {
+    position: "absolute",
+    top: 6,
+    right: 5,
+    backgroundColor: "red",
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  badgeText: {
+    color: "white",
+    fontSize: 10,
+    fontWeight: "bold",
+  },
+  iconBlue: {
+    color: "#3498db",
+  },
+  iconYellow: {
+    color: "#f1c40f",
+  },
+  iconRed: {
+    color: "#e74c3c",
+  },
+  iconGreen: {
+    color: "#2ecc71",
   },
   container: {
     flex: 1,
@@ -161,5 +254,3 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
 });
-
-export default Other;

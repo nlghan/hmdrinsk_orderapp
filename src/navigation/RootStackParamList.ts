@@ -16,5 +16,13 @@ export type RootStackParamList = {
     Order:undefined;
     Cart:undefined;
     ListVoucher: undefined
+    HistoryOrders: undefined;
+    DeliveringOrders: undefined;
+    PendingOrders: undefined;
+    CancelledOrders: undefined;
+    WaitingOrders: undefined;
+    RefundOrders: undefined;
+    MyOrderDetails: { shipmentId: number };
+    Orther: undefined;
   };
   
