@@ -1,6 +1,7 @@
 import { Product } from "../screens/ProductDetail";
 
 export type RootStackParamList = {
+
     Home: undefined;
     Login: undefined;
     Register: undefined;
@@ -24,5 +25,6 @@ export type RootStackParamList = {
     RefundOrders: undefined;
     MyOrderDetails: { shipmentId: number };
     Orther: undefined;
+
   };
   
