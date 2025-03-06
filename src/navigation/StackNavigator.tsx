@@ -25,6 +25,14 @@ import { Product } from '../screens/ProductDetail';
 import OrderScreen from '../screens/Order';
 import Cart from '../screens/Cart'
 import ListVoucher from '../screens/ListVoucher';
+import DeliveringOrders from '../screens/DeliveringOrders';
+import PendingOrders from '../screens/PendingOrders';
+import HistoryOrders from '../screens/HistoryOrders';
+import CancelledOrders from '../screens/CancelledOrders';
+import WaitingOrders from '../screens/WaitingOrders';
+import RefundOrder from '../screens/RefundOrder';
+import Orther from '../screens/Orther';
+import MyOrderDetails from '../screens/MyOrderDetails';
 
 // ✅ Định nghĩa kiểu cho danh sách các màn hình
 export type RootStackParamList = {
@@ -36,7 +44,7 @@ export type RootStackParamList = {
   ProductDetail: { product: Product };
   News: undefined;
   NewDetails: undefined;
-  Order:undefined;
+  Order: undefined;
   LanguageChange: undefined;
   AllReviews: { productId: number };
   AddReview: { productId: number };
@@ -45,11 +53,13 @@ export type RootStackParamList = {
   HistoryOrders: undefined;
   DeliveringOrders: undefined;
   PendingOrders: undefined;
-  Orther: undefined;
+
   CancelledOrders: undefined;
   WaitingOrders: undefined;
-  MyOrderDetails: { shipmentId: number };
   RefundOrders: undefined;
+  MyOrderDetails: { shipmentId: number };
+  Orther: undefined;
+
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -87,14 +97,17 @@ const StackNavigator = () => {
       <Stack.Screen name="LanguageChange" component={LanguageChange} options={{ title: t('common.selectLanguage'), headerShown: false, animation: 'slide_from_right' as const }} />
       <Stack.Screen name="AllReviews" component={AllReviewsScreen} options={{ title: t('common.allReviews'), headerShown: false, animation: 'slide_from_right' as const }} />
       <Stack.Screen name="AddReview" component={AddReviewScreen} options={{ title: t('common.addReview'), headerShown: false, animation: 'slide_from_right' as const }} />
-      <Stack.Screen name="ListVoucher" component={ListVoucher} options={{ title: t('common.addReview'), headerShown: false, animation: 'slide_from_right' as const }} />      <Stack.Screen name="DeliveringOrders" component={DeliveringOrders} options={{ headerShown: false, animation: 'slide_from_right' }} />
-      <Stack.Screen name="PendingOrders" component={PendingOrders} options={{ headerShown: false, animation: 'slide_from_right' }} />
+
+      <Stack.Screen name="ListVoucher" component={ListVoucher} options={{ title: t('common.addReview'), headerShown: false, animation: 'slide_from_right' as const }} />
+      <Stack.Screen name="DeliveringOrders" component={DeliveringOrders} options={{ headerShown: false, animation: 'slide_from_right' }} />
+      <Stack.Screen name="PendingOrders" component={PendingOrders} options={{ headerShown: false, animation: 'slide_from_right' }}/>
       <Stack.Screen name="HistoryOrders" component={HistoryOrders} options={{ headerShown: false, animation: 'slide_from_right' }} />
       <Stack.Screen name="CancelledOrders" component={CancelledOrders} options={{ headerShown: false, animation: 'slide_from_right' }} />
       <Stack.Screen name="WaitingOrders" component={WaitingOrders} options={{ headerShown: false, animation: 'slide_from_right' }} />
-      <Stack.Screen name="RefundOrders" component={RefundOrders} options={{ headerShown: false, animation: 'slide_from_right' }} />
+      <Stack.Screen name="RefundOrders" component={RefundOrder} options={{ headerShown: false, animation: 'slide_from_right' }} />
       <Stack.Screen name="Orther" component={Orther} options={{ headerShown: false, animation: 'slide_from_right' }} />
       <Stack.Screen name="MyOrderDetails" component={MyOrderDetails} options={{ headerShown: false, animation: 'slide_from_right' }} />
+
     </Stack.Navigator>
   );
 };

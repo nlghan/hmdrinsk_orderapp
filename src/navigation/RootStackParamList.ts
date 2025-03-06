@@ -1,27 +1,30 @@
 import { Product } from "../screens/ProductDetail";
 
 export type RootStackParamList = {
-  Login: undefined;
-  Register: undefined;
-  ForgotPassword: undefined;
-  Main: undefined;
-  Info: undefined;
-  ProductDetail: { product: Product };
-  News: undefined;
-  NewDetails: undefined;
-  Order:undefined;
-  LanguageChange: undefined;
-  AllReviews: { productId: number };
-  AddReview: { productId: number };
-  Cart:undefined;
-  ListVoucher: undefined
-  HistoryOrders: undefined;
-  DeliveringOrders: undefined;
-  PendingOrders: undefined;
-  Orther: undefined;
-  CancelledOrders: undefined;
-  WaitingOrders: undefined;
-  MyOrderDetails: { shipmentId: number };
-  RefundOrders: undefined;
+
+    Home: undefined;
+    Login: undefined;
+    Register: undefined;
+    ForgotPassword: undefined;
+    News: undefined;
+    NewDetails: { postId: number };
+    Main: undefined; // Thay vì Home, ta dùng Main để chứa TabNavigator
+    ProductDetail: { product: Product };
+    LanguageChange:  undefined;
+    AllReviews: { productId: number };  // 👈 Thêm dòng này
+    AddReview: { productId: number };
+    Info: undefined;
+    Order:undefined;
+    Cart:undefined;
+    ListVoucher: undefined
+    HistoryOrders: undefined;
+    DeliveringOrders: undefined;
+    PendingOrders: undefined;
+    CancelledOrders: undefined;
+    WaitingOrders: undefined;
+    RefundOrders: undefined;
+    MyOrderDetails: { shipmentId: number };
+    Orther: undefined;
+
   };
   
