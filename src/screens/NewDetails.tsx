@@ -191,6 +191,9 @@ const styles = StyleSheet.create({
   // Voucher Section
   voucherSection: {
     marginTop: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    flex: 1,
   },
   voucherButton: {
     marginTop: 20,
@@ -207,8 +210,7 @@ const styles = StyleSheet.create({
   },
   voucherCard: {
     backgroundColor: "#faedd4",
-    padding: 15,
-    paddingRight: 20,
+    padding: 13,
     borderRadius: 8,
     marginBottom: 40,
     margin: 5,
@@ -231,7 +233,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#333",
     marginBottom: 3,
-    marginLeft: 15,
+    marginRight: 5,
   },
 });
 

@@ -13,5 +13,13 @@ export type RootStackParamList = {
     AllReviews: { productId: number };  // 👈 Thêm dòng này
     AddReview: { productId: number };
     Info: undefined;
+    HistoryOrders: undefined;
+    DeliveringOrders: undefined;
+    PendingOrders: undefined;
+    CancelledOrders: undefined;
+    WaitingOrders: undefined;
+    RefundOrders: undefined;
+    MyOrderDetails: { shipmentId: number };
+    Orther: undefined;
   };
   
