@@ -25,14 +25,8 @@ import { Product } from '../screens/ProductDetail';
 import OrderScreen from '../screens/Order';
 import Cart from '../screens/Cart'
 import ListVoucher from '../screens/ListVoucher';
-import DeliveringOrders from '../screens/DeliveringOrders';
-import PendingOrders from '../screens/PendingOrders';
-import HistoryOrders from '../screens/HistoryOrders';
-import CancelledOrders from '../screens/CancelledOrders';
-import WaitingOrders from '../screens/WaitingOrders';
 import RefundOrder from '../screens/RefundOrder';
-import Orther from '../screens/Orther';
-import MyOrderDetails from '../screens/MyOrderDetails';
+
 
 // ✅ Định nghĩa kiểu cho danh sách các màn hình
 export type RootStackParamList = {

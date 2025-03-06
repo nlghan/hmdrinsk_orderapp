@@ -1,7 +1,7 @@
-import React from "react";
+import React, { useCallback } from "react";
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from "react-native";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
-import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { useCategoryStore } from "../store/store";
 import { StackNavigationProp } from "@react-navigation/stack";
@@ -11,7 +11,7 @@ import { useOrderStore, useOrderStorePending, useOrderStoreCancelled, useOrderSt
 const Other = () => {
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
   const { t } = useTranslation();
-  const logout = useCategoryStore((state) => state.logout); 
+  const logout = useCategoryStore((state) => state.logout);
   const { orderCount } = useOrderStore();
   const { orderCountPending } = useOrderStorePending();
   const { orderCountCancelled } = useOrderStoreCancelled();
@@ -24,6 +24,7 @@ const Other = () => {
       routes: [{ name: 'Login' }], // Chuyển về trang đăng nhập
     });
   };
+
   return (
     <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
       <View style={styles.container}>
@@ -31,11 +32,8 @@ const Other = () => {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>{t('features')}</Text>
           <View style={styles.centered}>
-            <TouchableOpacity style={styles.box}>
-              <MaterialIcons name="description" style={styles.iconPurple} size={24} />
-              <Text>{t('terms')}</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.box} onPress={() => navigation.navigate('HistoryOrders')}>
+
+            <TouchableOpacity style={styles.box1} onPress={() => navigation.navigate('HistoryOrders')}>
               <MaterialIcons name="history" style={styles.iconOrange} size={24} />
               <Text>{t('history.history')}</Text>
             </TouchableOpacity>
@@ -44,50 +42,56 @@ const Other = () => {
           {/* 5 trạng thái đơn hàng */}
           <View style={styles.row}>
             <TouchableOpacity style={styles.box} onPress={() => navigation.navigate('DeliveringOrders')}>
-              <MaterialIcons name="local-shipping" style={styles.iconBlue} size={24} />
+              <MaterialIcons name="local-shipping" style={styles.iconBlue} size={30} />
               {orderCount > 0 && (
-                  <View style={styles.badge}>
-                    <Text style={styles.badgeText}>{orderCount}</Text>
-                  </View>
-                )}
+                <View style={styles.badge}>
+                  <Text style={styles.badgeText}>{orderCount}</Text>
+                </View>
+              )}
+              <Text style={styles.statusText}>Đang giao</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.box} onPress={() => navigation.navigate('WaitingOrders')}>
-              <MaterialIcons name="schedule" style={styles.iconYellow} size={24} />
+              <MaterialIcons name="schedule" style={styles.iconYellow} size={30} />
               {orderCountWaiting > 0 && (
                 <View style={styles.badge}>
                   <Text style={styles.badgeText}>{orderCountWaiting}</Text>
                 </View>
-                )}
+              )}
+              <Text style={styles.statusText}>Chờ giao</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.box} onPress={() => navigation.navigate('CancelledOrders')}>
-              <MaterialIcons name="cancel" style={styles.iconRed} size={24} />
+              <MaterialIcons name="cancel" style={styles.iconRed} size={30} />
               {orderCountCancelled > 0 && (
-                  <View style={styles.badge}>
-                    <Text style={styles.badgeText}>{orderCountCancelled}</Text>
-                  </View>
-                )}
+                <View style={styles.badge}>
+                  <Text style={styles.badgeText}>{orderCountCancelled}</Text>
+                </View>
+              )}
+              <Text style={styles.statusText}>Đã hủy</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.box} onPress={() => navigation.navigate('PendingOrders')}>
-              <MaterialIcons name="payment" style={styles.iconGreen} size={24} />
+              <MaterialIcons name="payment" style={styles.iconGreen} size={30} />
               {orderCountPending > 0 && (
-                  <View style={styles.badge}>
-                    <Text style={styles.badgeText}>{orderCountPending}</Text>
-                  </View>
-                )}
+                <View style={styles.badge}>
+                  <Text style={styles.badgeText}>{orderCountPending}</Text>
+                </View>
+              )}
+              <Text style={styles.statusText}>Xác nhận</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.box} onPress={() => navigation.navigate('RefundOrders')}>
-              <MaterialIcons name="account-balance-wallet" style={styles.iconPurple} size={24} />
+              <MaterialIcons name="account-balance-wallet" style={styles.iconPurple} size={30} />
               {orderCountRefund > 0 && (
                 <View style={styles.badge}>
                   <Text style={styles.badgeText}>{orderCountRefund}</Text>
                 </View>
-                )}
+              )}
+              <Text style={styles.statusText}>Hoàn tiền</Text>
             </TouchableOpacity>
           </View>
+
         </View>
 
         {/* Hỗ trợ */}
@@ -211,6 +215,22 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   box: {
+    backgroundColor: "#fff",
+    padding: 12,
+    borderRadius: 8,
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    flexDirection: "column", // Chuyển sang dạng column
+    height: 80, // Tăng chiều cao để đủ chỗ cho icon và text
+  },
+  statusText: {
+    marginTop: 5,
+    fontSize: 9,
+    color: "#333",
+    fontWeight: "500",
+  },
+  box1: {
     backgroundColor: "#fff",
     padding: 10,
     borderRadius: 8,
