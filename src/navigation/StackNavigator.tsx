@@ -1,7 +1,6 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
-
 import Home from '../screens/Home';
 import Login from '../screens/Login';
 import Register from '../screens/Register';
@@ -10,10 +9,17 @@ import Info from '../screens/Info';
 import ProductDetail from '../screens/ProductDetail';
 import News from '../screens/News';
 import NewDetails from '../screens/NewDetails';
+import Orther from '../screens/Orther';
 import AllReviewsScreen from '../screens/AllReviews';
 import AddReviewScreen from '../screens/AddReview';
 import LanguageChange from '../screens/LanguagChange';
-
+import HistoryOrders from '../screens/HistoryOrders';
+import DeliveringOrders from '../screens/DeliveringOrders';
+import CancelledOrders from '../screens/CancelledOrders';
+import WaitingOrders from '../screens/PendingOrders';
+import RefundOrders from '../screens/RefundOrder';
+import PendingOrders from '../screens/WaitingOrders';
+import MyOrderDetails from '../screens/MyOrderDetails';
 import TabNavigator from './TabNavigator'; // Import TabNavigator
 import { Product } from '../screens/ProductDetail';
 import OrderScreen from '../screens/Order';
@@ -36,7 +42,14 @@ export type RootStackParamList = {
   AddReview: { productId: number };
   Cart:undefined;
   ListVoucher: undefined
-
+  HistoryOrders: undefined;
+  DeliveringOrders: undefined;
+  PendingOrders: undefined;
+  Orther: undefined;
+  CancelledOrders: undefined;
+  WaitingOrders: undefined;
+  MyOrderDetails: { shipmentId: number };
+  RefundOrders: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -75,7 +88,7 @@ const StackNavigator = () => {
         <Stack.Screen name="LanguageChange" component={LanguageChange} options={{ title: t('common.selectLanguage'), headerShown: false, animation: 'slide_from_right' as const }} />
       <Stack.Screen name="AllReviews" component={AllReviewsScreen} options={{ title: t('common.allReviews'), headerShown: false, animation: 'slide_from_right' as const }} />
       <Stack.Screen name="AddReview" component={AddReviewScreen} options={{ title: t('common.addReview'), headerShown: false, animation: 'slide_from_right' as const }} />
-      <Stack.Screen name="ListVoucher" component={ListVoucher} options={{ title: t('common.addReview'), headerShown: false, animation: 'slide_from_right' as const }} />
+
 
     </Stack.Navigator>
   );
