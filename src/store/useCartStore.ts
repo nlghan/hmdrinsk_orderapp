@@ -57,6 +57,7 @@ interface CartStore {
   voucherTotal: number;
   selectedVoucher: SelectedVoucher;
   coin: number;  // New field for storing coins
+  order: any | null; 
   ensureActiveCart: () => Promise<number>;
   fetchCartItem: () => Promise<void>;
   fetchVoucher: () => Promise<void>;
@@ -86,6 +87,7 @@ export const useCartStore = create<CartStore>()(
         selectedVoucherKey: null,
         selectedVoucherDiscountAmount: 0,
       },
+      order: null,
 
       coin: 0,  // Initialize the coin state to 0
 
@@ -482,7 +484,7 @@ export const useCartStore = create<CartStore>()(
 
       createOrder: async (note: string) => {
         try {
-          const { currentCartId, selectedVoucher, coin, cartTotal } = get();
+          const { currentCartId, selectedVoucher, coin } = get();
           const { userId, language } = useCategoryStore.getState();
       
           if (!userId) throw new Error("User not logged in");
@@ -491,56 +493,42 @@ export const useCartStore = create<CartStore>()(
           const accessToken = await AsyncStorage.getItem('access_token');
           if (!accessToken) throw new Error("Access token missing");
       
-          // Kiểm tra voucher và điểm coin
-          const voucherId = selectedVoucher.selectedVoucherId || "string";  // Nếu không có voucher thì sử dụng "string"
-          const pointCoinUse = coin || 0;  // Nếu không có coin thì sử dụng 0
+          const voucherId = selectedVoucher.selectedVoucherId || "string";  
+          const pointCoinUse = coin || 0;  
       
-          console.log(`🛒 Creating order with details:`);
-          console.log({
-            userId,
-            cartId: currentCartId,
-            voucherId,
-            pointCoinUse,
-            note,
-            language,
-          });
+          console.log(`🛒 Creating order...`);
       
           const response = await axiosInstance.post(
             '/orders/create',
-            {
-              userId,
-              cartId: currentCartId,
-              voucherId,
-              pointCoinUse,
-              note,
-              language,
-            },
+            { userId, cartId: currentCartId, voucherId, pointCoinUse, note, language },
             { headers: { Authorization: `Bearer ${accessToken}` } }
           );
       
           console.log("✅ Order created successfully:", response.data);
       
-          // Bạn có thể cập nhật thêm trạng thái giỏ hàng và order nếu cần
-          const order = response.data.body;
-          console.log("🛍 Order details:", order);
+          const order = response.data.body;  // Store order details
+          set({ 
+            order,  // ✅ Save the order in Zustand store
+            cart: [], 
+            cartTotal: 0, 
+            selectedVoucher: {
+              selectedVoucherId: null,
+              selectedVoucherKey: null,
+              selectedVoucherDiscountAmount: 0
+            }, 
+            coin: 0, 
+            currentCartId: null
+          });
       
-          // Clear cart state after order is successfully placed
-          set({ cart: [], cartTotal: 0, selectedVoucher: {
-            selectedVoucherId: null,
-            selectedVoucherKey: null,
-            selectedVoucherDiscountAmount: 0
-          }, coin: 0, currentCartId:0 });
+          console.log("🛍 Order stored in state:", order);
       
-          // Ensure a new active cart after the order is created
-          const newCartId = await get().ensureActiveCart();
-          set({ currentCartId: newCartId });
-      
-          return order;  // Return order details after successful creation
+          return order;  // Return order details
         } catch (error) {
           console.error("❌ Error creating order:", error);
           throw error;
         }
       },
+      
       
 
       addToCart: async (proId: number, size: string, quantity: number, language: string) => {

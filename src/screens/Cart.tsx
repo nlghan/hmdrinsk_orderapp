@@ -218,15 +218,18 @@ const Cart = () => {
 
     const handleCreateOrder = async () => {
         try {
-            await createOrder(note); // Call the createOrder function with the note as parameter
-            await fetchCartItem();
-            console.log("Đặt hàng thành công");
-            
-            // navigation.navigate('OrderConfirmation'); // Navigate to the confirmation screen (you can replace it with the correct one)
+            const order = await createOrder(note);  // Gọi API tạo đơn hàng
+    
+            await fetchCartItem();  // Cập nhật giỏ hàng sau khi đặt hàng
+            console.log("✅ Đặt hàng thành công:", order);
+    
+            // Chuyển sang màn hình Payment và truyền thông tin order
+            navigation.navigate('Payment');
         } catch (error) {
-            console.error("❌ Error creating order:", error);
+            console.error("❌ Lỗi khi tạo đơn hàng:", error);
         }
     };
+    
 
     return (
         <View style={styles.container}>

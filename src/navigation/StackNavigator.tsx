@@ -26,6 +26,8 @@ import OrderScreen from '../screens/Order';
 import Cart from '../screens/Cart'
 import ListVoucher from '../screens/ListVoucher';
 import RefundOrder from '../screens/RefundOrder';
+import Payment from '../screens/Payment';
+import OrderComplete from '../screens/OrderComplete';
 
 
 // ✅ Định nghĩa kiểu cho danh sách các màn hình
@@ -53,6 +55,8 @@ export type RootStackParamList = {
   RefundOrders: undefined;
   MyOrderDetails: { shipmentId: number };
   Orther: undefined;
+  Payment: undefined;
+  OrderComplete:undefined;
 
 };
 
@@ -101,7 +105,8 @@ const StackNavigator = () => {
       <Stack.Screen name="RefundOrders" component={RefundOrder} options={{ headerShown: false, animation: 'slide_from_right' }} />
       <Stack.Screen name="Orther" component={Orther} options={{ headerShown: false, animation: 'slide_from_right' }} />
       <Stack.Screen name="MyOrderDetails" component={MyOrderDetails} options={{ headerShown: false, animation: 'slide_from_right' }} />
-
+      <Stack.Screen name="Payment" component={Payment} options={{ headerShown: false, animation: 'slide_from_right' }} />
+      <Stack.Screen name="OrderComplete" component={OrderComplete} options={{ headerShown: false, animation: 'slide_from_right' }} />
     </Stack.Navigator>
   );
 };

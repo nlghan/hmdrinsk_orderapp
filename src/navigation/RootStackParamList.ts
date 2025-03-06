@@ -25,6 +25,7 @@ export type RootStackParamList = {
     RefundOrders: undefined;
     MyOrderDetails: { shipmentId: number };
     Orther: undefined;
-
+    Payment: undefined;
+    OrderComplete:undefined;
   };
   
