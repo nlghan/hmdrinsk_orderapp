@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, Text, FlatList, Image, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import axiosInstance from '../utils/axiosInstance';
@@ -288,5 +289,6 @@ const styles = StyleSheet.create({
     buttonText: {
         color: 'white',
         fontWeight: 'bold',
-    },
-});
+    }
+}
+)

@@ -25,7 +25,7 @@
         "delivery_cancel": "Ngày hủy hàng:",
         "delivery_failed": "Giao hàng không thành công!",
         "reorder": "Mua lại",
-        "payment" : "Thanh toán",
+        "payment": "Thanh toán",
         "print_invoice": "In hóa đơn",
         "payment_method": "Phương thức thanh toán",
         "refunded_status": "Trạng thái hoàn tiền"
@@ -414,11 +414,11 @@
         "noti": "Thông báo",
         "mark": "Đánh dấu đã đọc tất cả",
         "noNoti": "Không có thông báo mới.",
-        "proList":"Danh sách sản phẩm",
-        "greet":"Bạn ơi, Cà Phê nhé!",
-        "chooseLanguage":"Chọn ngôn ngữ",
+        "proList": "Danh sách sản phẩm",
+        "greet": "Bạn ơi, Cà Phê nhé!",
+        "chooseLanguage": "Chọn ngôn ngữ",
         "listComment": "Tất cả đánh giá",
-        "addCmt":"Thêm đánh giá"
+        "addCmt": "Thêm đánh giá"
     },
     "productContent": {
         "page": "Trang",

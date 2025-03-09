@@ -1,6 +1,7 @@
 import { Product } from "../screens/ProductDetail";
 
 export type RootStackParamList = {
+
     Home: undefined;
     Login: undefined;
     Register: undefined;
@@ -13,6 +14,9 @@ export type RootStackParamList = {
     AllReviews: { productId: number };  // 👈 Thêm dòng này
     AddReview: { productId: number };
     Info: undefined;
+    Order:undefined;
+    Cart:undefined;
+    ListVoucher: undefined
     HistoryOrders: undefined;
     DeliveringOrders: undefined;
     PendingOrders: undefined;
@@ -21,5 +25,7 @@ export type RootStackParamList = {
     RefundOrders: undefined;
     MyOrderDetails: { shipmentId: number };
     Orther: undefined;
+    Payment: undefined;
+    OrderComplete:undefined;
   };
   

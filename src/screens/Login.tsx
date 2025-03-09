@@ -28,6 +28,7 @@ const getUserIdFromToken = (token: string) => {
 };
 
 const Login: React.FC<Props> = ({ navigation }) => {
+  const { fetchFavoriteItems } = useCategoryStore();
   const { t } = useTranslation();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -67,6 +68,7 @@ const Login: React.FC<Props> = ({ navigation }) => {
 
         if (role.includes('CUSTOMER')) {
           setLoading(false);
+          
           navigation.replace('Main'); // 🔄 replace() để tránh quay lại màn hình login
         } else if (role.includes('SHIPPER')) {
           // navigation.replace('ShipperHome');
