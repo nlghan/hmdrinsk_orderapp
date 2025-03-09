@@ -1,4 +1,4 @@
-import React, { useCallback } from "react";
+import React, { useCallback, useState } from "react";
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from "react-native";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
@@ -7,6 +7,7 @@ import { useCategoryStore } from "../store/store";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { RootStackParamList } from "../navigation/RootStackParamList";
 import { useOrderStore, useOrderStorePending, useOrderStoreCancelled, useOrderStoreWaiting, useOrderStoreRefund } from "../store/countStore";
+import Notification from '../components/Notification';
 
 const Other = () => {
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
@@ -17,6 +18,7 @@ const Other = () => {
   const { orderCountCancelled } = useOrderStoreCancelled();
   const { orderCountWaiting } = useOrderStoreWaiting();
   const { orderCountRefund } = useOrderStoreRefund();
+  const [notification, setNotification] = useState({ message: '', visible: false });
   const handleLogout = () => {
     logout(); // Xóa dữ liệu đăng nhập
     navigation.reset({
@@ -24,17 +26,20 @@ const Other = () => {
       routes: [{ name: 'Login' }], // Chuyển về trang đăng nhập
     });
   };
-
+  const showNotification = (message: string) => {
+    setNotification({ message, visible: true });
+  };
   return (
     <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
       <View style={styles.container}>
+      <Notification message={notification.message} visible={notification.visible} onHide={() => setNotification({ ...notification, visible: false })} />
         {/* Tiện ích */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>{t('features')}</Text>
           <View style={styles.centered}>
 
             <TouchableOpacity style={styles.box1} onPress={() => navigation.navigate('HistoryOrders')}>
-              <MaterialIcons name="history" style={styles.iconOrange} size={24} />
+              <MaterialIcons name="history" style={styles.iconOrange} size={30} />
               <Text>{t('history.history')}</Text>
             </TouchableOpacity>
           </View>
@@ -108,11 +113,11 @@ const Other = () => {
               <Text>{t('contact1')}</Text>
               <MaterialIcons name="arrow-forward-ios" style={styles.iconrow} size={18} />
             </TouchableOpacity>
-            {/* <TouchableOpacity style={styles.listItem}>
+            <TouchableOpacity style={styles.listItem} onPress={() => showNotification('✅ ⚠️ ❌ Test!')}>
               <MaterialIcons name="receipt" style={styles.icon} size={24} />
-              <Text>Hướng dẫn xuất hóa đơn GTGT</Text>
+              <Text>Test nút Notification</Text>
               <MaterialIcons name="arrow-forward-ios" style={styles.iconrow} size={18} />
-            </TouchableOpacity> */}
+            </TouchableOpacity>
           </View>
         </View>
 
@@ -181,7 +186,7 @@ const styles = StyleSheet.create({
   },
   badgeText: {
     color: "white",
-    fontSize: 10,
+    fontSize: 9,
     fontWeight: "bold",
   },
   iconBlue: {
@@ -195,6 +200,9 @@ const styles = StyleSheet.create({
   },
   iconGreen: {
     color: "#2ecc71",
+  },
+  iconPurple: {
+    color: "purple",
   },
   container: {
     flex: 1,
@@ -220,7 +228,6 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     flex: 1,
     alignItems: "center",
-    justifyContent: "center",
     flexDirection: "column", // Chuyển sang dạng column
     height: 80, // Tăng chiều cao để đủ chỗ cho icon và text
   },
@@ -229,6 +236,8 @@ const styles = StyleSheet.create({
     fontSize: 9,
     color: "#333",
     fontWeight: "500",
+    marginLeft: -8,
+    marginRight: -8,
   },
   box1: {
     backgroundColor: "#fff",
@@ -267,10 +276,6 @@ const styles = StyleSheet.create({
   },
   iconOrange: {
     color: "orange",
-    marginRight: 10,
-  },
-  iconPurple: {
-    color: "purple",
     marginRight: 10,
   },
 });
