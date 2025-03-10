@@ -11,7 +11,6 @@ import LinearGradient from 'react-native-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from "@react-navigation/stack";
 import { RootStackParamList } from "../navigation/RootStackParamList";
-import { useOrderStoreRefund } from "../store/countStore";
 
 const RefundOrder = () => {
     type ProductItem = {
@@ -60,7 +59,6 @@ const RefundOrder = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const { language, userId } = useCategoryStore();
-    const { setOrderCountRefund } = useOrderStoreRefund();
 
     useEffect(() => {
         fetchRefundOrders();
@@ -83,9 +81,6 @@ const RefundOrder = () => {
 
             const { list = [] } = response.data;
 
-            if (response.data.length === 0) {
-                setOrderCountRefund(0);
-            }
             const refunds = list.map((item: any) => ({
                 orderId: item.order.orderId,
                 totalPrice: item.order.totalPrice,
@@ -108,7 +103,6 @@ const RefundOrder = () => {
             }));
 
             setRefundOrders(refunds);
-            setOrderCountRefund(refunds.length);
         } catch (err) {
             setError(language === 'EN' ? 'Unable to load refund orders.' : 'Không thể tải danh sách hoàn tiền.');
             console.error('Error fetching refund orders:', err);

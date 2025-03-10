@@ -11,7 +11,6 @@ import LinearGradient from 'react-native-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from "@react-navigation/stack";
 import { RootStackParamList } from "../navigation/RootStackParamList";
-import { useOrderStoreCancelled } from "../store/countStore";
 
 const CancelledOrder = () => {
     type Product = {
@@ -39,7 +38,6 @@ const CancelledOrder = () => {
     const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
     const { t } = useTranslation();
     const { language, userId } = useCategoryStore();
-    const { setOrderCountCancelled } = useOrderStoreCancelled();
 
     useEffect(() => {
         fetchCancelledOrders();
@@ -62,10 +60,8 @@ const CancelledOrder = () => {
             console.log("🚚 Đơn hàng đa huy:", responsePaid.data);
             if (responsePaid.data && responsePaid.data.list) {
                 setCancelledOrders(responsePaid.data.list);
-                setOrderCountCancelled(responsePaid.data.list.length);
             } else {
                 setCancelledOrders([]);
-                setOrderCountCancelled(0);
             }
         } catch (err) {
             console.error("Lỗi fetchCancelledOrders:", err);

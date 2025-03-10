@@ -10,7 +10,6 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import EmptyListAnimation from '../components/EmptyListAnimation';
 import Icon from "react-native-vector-icons/MaterialIcons";
 import { RootStackParamList } from "../navigation/RootStackParamList";
-import { useOrderStorePending } from "../store/countStore";
 
 
 const PendingOrder = () => {
@@ -55,7 +54,6 @@ const PendingOrder = () => {
     const [error, setError] = useState('');
     const { language, userId } = useCategoryStore();
     const { t } = useTranslation();
-    const { setOrderCountPending } = useOrderStorePending();
     const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
 
     useEffect(() => {
@@ -84,7 +82,6 @@ const PendingOrder = () => {
             ];
 
             setWaitingOrders(combinedOrders);
-            setOrderCountPending(combinedOrders.length);
         } catch (err) {
             setError('Không thể tải danh sách đơn hàng.');
         } finally {

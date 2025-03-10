@@ -11,7 +11,6 @@ import LinearGradient from 'react-native-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from "@react-navigation/stack";
 import { RootStackParamList } from "../navigation/RootStackParamList";
-import { useOrderStoreWaiting } from "../store/countStore";
 
 const WaitingOrder = () => {
     // Định nghĩa kiểu dữ liệu
@@ -55,7 +54,6 @@ const WaitingOrder = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const { language, userId } = useCategoryStore();
-    const { setOrderCountWaiting } = useOrderStoreWaiting();
 
     // useEffect(() => {
     //     fetchWaitingList();
@@ -75,11 +73,7 @@ const WaitingOrder = () => {
             });
             console.log("check", response.data);
     
-            const listOrders = response.data.listOrderWaiting.list || [];
-            
-            if (listOrders.length === 0) {
-                setOrderCountWaiting(0);
-            }
+            const listOrders = response.data.listOrderWaiting.list || [];    
     
             const promises = listOrders.map(async (order: Order) => {
                 try {
@@ -99,10 +93,8 @@ const WaitingOrder = () => {
     
             const listWithPaymentInfo = await Promise.all(promises);
             setWaitingOrders(listWithPaymentInfo);
-            setOrderCountWaiting(listWithPaymentInfo.length);
         } catch (error) {
             console.error('Lỗi fetchWaitingList:', error);
-            setOrderCountWaiting(0);
             setError('Không thể tải danh sách đơn hàng chờ.');
         } finally {
             setLoading(false);
