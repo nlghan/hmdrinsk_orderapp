@@ -1,22 +1,26 @@
-import React, { useCallback } from "react";
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from "react-native";
+import React, { useCallback, useState } from "react";
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator } from "react-native";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { useCategoryStore } from "../store/store";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { RootStackParamList } from "../navigation/RootStackParamList";
-import { useOrderStore, useOrderStorePending, useOrderStoreCancelled, useOrderStoreWaiting, useOrderStoreRefund } from "../store/countStore";
+import Notification from '../components/Notification';
+import OrderCount from '../components/OrderCount';
 
 const Other = () => {
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
   const { t } = useTranslation();
   const logout = useCategoryStore((state) => state.logout);
-  const { orderCount } = useOrderStore();
-  const { orderCountPending } = useOrderStorePending();
-  const { orderCountCancelled } = useOrderStoreCancelled();
-  const { orderCountWaiting } = useOrderStoreWaiting();
-  const { orderCountRefund } = useOrderStoreRefund();
+  const [orderCounts, setOrderCounts] = useState({
+    confirmed: 0,
+    // waiting: 0,
+    cancelled: 0,
+    pending: 0,
+    refunded: 0,
+  });
+  const [notification, setNotification] = useState({ message: '', visible: false });
   const handleLogout = () => {
     logout(); // Xóa dữ liệu đăng nhập
     navigation.reset({
@@ -24,70 +28,88 @@ const Other = () => {
       routes: [{ name: 'Login' }], // Chuyển về trang đăng nhập
     });
   };
-
+  const showNotification = (message: string) => {
+    setNotification({ message, visible: true });
+  };
   return (
     <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
       <View style={styles.container}>
+        <Notification message={notification.message} visible={notification.visible} onHide={() => setNotification({ ...notification, visible: false })} />
         {/* Tiện ích */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>{t('features')}</Text>
           <View style={styles.centered}>
 
             <TouchableOpacity style={styles.box1} onPress={() => navigation.navigate('HistoryOrders')}>
-              <MaterialIcons name="history" style={styles.iconOrange} size={24} />
+              <MaterialIcons name="history" style={styles.iconOrange} size={30} />
               <Text>{t('history.history')}</Text>
             </TouchableOpacity>
           </View>
-
+          {/* Fetch số lượng đơn hàng */}
+          <OrderCount onDataFetched={setOrderCounts} />
           {/* 5 trạng thái đơn hàng */}
           <View style={styles.row}>
             <TouchableOpacity style={styles.box} onPress={() => navigation.navigate('DeliveringOrders')}>
               <MaterialIcons name="local-shipping" style={styles.iconBlue} size={30} />
-              {orderCount > 0 && (
-                <View style={styles.badge}>
-                  <Text style={styles.badgeText}>{orderCount}</Text>
-                </View>
+              {orderCounts ? (
+                orderCounts.confirmed > 0 ? (
+                  <Text style={styles.badgeText}>{orderCounts.confirmed}</Text>
+                ) : null
+              ) : (
+                <ActivityIndicator size="small" color="#fff" />
               )}
               <Text style={styles.statusText}>Đang giao</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.box} onPress={() => navigation.navigate('WaitingOrders')}>
               <MaterialIcons name="schedule" style={styles.iconYellow} size={30} />
-              {orderCountWaiting > 0 && (
+              {/* {orderCounts.waiting > 0 && (
                 <View style={styles.badge}>
-                  <Text style={styles.badgeText}>{orderCountWaiting}</Text>
+                  <Text style={styles.badgeText}>{orderCounts.waiting}</Text>
                 </View>
-              )}
+              )} */}
               <Text style={styles.statusText}>Chờ giao</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.box} onPress={() => navigation.navigate('CancelledOrders')}>
               <MaterialIcons name="cancel" style={styles.iconRed} size={30} />
-              {orderCountCancelled > 0 && (
-                <View style={styles.badge}>
-                  <Text style={styles.badgeText}>{orderCountCancelled}</Text>
-                </View>
-              )}
+              <View style={styles.badge}>
+                {orderCounts ? (
+                  orderCounts.cancelled > 0 ? (
+                    <Text style={styles.badgeText}>{orderCounts.cancelled}</Text>
+                  ) : null
+                ) : (
+                  <ActivityIndicator size="small" color="white" />
+                )}
+              </View>
               <Text style={styles.statusText}>Đã hủy</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.box} onPress={() => navigation.navigate('PendingOrders')}>
               <MaterialIcons name="payment" style={styles.iconGreen} size={30} />
-              {orderCountPending > 0 && (
-                <View style={styles.badge}>
-                  <Text style={styles.badgeText}>{orderCountPending}</Text>
-                </View>
-              )}
+              <View style={styles.badge}>
+                {orderCounts ? (
+                  orderCounts.pending > 0 ? (
+                    <Text style={styles.badgeText}>{orderCounts.pending}</Text>
+                  ) : null
+                ) : (
+                  <ActivityIndicator size="small" color="#fff" />
+                )}
+              </View>
               <Text style={styles.statusText}>Xác nhận</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.box} onPress={() => navigation.navigate('RefundOrders')}>
               <MaterialIcons name="account-balance-wallet" style={styles.iconPurple} size={30} />
-              {orderCountRefund > 0 && (
-                <View style={styles.badge}>
-                  <Text style={styles.badgeText}>{orderCountRefund}</Text>
-                </View>
-              )}
+              <View style={styles.badge}>
+                {orderCounts ? (
+                  orderCounts.refunded > 0 ? (
+                    <Text style={styles.badgeText}>{orderCounts.refunded}</Text>
+                  ) : null
+                ) : (
+                  <ActivityIndicator size="large" color="#fff" />
+                )}
+              </View>
               <Text style={styles.statusText}>Hoàn tiền</Text>
             </TouchableOpacity>
           </View>
@@ -108,11 +130,11 @@ const Other = () => {
               <Text>{t('contact1')}</Text>
               <MaterialIcons name="arrow-forward-ios" style={styles.iconrow} size={18} />
             </TouchableOpacity>
-            {/* <TouchableOpacity style={styles.listItem}>
+            <TouchableOpacity style={styles.listItem} onPress={() => showNotification('✅ ⚠️ ❌ Test!')}>
               <MaterialIcons name="receipt" style={styles.icon} size={24} />
-              <Text>Hướng dẫn xuất hóa đơn GTGT</Text>
+              <Text>Test nút Notification</Text>
               <MaterialIcons name="arrow-forward-ios" style={styles.iconrow} size={18} />
-            </TouchableOpacity> */}
+            </TouchableOpacity>
           </View>
         </View>
 
@@ -181,7 +203,7 @@ const styles = StyleSheet.create({
   },
   badgeText: {
     color: "white",
-    fontSize: 10,
+    fontSize: 9,
     fontWeight: "bold",
   },
   iconBlue: {
@@ -195,6 +217,9 @@ const styles = StyleSheet.create({
   },
   iconGreen: {
     color: "#2ecc71",
+  },
+  iconPurple: {
+    color: "purple",
   },
   container: {
     flex: 1,
@@ -220,7 +245,6 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     flex: 1,
     alignItems: "center",
-    justifyContent: "center",
     flexDirection: "column", // Chuyển sang dạng column
     height: 80, // Tăng chiều cao để đủ chỗ cho icon và text
   },
@@ -229,6 +253,8 @@ const styles = StyleSheet.create({
     fontSize: 9,
     color: "#333",
     fontWeight: "500",
+    marginLeft: -8,
+    marginRight: -8,
   },
   box1: {
     backgroundColor: "#fff",
@@ -267,10 +293,6 @@ const styles = StyleSheet.create({
   },
   iconOrange: {
     color: "orange",
-    marginRight: 10,
-  },
-  iconPurple: {
-    color: "purple",
     marginRight: 10,
   },
 });

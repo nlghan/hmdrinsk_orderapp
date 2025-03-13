@@ -10,7 +10,6 @@ import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from "@react-navigation/stack";
 import { RootStackParamList } from "../navigation/RootStackParamList";
 import { useTranslation } from 'react-i18next';
-import { useOrderStore } from "../store/countStore";
 
 const DeliveringOrders = () => {
     // Định nghĩa kiểu dữ liệu
@@ -56,7 +55,6 @@ const DeliveringOrders = () => {
     const [showAll, setShowAll] = useState(false);
     const [currentDeliveringPage, setCurrentDeliveringPage] = useState(1);
     const { language, userId } = useCategoryStore();
-    const { setOrderCount } = useOrderStore();
     const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
     const { t } = useTranslation();
 
@@ -104,11 +102,9 @@ const DeliveringOrders = () => {
                     } : null,
                 }));
 
-                setConfirmedOrders(orders);
-                setOrderCount(orders.length);
+                setConfirmedOrders(orders);                
             } else {
                 setConfirmedOrders([]);
-                setOrderCount(0);
             }
         } catch (err) {
             console.error("Lỗi fetchConfirmedOrders:", err);

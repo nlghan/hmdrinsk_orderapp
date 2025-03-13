@@ -9,6 +9,7 @@ import { useTranslation } from 'react-i18next';
 import { useCategoryStore } from '../store/store';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { useCartStore } from '../store/useCartStore';
+import Notification from '../components/Notification';
 
 
 export interface Product {
@@ -23,8 +24,9 @@ export interface Product {
 type ProductDetailRouteProp = RouteProp<RootStackParamList, 'ProductDetail'>;
 
 const ProductDetail = () => {
+    const [notification, setNotification] = useState({ message: '', visible: false });
     const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
-    const { language} = useCategoryStore();
+    const { language } = useCategoryStore();
     const route = useRoute<ProductDetailRouteProp>();
     const { product } = route.params;
     const { t } = useTranslation();
@@ -42,6 +44,9 @@ const ProductDetail = () => {
     const [isFavorite, setIsFavorite] = useState(product.isFavourited);
 
     const { addToCart } = useCartStore();
+    const showNotification = (message: string) => {
+        setNotification({ message, visible: true });
+    };
 
 
     useEffect(() => {
@@ -64,7 +69,7 @@ const ProductDetail = () => {
 
     const handleFavoritePress = async () => {
         if (!userId) {
-            console.error("❌ User not logged in");
+            showNotification("⚠️ Vui lòng đăng nhập để thêm vào yêu thích!");
             return;
         }
 
@@ -73,14 +78,25 @@ const ProductDetail = () => {
         try {
             if (!isFavorite) {
                 await insertFavoriteItem(1, product.proId, selectedSize);
+                showNotification("Đã thêm vào yêu thích!");
+            } else {
+                showNotification("Đã xóa khỏi yêu thích!");
             }
         } catch (error) {
-            console.error("❌ Error updating favorite state:", error);
+            console.error("❌ Lỗi cập nhật yêu thích:", error);
             setIsFavorite((prev) => !prev);
+            showNotification("⚠️ Có lỗi xảy ra, thử lại sau!");
         }
     };
 
+
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+    const handleAddToCart = () => {
+        addToCart(product.proId, selectedSize, quantity, language);
+        showNotification("Sản phẩm đã được thêm vào giỏ hàng!");
+    };
+
 
     useEffect(() => {
         const interval = setInterval(() => {
@@ -114,6 +130,7 @@ const ProductDetail = () => {
                 showsVerticalScrollIndicator={false}
                 keyboardShouldPersistTaps="handled"
             >
+                <Notification message={notification.message} visible={notification.visible} onHide={() => setNotification({ ...notification, visible: false })} />
                 <View style={productDetail.topButtons}>
                     <TouchableOpacity onPress={() => navigation.goBack()} style={productDetail.backButton}>
                         <Icon name="arrow-back" size={24} color="#000" />
@@ -212,10 +229,11 @@ const ProductDetail = () => {
                 </View>
                 <TouchableOpacity
                     style={productDetail.cartButton}
-                    onPress={() => addToCart(product.proId, selectedSize, quantity, language)}
+                    onPress={handleAddToCart}
                 >
                     <Text style={productDetail.cartText}>{formatPrice(selectedPrice, quantity)}</Text>
                 </TouchableOpacity>
+
 
             </View>
 
