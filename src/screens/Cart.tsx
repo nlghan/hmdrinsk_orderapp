@@ -17,7 +17,7 @@ import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../navigation/RootStackParamList';
 import styles from '../styles/cartStyles';
-import { Swipeable } from 'react-native-gesture-handler';
+import { Swipeable, GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Picker } from '@react-native-picker/picker';
 
 interface CartItem {
@@ -124,6 +124,7 @@ const Cart = () => {
         const totalPrice = item.reduce((sum, i) => sum + i.totalPrice, 0);
 
         return (
+            <GestureHandlerRootView style={{ flex: 1 }}> 
             <Swipeable
                 renderRightActions={() => (
                     <View style={styles.swipeActions}>
@@ -213,6 +214,7 @@ const Cart = () => {
                     </View>
                 </View>
             </Swipeable>
+            </GestureHandlerRootView>
         );
     };
 
@@ -309,6 +311,7 @@ const Cart = () => {
                             <TextInput
                                 style={styles.noteInput}
                                 placeholder="Nhập ghi chú..."
+                                placeholderTextColor="#A9A9A9"
                                 value={note}
                                 onChangeText={setNote}
                             />

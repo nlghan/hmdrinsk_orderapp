@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import axios from "axios";
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axiosInstance from '../utils/axiosInstance';
@@ -533,42 +534,39 @@ export const useCartStore = create<CartStore>()(
 
       addToCart: async (proId: number, size: string, quantity: number, language: string) => {
         try {
-          let { currentCartId } = get();
-          if (!currentCartId) {
-            console.log("🔄 No active cart, ensuring...");
-            currentCartId = await get().ensureActiveCart();
-            set({ currentCartId });
-          }
-
-          const { userId } = useCategoryStore.getState();
-          if (!userId) throw new Error("User not logged in");
-
-          const accessToken = await AsyncStorage.getItem('access_token');
-          if (!accessToken) throw new Error("Access token missing");
-
-          console.log(`➕ Adding product ${proId} (Size: ${size}, Qty: ${quantity}) to cart ${currentCartId}`);
-
-          const response = await axiosInstance.post<CartItem>(
-            `/cart-item/insert`,
-            {
-              userId,
-              cartId: currentCartId,
-              proId,
-              size,
-              quantity,
-              language,
-            },
-            { headers: { Authorization: `Bearer ${accessToken}` } }
-          );
-
-          console.log("✅ Added to cart:", response.data);
-
-          await get().fetchCartItem(); // Cập nhật lại giỏ hàng sau khi thêm
-        } catch (error) {
-          console.error("❌ Error adding to cart:", error);
+            let { currentCartId } = get();
+            if (!currentCartId) {
+                console.log("🔄 No active cart, ensuring...");
+                currentCartId = await get().ensureActiveCart();
+                set({ currentCartId });
+            }
+    
+            const { userId } = useCategoryStore.getState();
+            if (!userId) throw new Error("User not logged in");
+    
+            const accessToken = await AsyncStorage.getItem('access_token');
+            if (!accessToken) throw new Error("Access token missing");
+    
+            console.log(`➕ Adding product ${proId} (Size: ${size}, Qty: ${quantity}) to cart ${currentCartId}`);
+    
+            const response = await axiosInstance.post<CartItem>(
+                `/cart-item/insert`,
+                { userId, cartId: currentCartId, proId, size, quantity, language },
+                { headers: { Authorization: `Bearer ${accessToken}` } }
+            );
+    
+            console.log("✅ Added to cart:", response.data);
+    
+            await get().fetchCartItem(); // Cập nhật lại giỏ hàng sau khi thêm
+        } catch (error: any) {
+            if (axios.isAxiosError(error) && error.response) {
+                if (error.response.status === 400) {
+                    throw new Error("❌ Vượt quá số lượng tồn kho");
+                }
+            }
+            throw new Error("❌ Lỗi thêm vào giỏ hàng");
         }
-      },
-
+    },    
 
       setSelectedVoucher: ({ selectedVoucherId, selectedVoucherKey, selectedVoucherDiscountAmount }) => {
         console.log("🛒 Setting selected voucher:", { selectedVoucherId, selectedVoucherKey, selectedVoucherDiscountAmount });

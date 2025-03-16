@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, Image, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, Image, TouchableOpacity, ScrollView, TextInput } from 'react-native';
 import { useRoute, useNavigation, RouteProp } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { RootStackParamList } from '../navigation/RootStackParamList';
@@ -9,6 +9,7 @@ import { useTranslation } from 'react-i18next';
 import { useCategoryStore } from '../store/store';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { useCartStore } from '../store/useCartStore';
+import Notification from '../components/Notification';
 
 
 export interface Product {
@@ -17,16 +18,20 @@ export interface Product {
     proName: string;
     isFavourited: boolean;
     productImageResponseList: { linkImage: string }[];
-    listProductVariants: { price: number; size: string }[];
+    listProductVariants: { price: number; size: string; stock: number }[];
 }
 
 type ProductDetailRouteProp = RouteProp<RootStackParamList, 'ProductDetail'>;
 
 const ProductDetail = () => {
+    const [notification, setNotification] = useState({ message: '', visible: false });
     const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
-    const { language} = useCategoryStore();
+    const { language } = useCategoryStore();
     const route = useRoute<ProductDetailRouteProp>();
     const { product } = route.params;
+    const price0 = product.listProductVariants[0]?.stock !== 0 ? product.listProductVariants[0]?.price : 0
+    const price1 = product.listProductVariants[1]?.stock !== 0 ? product.listProductVariants[1]?.price : 0
+    const price2 = product.listProductVariants[2]?.stock !== 0 ? product.listProductVariants[2]?.price : 0
     const { t } = useTranslation();
     const [quantity, setQuantity] = useState(1);
     const increaseQuantity = () => setQuantity(prev => prev + 1);
@@ -37,12 +42,19 @@ const ProductDetail = () => {
     const { fetchProductReviews, data, insertFavoriteItem, userId } = useCategoryStore();
 
     const [expanded, setExpanded] = useState(false);
-    const [selectedSize, setSelectedSize] = useState(product.listProductVariants[0]?.size);
-    const [selectedPrice, setSelectedPrice] = useState(product.listProductVariants[0]?.price);
+    const [selectedSize, setSelectedSize] = useState(
+        price0 !== 0 ? product.listProductVariants[0].size : price1 !== 0 ? product.listProductVariants[1].size : product.listProductVariants[2].size
+    );
+    const [selectedPrice, setSelectedPrice] = useState(
+        price0 !== 0 ? product.listProductVariants[0].price : price1 !== 0 ? product.listProductVariants[1].price : product.listProductVariants[2].price
+    );
+
     const [isFavorite, setIsFavorite] = useState(product.isFavourited);
 
     const { addToCart } = useCartStore();
-
+    const showNotification = (message: string) => {
+        setNotification({ message, visible: true });
+    };
 
     useEffect(() => {
         fetchProductReviews(product.proId, 1, 5);
@@ -55,16 +67,22 @@ const ProductDetail = () => {
     // const formatPrice = (price: number) => price.toLocaleString() + " VND";
 
     const handleSizeSelection = (size: string) => {
-        setSelectedSize(size);
         const variant = product.listProductVariants.find(v => v.size === size);
-        if (variant) {
-            setSelectedPrice(variant.price);
+        if (!variant) {
+            showNotification("⚠️ Kích thước sản phẩm không hợp lệ!");
+            return;
         }
+        if (variant.stock === 0) {
+            showNotification("⚠️ Sản phẩm đã hết hàng!");
+            return;
+        }
+        setSelectedSize(size);
+        setSelectedPrice(variant.price);
     };
 
     const handleFavoritePress = async () => {
         if (!userId) {
-            console.error("❌ User not logged in");
+            showNotification("⚠️ Vui lòng đăng nhập để thêm vào yêu thích!");
             return;
         }
 
@@ -73,14 +91,44 @@ const ProductDetail = () => {
         try {
             if (!isFavorite) {
                 await insertFavoriteItem(1, product.proId, selectedSize);
+                showNotification("Đã thêm vào yêu thích!");
+            } else {
+                showNotification("Đã xóa khỏi yêu thích!");
             }
         } catch (error) {
-            console.error("❌ Error updating favorite state:", error);
+            console.error("❌ Lỗi cập nhật yêu thích:", error);
             setIsFavorite((prev) => !prev);
+            showNotification("⚠️ Có lỗi xảy ra, thử lại sau!");
         }
     };
 
+
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+    const handleAddToCart = () => {
+
+        if (!selectedSize || !selectedPrice) {
+            showNotification("⚠️ Vui lòng chọn kích thước sản phẩm trước khi thêm vào giỏ hàng!");
+            return;
+        }
+        if (quantity <= 0) {
+            showNotification("⚠️ Số lượng sản phẩm phải lớn hơn 0!");
+            return;
+        }
+
+        addToCart(product.proId, selectedSize, quantity, language).then (() => {
+            showNotification("✅ Sản phẩm đã được thêm vào giỏ hàng!");
+        }
+        ).catch((error) => {
+            const message = error.message
+            if (message.includes("❌ Vượt quá số lượng tồn kho")) {
+                showNotification("⚠️ Số lượng sản phẩm vượt quá số lượng tồn kho!");
+            } else {
+                showNotification("❌ Lỗi khi thêm sản phẩm vào giỏ hàng. Vui lòng thử lại!");
+            }
+        });
+    };
+
 
     useEffect(() => {
         const interval = setInterval(() => {
@@ -94,6 +142,7 @@ const ProductDetail = () => {
 
     return (
         <View style={{ flex: 1 }}>
+            <Notification message={notification.message} visible={notification.visible} onHide={() => setNotification({ ...notification, visible: false })} />
             <Header
                 style={{
                     paddingHorizontal: 14,
@@ -114,6 +163,7 @@ const ProductDetail = () => {
                 showsVerticalScrollIndicator={false}
                 keyboardShouldPersistTaps="handled"
             >
+                
                 <View style={productDetail.topButtons}>
                     <TouchableOpacity onPress={() => navigation.goBack()} style={productDetail.backButton}>
                         <Icon name="arrow-back" size={24} color="#000" />
@@ -183,18 +233,19 @@ const ProductDetail = () => {
                     <View style={productDetail.sizeContainer}>
                         <Text style={productDetail.sizeLabel}>{t('size')}</Text>
                         <View style={productDetail.sizeOptions}>
-                            {[...product.listProductVariants].reverse().map((variant) => (
-                                <TouchableOpacity
+                            {[...product.listProductVariants].reverse().map((variant) => {
+                                return (<TouchableOpacity
                                     key={variant.size}
                                     style={[
                                         productDetail.sizeButton,
                                         selectedSize === variant.size && productDetail.selectedSize
                                     ]}
-                                    onPress={() => handleSizeSelection(variant.size)}
+                                    onPress={() => {handleSizeSelection(variant.size)
+                                    }}
                                 >
                                     <Text>{variant.size}</Text>
-                                </TouchableOpacity>
-                            ))}
+                                </TouchableOpacity>)
+                            })}
                         </View>
                     </View>
                 </View>
@@ -205,17 +256,39 @@ const ProductDetail = () => {
                     <TouchableOpacity onPress={decreaseQuantity} style={productDetail.quantityButton}>
                         <Text style={productDetail.quantityText}>-</Text>
                     </TouchableOpacity>
-                    <Text style={productDetail.quantityValue}>{quantity}</Text>
+                    <TextInput
+                        style={[productDetail.quantityValue, { color: "black" }]}
+                        keyboardType="numeric"
+                        value={quantity === null ? "" : quantity.toString()}
+                        onChangeText={(text) => {
+                            if (text === "") {
+                                setQuantity(0);
+                            } else {
+                                const num = parseInt(text, 10);
+                                if (!isNaN(num) && num >= 1) {
+                                    setQuantity(num);
+                                }
+                            }
+                        }}
+                        onBlur={() => {
+                            if (quantity === 0) {
+                                setQuantity(1);
+                            }
+                        }}
+                    />
+
+
                     <TouchableOpacity onPress={increaseQuantity} style={productDetail.quantityButton}>
                         <Text style={productDetail.quantityText}>+</Text>
                     </TouchableOpacity>
                 </View>
                 <TouchableOpacity
                     style={productDetail.cartButton}
-                    onPress={() => addToCart(product.proId, selectedSize, quantity, language)}
+                    onPress={handleAddToCart}
                 >
                     <Text style={productDetail.cartText}>{formatPrice(selectedPrice, quantity)}</Text>
                 </TouchableOpacity>
+
 
             </View>
 

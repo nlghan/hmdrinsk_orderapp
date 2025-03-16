@@ -153,32 +153,66 @@ const OrderScreen = () => {
             </View>
           </View>
         }
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            style={homeStyles.productItem}
-            onPress={() =>
-              navigation.navigate("ProductDetail", {
-                product: { ...item, isFavourited: item.isFavourited ?? false },
-              })
-            }
-          >
-            <Image source={{ uri: item.productImageResponseList[0]?.linkImage }} style={homeStyles.productImage} />
-            <View style={homeStyles.productInfo}>
-              <Text style={homeStyles.productName}>{item.proName}</Text>
-              <Text style={homeStyles.productPrice}>{item.listProductVariants[0]?.price} đ</Text>
+        renderItem={({ item }) => {
+          const price0 = item.listProductVariants[0]?.stock !== 0 ? item.listProductVariants[0]?.price : 0;
+          const price1 = item.listProductVariants[1]?.stock !== 0 ? item.listProductVariants[1]?.price : 0;
+          const price2 = item.listProductVariants[2]?.stock !== 0 ? item.listProductVariants[2]?.price : 0;
+      
+          const isOutOfStock = 
+              (item.listProductVariants[0]?.stock || 0) === 0 &&
+              (item.listProductVariants[1]?.stock || 0) === 0 &&
+              (item.listProductVariants[2]?.stock || 0) === 0;
+      
+          return (
               <TouchableOpacity
-                style={homeStyles.addToCartButton}
-                onPress={() =>
-                  navigation.navigate("ProductDetail", {
-                    product: { ...item, isFavourited: item.isFavourited ?? false },
-                  })
-                }
+                  style={[
+                      homeStyles.productItem,
+                      isOutOfStock && { backgroundColor: "#D3D3D3", opacity: 0.5 } // Màu xám nếu hết hàng
+                  ]}
+                  onPress={() =>
+                      navigation.navigate("ProductDetail", {
+                          product: { ...item, isFavourited: item.isFavourited ?? false },
+                      })
+                  }
+                  disabled={isOutOfStock}
               >
-                <Text style={homeStyles.addToCartText}>{t("detail")}</Text>
+                  <Image 
+                      source={{ uri: item.productImageResponseList[0]?.linkImage }} 
+                      style={homeStyles.productImage} 
+                  />
+                  <View style={homeStyles.productInfo}>
+                      <Text style={homeStyles.productName}>{item.proName}</Text>
+      
+                      {/* Hiển thị giá hoặc thông báo hết hàng */}
+                      {isOutOfStock ? (
+                          <Text style={[homeStyles.productPrice, { color: "red", fontWeight: "bold" }]}>
+                              Sản phẩm hiện tại đã hết!
+                          </Text>
+                      ) : (
+                          <Text style={homeStyles.productPrice}>
+                              {price0 !== 0 ? price0 : price1 !== 0 ? price1 : price2 !== 0 ? price2 : price0} đ
+                          </Text>
+                      )}
+      
+                      <TouchableOpacity
+                          style={[
+                              homeStyles.addToCartButton,
+                              isOutOfStock && { backgroundColor: "#A9A9A9" } // Làm nhạt màu nút nếu hết hàng
+                          ]}
+                          onPress={() =>
+                              navigation.navigate("ProductDetail", {
+                                  product: { ...item, isFavourited: item.isFavourited ?? false },
+                              })
+                          }
+                          disabled={isOutOfStock}
+                      >
+                          <Text style={homeStyles.addToCartText}>{t("detail")}</Text>
+                      </TouchableOpacity>
+                  </View>
               </TouchableOpacity>
-            </View>
-          </TouchableOpacity>
-        )}
+          );
+      }
+      }
         ListFooterComponent={
           visibleProducts < filteredProducts.length ? <ActivityIndicator size="large" color="blue" /> : null
         }
