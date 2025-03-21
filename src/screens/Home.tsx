@@ -2,8 +2,9 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { 
   View, Text, TouchableOpacity, Image, FlatList, 
   SafeAreaView, ActivityIndicator, TouchableWithoutFeedback, RefreshControl, 
-  ListRenderItem, Keyboard 
+  ListRenderItem, Keyboard, Alert 
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useCategoryStore } from '../store/store';
 import { COLORS } from '../theme/theme';
 import LinearGradient from 'react-native-linear-gradient';
@@ -20,6 +21,9 @@ import Slider from '../components/Slider';
 import { Product } from './ProductDetail';
 import { Category } from '../store/store'; 
 import { useCartStore } from '../store/useCartStore';
+import useWebSocket from '../utils/Socket'; 
+import NotificationPopup from '../components/NotificationPopup';
+
 
 const Home = () => {
   const { data, insertFavoriteItem } = useCategoryStore();
@@ -30,7 +34,8 @@ const Home = () => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<number | null>(null);
-
+  const token = AsyncStorage.getItem('access_token');
+  const { language, userId } = useCategoryStore();
 
   // 🟢 Xử lý dữ liệu sản phẩm để tránh lỗi undefined
   const fixedProducts: Product[] = Array.isArray(products)
@@ -130,6 +135,7 @@ const Home = () => {
 
   return (
     <SafeAreaView style={{ flex: 1 }}>
+      <NotificationPopup userId={userId ?? 0} />
       <View>
       <LinearGradient
           colors={['#f3ebe0', '#f7eee9de']}

@@ -8,11 +8,13 @@ import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../navigation/RootStackParamList';
 import { useCartStore } from '../store/useCartStore';
+import { useCategoryStore } from '../store/store';
 
 const Header = ({ style }: { style?: object }) => {
     const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
     const { cartTotal } = useCartStore();
     const { t } = useTranslation();
+    const { userId } = useCategoryStore();
     return (
         <View style={[homeStyles.header, style]}>
             <View style={homeStyles.logoContainer}>
@@ -22,13 +24,15 @@ const Header = ({ style }: { style?: object }) => {
 
             <View style={homeStyles.headerIcons}>
                 <TouchableOpacity style={homeStyles.iconButton} onPress={() => {
-                     // ✅ Hủy chọn khi chuyển trang
+                    // ✅ Hủy chọn khi chuyển trang
                     navigation.navigate('Cart');
                 }}>
                     <Icon name="shopping-cart" size={20} color={COLORS.primaryGreenHex} />
                     <Text style={homeStyles.iconText}>{cartTotal}</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={homeStyles.iconButton}>
+                <TouchableOpacity  style={homeStyles.iconButton}
+                    onPress={() => navigation.navigate("Notification", { userId : userId ?? 0})} // Truyền userId hợp lệ
+                >
                     <Text>
                         <Icon name="notifications" size={20} color={COLORS.blackAlpha} />
                     </Text>

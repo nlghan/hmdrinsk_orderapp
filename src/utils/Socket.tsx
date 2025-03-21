@@ -1,73 +1,116 @@
-import { useEffect, useState } from 'react';
-import { Client } from '@stomp/stompjs';
-import SockJS from 'sockjs-client';
-import { Alert } from 'react-native';
-import { useCategoryStore } from '../store/store';
+import React, { useState, useEffect, useRef } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const useWebSocket = (userId: number) => {
-
-    interface Notification {
+    interface NotificationWS {
         userId: number;
         shipmentId: number;
         message: string;
         time: string;
-      }
-      
-      const [notifications, setNotifications] = useState<Notification[]>([]);      
+    }
+
+    const [notifications, setNotifications] = useState<NotificationWS[]>([]);
+    const socketRef = useRef<WebSocket | null>(null);
+    const reconnectRef = useRef<NodeJS.Timeout | null>(null);
+    const heartbeatRef = useRef<NodeJS.Timeout | null>(null);
 
     useEffect(() => {
         if (!userId) {
-            console.warn('ID không hợp lệ.');
+            console.log('ID không hợp lệ.');
             return;
         }
 
-        console.log('Connecting WebSocket with userId:', userId);
+        console.log('🔗 Connecting WebSocket with userId:', userId);
 
-        const socket = new SockJS('http://192.168.9.195:1010/ws');
-        
-        const stompClient = new Client({
-            webSocketFactory: () => socket,
-            connectHeaders: {},
-            debug: (str) => console.log(str),
-            onConnect: () => {
-                console.log('WebSocket connected');
-                const topic = `/topic/shipper/${userId}`;
-                console.log(`Subscribing to ${topic}`);
-
-                stompClient.subscribe(topic, (message) => {
-                    console.log('Received raw message:', message);
-                    if (message.body) {
-                        try {
-                            const notification = JSON.parse(message.body);
-                            console.log('Parsed notification:', notification);
-                            setNotifications((prev) => [...prev, notification]);
-                            Alert.alert('Thông báo', notification.message);
-                        } catch (e) {
-                            console.error('Error parsing message body:', e);
-                        }
-                    }
+        const connectWebSocket = async () => {
+            try {
+                const token = await AsyncStorage.getItem('access_token');
+                if (!token) {
+                    console.log('⚠️ Không tìm thấy token, hủy kết nối WebSocket.');
+                    return;
                 }
-            );
-            },            
-            onStompError: (frame) => {
-                console.error(`Broker reported error: ${frame.headers['message']}`);
-                console.error(`Additional details: ${frame.body}`);
-            },
-            onDisconnect: () => {
-                console.log('WebSocket disconnected');
-            },
-        });
+        
+                console.log('🔑 Token được sử dụng:', token);
+                
+                const encodedToken = encodeURIComponent(token);  // Encode token để tránh lỗi URL
+                const ws = new WebSocket(`ws://192.168.9.195:1010/ws-raw?token=${encodedToken}&userId=${userId}`);
+                
+                socketRef.current = ws;
+        
+                ws.onopen = () => {
+                    console.log('✅ WebSocket connected!');
+                    ws.send(JSON.stringify({ userId, token })); 
+                    startHeartbeat(); // Bắt đầu gửi ping giữ kết nối
+                };
 
-        stompClient.onWebSocketError = (error) => {
-            console.error('WebSocket error:', error);
+                ws.onerror = (error) => {
+                    console.log('❌ WebSocket error:', error);
+                };
+
+                ws.onclose = (event) => {
+                    console.log(`⚠️ WebSocket disconnected! Code: ${event.code}, Reason: ${event.reason}`);
+                    stopHeartbeat();
+                    if (!event.wasClean) {
+                        console.log('🔄 Đang thử kết nối lại sau 5 giây...');
+                        reconnectRef.current = setTimeout(connectWebSocket, 5000);
+                    }
+                };
+
+                ws.onmessage = (event) => {
+                    console.log('📩 Nhận được tin nhắn từ server:', event.data);
+                    try {
+                        const message = JSON.parse(event.data);
+                        console.log('🚀 ~ WebSocket Message:', message);
+
+                        if (message.type === 'NEW_NOTIFICATION') {
+                            setNotifications((prev) => [
+                                ...prev,
+                                {
+                                    userId: message.userId,
+                                    shipmentId: message.shipmentId,
+                                    message: message.message,
+                                    time: message.time,
+                                },
+                            ]);
+                        }
+                    } catch (error) {
+                        console.log('❌ Lỗi khi parse JSON:', error);
+                    }
+                };
+            } catch (error) {
+                console.log('🚨 Lỗi khi lấy token:', error);
+            }
         };
 
-        stompClient.activate();
-        console.log('WebSocket is activating...');
+        const startHeartbeat = () => {
+            stopHeartbeat(); // Xóa timer cũ nếu có
+            heartbeatRef.current = setInterval(() => {
+                if (socketRef.current?.readyState === WebSocket.OPEN) {
+                    console.log('💓 Sending ping...');
+                    socketRef.current.send(JSON.stringify({ type: 'PING' }));
+                }
+            }, 10000); // Gửi ping mỗi 10 giây
+        };
+
+        const stopHeartbeat = () => {
+            if (heartbeatRef.current) {
+                clearInterval(heartbeatRef.current);
+                heartbeatRef.current = null;
+            }
+        };
+
+        connectWebSocket();
 
         return () => {
-            if (stompClient) stompClient.deactivate();
-            console.log('WebSocket deactivated');
+            console.log('🔌 Đóng kết nối WebSocket...');
+            stopHeartbeat();
+            if (socketRef.current) {
+                socketRef.current.close();
+            }
+            if (reconnectRef.current) {
+                clearTimeout(reconnectRef.current);
+                reconnectRef.current = null;
+            }
         };
     }, [userId]);
 

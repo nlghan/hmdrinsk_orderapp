@@ -27,5 +27,6 @@ export type RootStackParamList = {
     Orther: undefined;
     Payment: undefined;
     OrderComplete:undefined;
+    Notification: { userId: number } | undefined;
   };
   

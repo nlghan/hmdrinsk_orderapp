@@ -447,8 +447,6 @@ export const useCartStore = create<CartStore>()(
                   { headers: { Authorization: `Bearer ${accessToken}` } }
                 );
 
-                console.log(`✅ API Response for voucher ${voucher.voucherId}:`, voucherDetailResponse.data);
-
                 const voucherDetails = voucherDetailResponse.data?.body;
                 if (!voucherDetails) {
                   console.warn(`⚠️ No details found for voucher ${voucher.voucherId}`);
@@ -474,8 +472,6 @@ export const useCartStore = create<CartStore>()(
           const validVouchers = detailedVouchers.filter((v) => v !== null);
 
           set({ vouchers: validVouchers, voucherTotal: response.data.total });
-
-          console.log("✅ Final stored vouchers:", validVouchers);
 
         } catch (error) {
           console.error("❌ Error fetching vouchers:", error);
