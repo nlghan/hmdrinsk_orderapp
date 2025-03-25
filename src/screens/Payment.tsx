@@ -168,7 +168,7 @@ const Payment = () => {
                 {/* Số tiền thanh toán */}
                 <View style={styles.totalContainer}>
                     <Text style={styles.totalText}>Số tiền thanh toán</Text>
-                    <Text style={styles.totalAmount}>{(order.totalPrice - order.pointCoinUse - order.deliveryFee).toLocaleString()}đ</Text>
+                    <Text style={styles.totalAmount}>{(order.totalPrice - order.pointCoinUse + order.deliveryFee).toLocaleString()}đ</Text>
                 </View>
 
                 {/* Nút đặt hàng */}

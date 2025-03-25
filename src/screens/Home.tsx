@@ -134,7 +134,7 @@ const Home = () => {
   ), []);
 
   return (
-    <SafeAreaView style={{ flex: 1 }}>
+    <View style={{ flex: 1 }}>
       <NotificationPopup userId={userId ?? 0} />
       <View>
       <LinearGradient
@@ -191,7 +191,7 @@ const Home = () => {
           )}
         </LinearGradient>
       </TouchableWithoutFeedback>
-    </SafeAreaView>
+    </View>
   );
 };
 

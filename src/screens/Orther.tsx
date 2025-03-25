@@ -8,11 +8,13 @@ import { StackNavigationProp } from "@react-navigation/stack";
 import { RootStackParamList } from "../navigation/RootStackParamList";
 import Notification from '../components/Notification';
 import OrderCount from '../components/OrderCount';
+import NotificationPopup from '../components/NotificationPopup';
 
 const Other = () => {
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
   const { t } = useTranslation();
   const logout = useCategoryStore((state) => state.logout);
+  const { language, userId } = useCategoryStore();
   const [orderCounts, setOrderCounts] = useState({
     confirmed: 0,
     // waiting: 0,
@@ -33,6 +35,7 @@ const Other = () => {
   };
   return (
     <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
+      {/* <NotificationPopup userId={userId ?? 0} /> */}
       <View style={styles.container}>
         <Notification message={notification.message} visible={notification.visible} onHide={() => setNotification({ ...notification, visible: false })} />
         {/* Tiện ích */}
@@ -51,6 +54,7 @@ const Other = () => {
           <View style={styles.row}>
             <TouchableOpacity style={styles.box} onPress={() => navigation.navigate('DeliveringOrders')}>
               <MaterialIcons name="local-shipping" style={styles.iconBlue} size={30} />
+              <View style={styles.badge}>
               {orderCounts ? (
                 orderCounts.confirmed > 0 ? (
                   <Text style={styles.badgeText}>{orderCounts.confirmed}</Text>
@@ -58,6 +62,7 @@ const Other = () => {
               ) : (
                 <ActivityIndicator size="small" color="#fff" />
               )}
+              </View>             
               <Text style={styles.statusText}>Đang giao</Text>
             </TouchableOpacity>
 

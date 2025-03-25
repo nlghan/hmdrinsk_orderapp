@@ -15,15 +15,16 @@ const useWebSocket = (userId: number) => {
     const heartbeatRef = useRef<NodeJS.Timeout | null>(null);
 
     useEffect(() => {
-        if (!userId) {
-            console.log('ID không hợp lệ.');
-            return;
-        }
-
+        if (!userId || socketRef.current) return;
         console.log('🔗 Connecting WebSocket with userId:', userId);
 
         const connectWebSocket = async () => {
             try {
+                if (socketRef.current) {
+                    console.log('⚠️ Đóng kết nối cũ trước khi tạo mới');
+                    socketRef.current.close();
+                    socketRef.current = null;
+                }
                 const token = await AsyncStorage.getItem('access_token');
                 if (!token) {
                     console.log('⚠️ Không tìm thấy token, hủy kết nối WebSocket.');
@@ -52,7 +53,7 @@ const useWebSocket = (userId: number) => {
                     stopHeartbeat();
                     if (!event.wasClean) {
                         console.log('🔄 Đang thử kết nối lại sau 5 giây...');
-                        reconnectRef.current = setTimeout(connectWebSocket, 5000);
+                        // reconnectRef.current = setTimeout(connectWebSocket, 5000);
                     }
                 };
 
@@ -86,7 +87,6 @@ const useWebSocket = (userId: number) => {
             stopHeartbeat(); // Xóa timer cũ nếu có
             heartbeatRef.current = setInterval(() => {
                 if (socketRef.current?.readyState === WebSocket.OPEN) {
-                    console.log('💓 Sending ping...');
                     socketRef.current.send(JSON.stringify({ type: 'PING' }));
                 }
             }, 10000); // Gửi ping mỗi 10 giây

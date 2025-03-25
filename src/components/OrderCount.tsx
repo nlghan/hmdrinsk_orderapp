@@ -53,12 +53,13 @@ const OrderCount: React.FC<OrderCountProps> = ({onDataFetched }) => {
         ]);
 
         const newOrderCounts = {
-          confirmed: confirmedRes.data.total || 0,
+          confirmed: confirmedRes.data.length|| 0,
         //   waiting: waitingRes.data.total || 0,
           cancelled: cancelledRes.data.total || 0,
           pending: pendingRes.data.total || 0,
           refunded: refundedRes.data.total || 0,
         };
+        console.log('📦 Số lượng đơn hàng:', newOrderCounts);
 
         setOrderCounts(newOrderCounts);
         onDataFetched(newOrderCounts);

@@ -125,7 +125,24 @@ const styles = StyleSheet.create({
       marginTop: 4,
       textAlign: 'center',
     },
-    //order
+    notificationCount: {
+      position: "absolute",
+      top: -6,
+      right: -5,
+      backgroundColor: COLORS.primaryGreenHex,
+      width: 16,
+      height: 16,
+      borderRadius: 8,
+      justifyContent: "center",
+      alignItems: "center",
+  },
+  
+  notificationText: {
+      color: "white",
+      fontSize: 10,
+      fontWeight: "bold",
+  },
+  
     
     
     

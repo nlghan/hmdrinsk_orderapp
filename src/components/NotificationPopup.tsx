@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { View, Text, Modal, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
 import useWebSocket from '../utils/Socket';
 import { useTranslation } from 'react-i18next';
@@ -19,16 +19,39 @@ const NotificationPopup: React.FC<NotificationPopupProps> = ({ userId }) => {
     const [notifications, setNotifications] = useState<NotificationWS[]>([]);
     const [modalVisible, setModalVisible] = useState(false);
     const { t } = useTranslation();
+    const isModalOpen = useRef(false);
+    const lastNotificationTime = useRef<number | null>(null);
 
     useEffect(() => {
         if (socketNotifications.length > 0) {
             const newNotification = socketNotifications[socketNotifications.length - 1];
-            if (newNotification && typeof newNotification === 'object' && 'message' in newNotification) {
-                setNotifications((prev: NotificationWS[]) => [...prev, newNotification]); // Giữ kiểu Notification[]
-                setModalVisible(true);
+            const newNotificationTime = Number(newNotification.time);
+            // Kiểm tra nếu thông báo mới không trùng với thông báo trước đó
+            if (
+                newNotification &&
+                typeof newNotification === "object" &&
+                "message" in newNotification &&
+                (lastNotificationTime.current === null || lastNotificationTime.current !== newNotificationTime)
+            ) {
+                lastNotificationTime.current = newNotificationTime; // Cập nhật timestamp mới nhất
+    
+                setNotifications((prev) => {
+                    const isDuplicate = prev.some(noti => Number(noti.time) === newNotificationTime);
+                    return isDuplicate ? prev : [...prev, newNotification];
+                });
+    
+                if (!isModalOpen.current) {
+                    setModalVisible(true);
+                    isModalOpen.current = true;
+                }
             }
         }
     }, [socketNotifications]);
+
+    const closeModal = () => {
+        setModalVisible(false);
+        isModalOpen.current = false; // 🔹 Cập nhật trạng thái khi đóng
+    };
 
     return (
         <View>
@@ -36,7 +59,7 @@ const NotificationPopup: React.FC<NotificationPopupProps> = ({ userId }) => {
                 animationType="slide"
                 transparent={true}
                 visible={modalVisible}
-                onRequestClose={() => setModalVisible(false)}
+                onRequestClose={closeModal}
             >
                 <View style={styles.modalContainer}>
                     <View style={styles.modalContent}>
