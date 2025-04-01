@@ -28,6 +28,9 @@ import ListVoucher from '../screens/ListVoucher';
 import RefundOrder from '../screens/RefundOrder';
 import Payment from '../screens/Payment';
 import OrderComplete from '../screens/OrderComplete';
+import Notification from '../screens/Notification';
+import NotificationScreen from '../screens/Notification';
+import OrderFailed from '../screens/OrderFailed';
 
 
 // ✅ Định nghĩa kiểu cho danh sách các màn hình
@@ -49,15 +52,15 @@ export type RootStackParamList = {
   HistoryOrders: undefined;
   DeliveringOrders: undefined;
   PendingOrders: undefined;
-
+  OrderFailed:undefined;
   CancelledOrders: undefined;
   WaitingOrders: undefined;
   RefundOrders: undefined;
   MyOrderDetails: { shipmentId: number };
   Orther: undefined;
-  Payment: undefined;
+  Payment: { orderId: number };
   OrderComplete:undefined;
-
+  Notification: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -107,6 +110,10 @@ const StackNavigator = () => {
       <Stack.Screen name="MyOrderDetails" component={MyOrderDetails} options={{ headerShown: false, animation: 'slide_from_right' }} />
       <Stack.Screen name="Payment" component={Payment} options={{ headerShown: false, animation: 'slide_from_right' }} />
       <Stack.Screen name="OrderComplete" component={OrderComplete} options={{ headerShown: false, animation: 'slide_from_right' }} />
+      <Stack.Screen name="OrderFailed" component={OrderFailed} options={{ headerShown: false, animation: 'slide_from_right' }} />
+      <Stack.Screen name="Notification" component={NotificationScreen} options={{ headerShown: false, animation: 'slide_from_right' }}/>
+
+      
     </Stack.Navigator>
   );
 };

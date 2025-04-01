@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import axios from "axios";
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axiosInstance from '../utils/axiosInstance';
@@ -57,7 +58,8 @@ interface CartStore {
   voucherTotal: number;
   selectedVoucher: SelectedVoucher;
   coin: number;  // New field for storing coins
-  order: any | null; 
+  order: any | null;
+  orderId: number;
   ensureActiveCart: () => Promise<number>;
   fetchCartItem: () => Promise<void>;
   fetchVoucher: () => Promise<void>;
@@ -71,7 +73,8 @@ interface CartStore {
   changeSize: (cartItemId: number, size: string) => Promise<void>;
   setCoin: (coinAmount: number) => void;  // New function to update the coin state
   updateCartTotal: () => void;
-  createOrder: (note: string) => void;  // New function to update the coin state
+  createOrder: (note: string) => Promise<string>;  // New function to update the coin state
+  setOrderId: (orderId: number) => void;
 }
 
 export const useCartStore = create<CartStore>()(
@@ -88,7 +91,7 @@ export const useCartStore = create<CartStore>()(
         selectedVoucherDiscountAmount: 0,
       },
       order: null,
-
+      orderId: 0,
       coin: 0,  // Initialize the coin state to 0
 
       // Function to set the coin amount
@@ -97,12 +100,18 @@ export const useCartStore = create<CartStore>()(
         set({ coin: coinAmount });
       },
 
+      setOrderId: (orderId: number) => {
+        console.log("🔢 Đặt orderId:", orderId);
+        set({ orderId });
+      },
+
+
       updateCartTotal: () => {
         const cartItems = get().cart;
         const totalQuantity = cartItems.reduce((sum, item) => sum + item.quantity, 0);
         set({ cartTotal: totalQuantity });
       },
-      
+
 
       ensureActiveCart: async () => {
         try {
@@ -119,8 +128,14 @@ export const useCartStore = create<CartStore>()(
             { headers: { Authorization: `Bearer ${accessToken}` } }
           );
 
-          const restoreCart = cartListResponse.data.listCart.find(cart => cart.statusCart === "RESTORE");
-          const activeCart = restoreCart || cartListResponse.data.listCart.find(cart => ["NEW", "PAUSE"].includes(cart.statusCart));
+          const { listCart } = cartListResponse.data;
+
+          // Ưu tiên theo thứ tự COMPLETED_PAUSE > RESTORE > NEW/PAUSE
+          const completedPauseCart = listCart.find(cart => cart.statusCart === "COMPLETED_PAUSE");
+          const restoreCart = listCart.find(cart => cart.statusCart === "RESTORE");
+          const newOrPauseCart = listCart.find(cart => ["NEW"].includes(cart.statusCart));
+
+          const activeCart = completedPauseCart || restoreCart || newOrPauseCart;
 
           if (activeCart) {
             console.log("✅ Found active cart:", activeCart.cartId);
@@ -143,6 +158,7 @@ export const useCartStore = create<CartStore>()(
           throw error;
         }
       },
+
 
       fetchCartItem: async () => {
         try {
@@ -191,7 +207,7 @@ export const useCartStore = create<CartStore>()(
         try {
           const accessToken = await AsyncStorage.getItem('access_token');
           const { userId } = useCategoryStore.getState();
-          
+
           if (!accessToken) throw new Error("Access token missing");
           if (!userId) throw new Error("User ID missing");
 
@@ -226,29 +242,29 @@ export const useCartStore = create<CartStore>()(
         try {
           const accessToken = await AsyncStorage.getItem('access_token');
           const { userId } = useCategoryStore.getState();
-      
+
           if (!accessToken) throw new Error("Access token missing");
           if (!userId) throw new Error("User ID missing");
-      
+
           console.log(`🔄 Updating quantity for cart item ${cartItemId} to ${quantity}...`);
-      
+
           const payload = {
             userId: Number(userId),
             cartItemId,
             quantity,
           };
-      
+
           console.log("🛠 Payload to update quantity:", payload);
-      
+
           // Send PUT request to update the quantity of the cart item
           const response = await axiosInstance.put(
             `/cart-item/update`,
             payload,
             { headers: { Authorization: `Bearer ${accessToken}` } }
           );
-      
+
           console.log("📩 Response from server:", response.data);
-      
+
           // Update the cart after the quantity update
           await get().fetchCartItem();
           console.log("✅ Quantity updated successfully!");
@@ -257,8 +273,8 @@ export const useCartStore = create<CartStore>()(
           console.error("❌ Error updating quantity:", error);
         }
       },
-      
-      
+
+
 
       increaseQuantity: async (cartItemId: number) => {
         try {
@@ -290,128 +306,128 @@ export const useCartStore = create<CartStore>()(
         }
       },
 
-     // Hàm xóa sản phẩm khỏi giỏ hàng
-     deleteCartItem: async (cartItemId: number) => {
-      try {
-        const accessToken = await AsyncStorage.getItem('access_token');
-        const { userId } = useCategoryStore.getState();
-    
-        if (!accessToken) throw new Error("Access token missing");
-        if (!userId) throw new Error("User ID missing");
-    
-        console.log("🔴 Deleting item with cartItemId:", cartItemId);
-    
-        const deletePayload = { userId: Number(userId), cartItemId };
-    
-        // Send DELETE request to the server
-        const deleteResponse = await axiosInstance.delete(
-          `/cart-item/delete/${cartItemId}`,
-          {
-            headers: { Authorization: `Bearer ${accessToken}` },
-            data: deletePayload,
-          }
-        );
-    
-        console.log("🗑 Item deleted successfully:", deleteResponse.data.message);
-    
-        // Update the cart in the store after deletion
-        const updatedCart = useCartStore.getState().cart.filter(item => item.cartItemId !== cartItemId);
-        set({ cart: updatedCart });
-        get().updateCartTotal();
-    
-      } catch (error) {
-        console.error("❌ Error deleting cart item:", error);
-      }
-    },
+      // Hàm xóa sản phẩm khỏi giỏ hàng
+      deleteCartItem: async (cartItemId: number) => {
+        try {
+          const accessToken = await AsyncStorage.getItem('access_token');
+          const { userId } = useCategoryStore.getState();
 
-    deleteAllCartItems: async () => {
-      try {
-        const { currentCartId } = get();
-        const { userId } = useCategoryStore.getState();  // Get userId from the store
-    
-        if (!userId) throw new Error("User not logged in");
-        if (!currentCartId) throw new Error("No active cart found");
-    
-        const accessToken = await AsyncStorage.getItem('access_token');
-        if (!accessToken) throw new Error("Access token missing");
-    
-        console.log(`🗑️ Deleting all items from cart ${currentCartId} for user ${userId}...`);
-    
-        const payload = {
-          userId: Number(userId),
-          cartId: currentCartId,
-        };
-    
-        // Send DELETE request to the server
-        const response = await axiosInstance.delete(
-          `/cart/delete-allItem/${currentCartId}`,
-          {
-            headers: { Authorization: `Bearer ${accessToken}` },
-            data: payload,
-          }
-        );
-    
-        console.log("✅ All items deleted successfully:", response.data.message);
-    
-        // Update the cart in the store after deletion
-        set({ cart: [], cartTotal: 0 });
-    
-      } catch (error) {
-        console.error("❌ Error deleting all items from the cart:", error);
-      }
-    },
-    
-    
+          if (!accessToken) throw new Error("Access token missing");
+          if (!userId) throw new Error("User ID missing");
 
-    // Hàm giảm số lượng sản phẩm trong giỏ hàng (decreaseQuantity)
-    decreaseQuantity: async (cartItemId: number) => {
-      try {
-        const accessToken = await AsyncStorage.getItem('access_token');
-        const { userId } = useCategoryStore.getState(); // 🔥 Lấy userId đúng cách
+          console.log("🔴 Deleting item with cartItemId:", cartItemId);
 
-        if (!accessToken) throw new Error("Access token missing");
-        if (!userId) throw new Error("User ID missing");
+          const deletePayload = { userId: Number(userId), cartItemId };
 
-        console.log(`🔽 Decreasing quantity for cart item ${cartItemId}...`);
-
-        // Get the current cart state from the store
-        const cart = useCartStore.getState().cart;
-        const cartItem = cart.find(item => item.cartItemId === cartItemId);
-
-        if (!cartItem) {
-          throw new Error("Cart item not found");
-        }
-
-        const currentQuantity = cartItem.quantity;
-
-        if (currentQuantity > 1) {
-          // If quantity is greater than 1, decrease the quantity
-          console.log("🔼 Quantity is greater than 1, decreasing...");
-
-          const payload = { userId: Number(userId), cartItemId, quantity: 1 };
-          console.log("🛠 Payload for decrease:", payload);
-
-          const response = await axiosInstance.put(
-            `/cart-item/decrease`,
-            payload,
-            { headers: { Authorization: `Bearer ${accessToken}` } }
+          // Send DELETE request to the server
+          const deleteResponse = await axiosInstance.delete(
+            `/cart-item/delete/${cartItemId}`,
+            {
+              headers: { Authorization: `Bearer ${accessToken}` },
+              data: deletePayload,
+            }
           );
 
-          console.log("📩 Response from server:", response.data);
+          console.log("🗑 Item deleted successfully:", deleteResponse.data.message);
 
-          console.log("✅ Quantity decreased successfully!");
-
-          await get().fetchCartItem();
-        } else if (currentQuantity === 1 || currentQuantity < 1) {
-          // If quantity is 1 or less, delete the item
-          await get().deleteCartItem(cartItemId);
+          // Update the cart in the store after deletion
+          const updatedCart = useCartStore.getState().cart.filter(item => item.cartItemId !== cartItemId);
+          set({ cart: updatedCart });
           get().updateCartTotal();
+
+        } catch (error) {
+          console.error("❌ Error deleting cart item:", error);
         }
-      } catch (error) {
-        console.error("❌ Error decreasing quantity:", error);
-      }
-    },
-      
+      },
+
+      deleteAllCartItems: async () => {
+        try {
+          const { currentCartId } = get();
+          const { userId } = useCategoryStore.getState();  // Get userId from the store
+
+          if (!userId) throw new Error("User not logged in");
+          if (!currentCartId) throw new Error("No active cart found");
+
+          const accessToken = await AsyncStorage.getItem('access_token');
+          if (!accessToken) throw new Error("Access token missing");
+
+          console.log(`🗑️ Deleting all items from cart ${currentCartId} for user ${userId}...`);
+
+          const payload = {
+            userId: Number(userId),
+            cartId: currentCartId,
+          };
+
+          // Send DELETE request to the server
+          const response = await axiosInstance.delete(
+            `/cart/delete-allItem/${currentCartId}`,
+            {
+              headers: { Authorization: `Bearer ${accessToken}` },
+              data: payload,
+            }
+          );
+
+          console.log("✅ All items deleted successfully:", response.data.message);
+
+          // Update the cart in the store after deletion
+          set({ cart: [], cartTotal: 0 });
+
+        } catch (error) {
+          console.error("❌ Error deleting all items from the cart:", error);
+        }
+      },
+
+
+
+      // Hàm giảm số lượng sản phẩm trong giỏ hàng (decreaseQuantity)
+      decreaseQuantity: async (cartItemId: number) => {
+        try {
+          const accessToken = await AsyncStorage.getItem('access_token');
+          const { userId } = useCategoryStore.getState(); // 🔥 Lấy userId đúng cách
+
+          if (!accessToken) throw new Error("Access token missing");
+          if (!userId) throw new Error("User ID missing");
+
+          console.log(`🔽 Decreasing quantity for cart item ${cartItemId}...`);
+
+          // Get the current cart state from the store
+          const cart = useCartStore.getState().cart;
+          const cartItem = cart.find(item => item.cartItemId === cartItemId);
+
+          if (!cartItem) {
+            throw new Error("Cart item not found");
+          }
+
+          const currentQuantity = cartItem.quantity;
+
+          if (currentQuantity > 1) {
+            // If quantity is greater than 1, decrease the quantity
+            console.log("🔼 Quantity is greater than 1, decreasing...");
+
+            const payload = { userId: Number(userId), cartItemId, quantity: 1 };
+            console.log("🛠 Payload for decrease:", payload);
+
+            const response = await axiosInstance.put(
+              `/cart-item/decrease`,
+              payload,
+              { headers: { Authorization: `Bearer ${accessToken}` } }
+            );
+
+            console.log("📩 Response from server:", response.data);
+
+            console.log("✅ Quantity decreased successfully!");
+
+            await get().fetchCartItem();
+          } else if (currentQuantity === 1 || currentQuantity < 1) {
+            // If quantity is 1 or less, delete the item
+            await get().deleteCartItem(cartItemId);
+            get().updateCartTotal();
+          }
+        } catch (error) {
+          console.error("❌ Error decreasing quantity:", error);
+        }
+      },
+
       fetchVoucher: async () => {
         try {
           const { userId } = useCategoryStore.getState();
@@ -446,8 +462,6 @@ export const useCartStore = create<CartStore>()(
                   { headers: { Authorization: `Bearer ${accessToken}` } }
                 );
 
-                console.log(`✅ API Response for voucher ${voucher.voucherId}:`, voucherDetailResponse.data);
-
                 const voucherDetails = voucherDetailResponse.data?.body;
                 if (!voucherDetails) {
                   console.warn(`⚠️ No details found for voucher ${voucher.voucherId}`);
@@ -474,62 +488,67 @@ export const useCartStore = create<CartStore>()(
 
           set({ vouchers: validVouchers, voucherTotal: response.data.total });
 
-          console.log("✅ Final stored vouchers:", validVouchers);
-
         } catch (error) {
           console.error("❌ Error fetching vouchers:", error);
           set({ vouchers: [], voucherTotal: 0 });
         }
       },
 
-      createOrder: async (note: string) => {
+      createOrder: async (note: string): Promise<string> => {  // Thêm Promise<string>
         try {
           const { currentCartId, selectedVoucher, coin } = get();
           const { userId, language } = useCategoryStore.getState();
-      
+
           if (!userId) throw new Error("User not logged in");
           if (!currentCartId) throw new Error("No active cart found");
-      
+
           const accessToken = await AsyncStorage.getItem('access_token');
           if (!accessToken) throw new Error("Access token missing");
-      
-          const voucherId = selectedVoucher.selectedVoucherId || "string";  
-          const pointCoinUse = coin || 0;  
-      
+
+          const voucherId = selectedVoucher.selectedVoucherId || "string";
+          const pointCoinUse = coin || 0;
+
           console.log(`🛒 Creating order...`);
-      
+
           const response = await axiosInstance.post(
             '/orders/create',
             { userId, cartId: currentCartId, voucherId, pointCoinUse, note, language },
             { headers: { Authorization: `Bearer ${accessToken}` } }
           );
-      
+
           console.log("✅ Order created successfully:", response.data);
-      
-          const order = response.data.body;  // Store order details
-          set({ 
-            order,  // ✅ Save the order in Zustand store
-            cart: [], 
-            cartTotal: 0, 
+
+          const order = response.data.body;
+          const orderId = order?.orderId;
+
+          if (!orderId) {
+            throw new Error("Invalid orderId received from API");
+          }
+
+          // Lưu orderId vào Zustand store
+          set({
+            order,
+            orderId,
+            cart: [],
+            cartTotal: 0,
             selectedVoucher: {
               selectedVoucherId: null,
               selectedVoucherKey: null,
               selectedVoucherDiscountAmount: 0
-            }, 
-            coin: 0, 
+            },
+            coin: 0,
             currentCartId: null
           });
-      
+
           console.log("🛍 Order stored in state:", order);
-      
-          return order;  // Return order details
+
+          return orderId;  // Đảm bảo luôn trả về orderId dưới dạng string
         } catch (error) {
           console.error("❌ Error creating order:", error);
           throw error;
         }
       },
-      
-      
+
 
       addToCart: async (proId: number, size: string, quantity: number, language: string) => {
         try {
@@ -550,25 +569,22 @@ export const useCartStore = create<CartStore>()(
 
           const response = await axiosInstance.post<CartItem>(
             `/cart-item/insert`,
-            {
-              userId,
-              cartId: currentCartId,
-              proId,
-              size,
-              quantity,
-              language,
-            },
+            { userId, cartId: currentCartId, proId, size, quantity, language },
             { headers: { Authorization: `Bearer ${accessToken}` } }
           );
 
           console.log("✅ Added to cart:", response.data);
 
           await get().fetchCartItem(); // Cập nhật lại giỏ hàng sau khi thêm
-        } catch (error) {
-          console.error("❌ Error adding to cart:", error);
+        } catch (error: any) {
+          if (axios.isAxiosError(error) && error.response) {
+            if (error.response.status === 400) {
+              throw new Error("❌ Vượt quá số lượng tồn kho");
+            }
+          }
+          throw new Error("❌ Lỗi thêm vào giỏ hàng");
         }
       },
-
 
       setSelectedVoucher: ({ selectedVoucherId, selectedVoucherKey, selectedVoucherDiscountAmount }) => {
         console.log("🛒 Setting selected voucher:", { selectedVoucherId, selectedVoucherKey, selectedVoucherDiscountAmount });

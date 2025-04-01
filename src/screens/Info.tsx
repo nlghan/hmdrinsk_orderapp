@@ -11,6 +11,7 @@ import { useNavigation } from '@react-navigation/native';
 import { useCategoryStore } from "../store/store";
 import Header from "../components/Header";
 import { useTranslation } from 'react-i18next';
+import { COLORS, FONTFAMILY } from "../theme/theme";
 
 type NavigationProps = {
   navigate: (screen: string) => void;
@@ -539,7 +540,7 @@ const Info: React.FC = () => {
         <Modal visible={isModalVisibleV} animationType="slide" transparent={true}>
           <View style={styles.modalContainer}>
             <View style={styles.modalContent}>
-              <Text style={styles.modalTitle}>Danh sách Voucher</Text>
+              <Text style={styles.modalTitle}>{t('information.voucherList')}</Text>
               {loading ? (
                 <ActivityIndicator size="large" color="#FF9800" />
               ) : (
@@ -552,11 +553,16 @@ const Info: React.FC = () => {
                       <Text
                         style={[
                           styles.voucherStatus,
-                          { color: item.status === "USED" ? "red" : "green" },
+                          { color: item.status === "USED" ? "red" : item.status === "EXPIRED" ? "gray" : "green" },
                         ]}
                       >
-                        {item.status === "USED" ? t('information.used') : t('information.inactive')}
+                        {item.status === "USED"
+                          ? t('information.used')
+                          : item.status === "EXPIRED"
+                            ? t('information.expired')
+                            : t('information.inactive')}
                       </Text>
+
                     </View>
                   )}
                 />
@@ -581,7 +587,7 @@ const Info: React.FC = () => {
             </View>
           ) : (
             <View style={styles.placeholder}>
-              <Text style={styles.placeholderText}>Không có ảnh</Text>
+              <Text style={styles.placeholderText}>N/A</Text>
             </View>
           )}
           <TouchableOpacity style={styles.updateButton}>
@@ -848,17 +854,19 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#ccc',
     color: "gray",
+    
   },
   datePickerButton: {
-    padding: 10,
+    padding: 8,
     backgroundColor: '#f2f2f2',
     borderRadius: 5,
     alignItems: 'center',
     marginBottom: 10,
   },
   dateText: {
-    fontSize: 16,
     color: '#333',
+    fontSize:24,
+    fontFamily:FONTFAMILY.dongle_regular,
   },
   updateButton: {
     marginTop: 20,
@@ -869,14 +877,14 @@ const styles = StyleSheet.create({
   },
   buttonUpImg: {
     marginTop: 20,
-    backgroundColor: "#e89f33",
+    backgroundColor: COLORS.primaryGreenHex,
     borderRadius: 8,
     alignItems: "center",
   },
   buttonText: {
     color: "#fff",
-    fontSize: 16,
-    fontWeight: "bold",
+    fontSize:24,
+    fontFamily:FONTFAMILY.dongle_regular,
   },
   voucherItem: {
     flexDirection: "row", // Xếp key và status trên cùng một dòng
@@ -887,21 +895,24 @@ const styles = StyleSheet.create({
     borderBottomColor: "#ccc",
   },
   voucherKey: {
-    fontSize: 16,
-    fontWeight: "bold",
+    fontSize:26,
+    fontFamily:FONTFAMILY.dongle_bold,
   },
   voucherStatus: {
-    fontSize: 16,
+    fontSize:24,
+    fontFamily:FONTFAMILY.dongle_regular,
   },
   input: {
     width: "100%",
-    padding: 10,
+    padding: 8,
     borderWidth: 1,
     borderColor: "#ab8b59",
     borderRadius: 8,
     marginBottom: 10,
     overflow: "hidden",
     textAlign: "left",
+    fontSize:25,
+    fontFamily:FONTFAMILY.dongle_light,
   },
   modalButton: {
     backgroundColor: "#e89f33",
@@ -928,7 +939,7 @@ const styles = StyleSheet.create({
     borderWidth: 4,
     borderColor: "#FFA726",
   },
-  avatar: { width: 120, height: 120, borderRadius: 60 },
+  avatar: { width: 160, height: 160, borderRadius: 80 },
   loadingOverlay: {
     position: "absolute",
     top: 0,
@@ -971,13 +982,16 @@ const styles = StyleSheet.create({
     borderBottomColor: "#ffdaa3",
   },
   label: {
-    fontWeight: "bold",
+    fontSize: 22,
+    fontFamily: FONTFAMILY.dongle_bold,
     color: "#E65100",
   },
   value: {
     flex: 1,
     textAlign: "right",
     color: "#5D4037",
+    fontSize: 22,
+    fontFamily: FONTFAMILY.dongle_regular,
   },
   loading: { textAlign: "center", marginTop: 20 },
   error: { color: "red", textAlign: "center", marginTop: 20 },

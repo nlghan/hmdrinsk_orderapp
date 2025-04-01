@@ -1,11 +1,17 @@
 
 import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView, ActivityIndicator, StyleSheet, Image } from 'react-native';
+import { View, Text, ScrollView, ActivityIndicator, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import { useRoute } from '@react-navigation/native';
 import axiosInstance from '../utils/axiosInstance';
 import { useCategoryStore } from "../store/store";
+import IconM from "react-native-vector-icons/MaterialIcons";
 import { useTranslation } from 'react-i18next';
+import { useNavigation } from "@react-navigation/native";
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { RootStackParamList } from "../navigation/RootStackParamList";
+import NotificationPopup from '../components/NotificationPopup';
+import { FONTFAMILY } from '../theme/theme';
 
 interface Order {
     orderId: number;
@@ -38,7 +44,7 @@ interface Item {
 const MyOrderDetails = () => {
     const route = useRoute();
     const { shipmentId } = route.params as { shipmentId: string | number };
-
+    const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
     const [customerName, setCustomerName] = useState<string>('');
     const [order, setOrder] = useState<Order | null>(null);
     const [payment, setPayment] = useState<Payment | null>(null);
@@ -46,8 +52,28 @@ const MyOrderDetails = () => {
     const [items, setItems] = useState<Item[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string>('');
-    const { language } = useCategoryStore();
+    const { language, userId } = useCategoryStore();
     const { t } = useTranslation();
+    const formatPrice = (price: number) => {
+        return (price).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    };
+    const statusMapVN: Record<string, string> = {
+        CONFIRMED: 'Đã xác nhận',
+        CANCELLED: 'Đã hủy',
+    };
+    const statusPaymentMapVN: Record<string, string> = {
+        COMPLETED: 'Hoàn tất',
+        FAILED: 'Thất bại',
+        PENDING: 'Đang xử lý',
+        REFUND: 'Hoàn tiền',
+    };
+    const statusShipmentMapVN: Record<string, string> = {
+        CANCELLED: 'Đã hủy',
+        SHIPPING: 'Đang giao',
+        SUCCESS: 'Giao thành công',
+        WAITINF: 'Chờ giao'
+    };
+
 
     useEffect(() => {
         const fetchOrderDetails = async () => {
@@ -100,93 +126,119 @@ const MyOrderDetails = () => {
 
     return (
         <ScrollView style={styles.container}>
+            {/* <NotificationPopup userId={userId ?? 0} /> */}
             <View style={styles.body}>
-            <Text style={styles.header}>Chi tiết đơn hàng</Text>
-
-            {/* Mã đơn hàng */}
-            <View style={styles.orderIdBox}>
-                <Text style={styles.orderIdText}>Mã đơn hàng: {order?.orderId || 'Không có'}</Text>
-            </View>
-
-            {/* Thông tin khách hàng */}
-            <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Thông tin khách hàng</Text>
-                <View style={styles.detailRow}>
-                    <Text style={styles.label}>Tên khách hàng:</Text>
-                    <Text style={styles.value}>{customerName}</Text>
+                <View style={styles.header}>
+                    <Text style={styles.header}>{t('orderDetail')}</Text>
+                    <TouchableOpacity style={styles.backIcon} onPress={() => navigation.goBack()}>
+                        <IconM name="arrow-back" size={20} color="#FF9800" />
+                    </TouchableOpacity>
                 </View>
-                <View style={styles.detailRow}>
-                    <Text style={styles.label}>Địa chỉ giao hàng:</Text>
+                {/* Mã đơn hàng */}
+                <View style={styles.orderIdBox}>
+                    <Text style={styles.orderIdText}>{t('history.order_id')} {order?.orderId || 'N/A'}</Text>
                 </View>
-                <View style={styles.detailRow}>
-        
+
+                {/* Thông tin khách hàng */}
+                <View style={styles.section}>
+                    <Text style={styles.sectionTitle}>{t('order.orderDetail.info')}</Text>
+                    <View style={styles.detailRow}>
+                        <Text style={styles.label}>{t('order.customer')}:</Text>
+                        <Text style={styles.value}>{customerName}</Text>
+                    </View>
+                    <View style={styles.detailRow}>
+                        <Text style={styles.label}>{t('address')}:</Text>
+                    </View>
+                    <View style={styles.detailRow}>
+
                         <Text style={styles.value}>{order?.address || 'Không có'}</Text>
 
-                </View>
-            </View>
-
-            {/* Thông tin đơn hàng */}
-            <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Thông tin đơn hàng</Text>
-                <View style={styles.detailRow}>
-                    <Text style={styles.label}>Tổng tiền:</Text>
-                    <Text style={styles.value}>{order?.totalPrice || 'Không có'} VNĐ</Text>
-                </View>
-                <View style={styles.detailRow}>
-                    <Text style={styles.label}>Trạng thái đơn hàng:</Text>
-                    <Text style={styles.value}>{order?.status || 'Không có'}</Text>
-                </View>
-            </View>
-
-            {/* Thông tin thanh toán */}
-            <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Thông tin thanh toán</Text>
-                <View style={styles.detailRow}>
-                    <Text style={styles.label}>Phương thức thanh toán:</Text>
-                    <Text style={styles.value}>{payment?.paymentMethod || 'Không có'}</Text>
-                </View>
-                <View style={styles.detailRow}>
-                    <Text style={styles.label}>Tình trạng thanh toán:</Text>
-                    <Text style={styles.value}>{payment?.statusPayment || 'Không có'}</Text>
-                </View>
-            </View>
-
-            {/* Thông tin giao hàng */}
-            <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Thông tin giao hàng</Text>
-                <View style={styles.detailRow}>
-                    <Text style={styles.label}>Tên shipper:</Text>
-                    <Text style={styles.value}>{shipment?.nameShipper || 'Không có'}</Text>
-                </View>
-                <View style={styles.detailRow}>
-                    <Text style={styles.label}>Ngày giao hàng:</Text>
-                    <Text style={styles.value}>{shipment?.dateDeliver || 'Chưa cập nhật'}</Text>
-                </View>
-                <View style={styles.detailRow}>
-                    <Text style={styles.label}>Trạng thái giao hàng:</Text>
-                    <Text style={styles.value}>{shipment?.status || 'Không có'}</Text>
-                </View>
-            </View>
-
-            {/* Danh sách sản phẩm */}
-            <View style={styles.section}>
-            <Text style={styles.subHeader}>Danh sách sản phẩm</Text>
-            {items.length > 0 ? (
-                items.map((item, index) => (
-                    <View key={index} style={styles.itemBox}>
-                        <Image source={{ uri: item.imageUrl }} style={styles.image} />
-                        <View style={styles.itemInfo}>
-                            <Text style={styles.itemName}>{item.proName}</Text>
-                            <Text style={styles.itemDetail}>Số lượng: {item.quantity}</Text>
-                            <Text style={styles.itemDetail}>Kích thước: {item.size}</Text>
-                            <Text style={styles.itemPrice}>{item.totalPrice} VNĐ</Text>
-                        </View>
                     </View>
-                ))
-            ) : (
-                <Text style={styles.emptyText}>Không có sản phẩm nào trong đơn hàng.</Text>
-            )}
-            </View>
+                </View>
+
+                {/* Thông tin đơn hàng */}
+                <View style={styles.section}>
+                    <Text style={styles.sectionTitle}>{t('orderContent.orderInfo')}</Text>
+                    <View style={styles.detailRow}>
+                        <Text style={styles.label}>{t('orderContent.price')}:</Text>
+                        <Text style={styles.value}>{formatPrice(payment?.amount ?? 0)}đ</Text>
+
+                    </View>
+                    <View style={styles.detailRow}>
+                        <Text style={styles.label}>{t('common.status')}:</Text>
+                        <Text style={styles.value}>
+                            {order?.status
+                                ? language === 'VN'
+                                    ? statusMapVN[order.status] || order.status
+                                    : order.status
+                                : 'Không có'}
+                        </Text>
+
+                    </View>
+                </View>
+
+                {/* Thông tin thanh toán */}
+                <View style={styles.section}>
+                    <Text style={styles.sectionTitle}>{t('infoPayment')}</Text>
+                    <View style={styles.detailRow}>
+                        <Text style={styles.label}>{t('paymentMethod')}:</Text>
+                        <Text style={styles.value}>{payment?.paymentMethod || 'Không có'}</Text>
+                    </View>
+                    <View style={styles.detailRow}>
+                        <Text style={styles.label}>{t('statusPayment')}:</Text>
+                        <Text style={styles.value}>
+                            {payment?.statusPayment
+                                ? language === 'VN'
+                                    ? statusPaymentMapVN[payment.statusPayment] || payment.statusPayment
+                                    : payment.statusPayment
+                                : 'Không có'}
+                        </Text>
+                    </View>
+                </View>
+
+                {/* Thông tin giao hàng */}
+                <View style={styles.section}>
+                    <Text style={styles.sectionTitle}>{t('orderContent.deliveryInfo')}</Text>
+                    <View style={styles.detailRow}>
+                        <Text style={styles.label}>{t('history.shipper')}</Text>
+                        <Text style={styles.value}>{shipment?.nameShipper || 'Không có'}</Text>
+                    </View>
+                    <View style={styles.detailRow}>
+                        <Text style={styles.label}>{t('history.delivery_date')}:</Text>
+                        <Text style={styles.value}>{shipment?.dateDeliver || 'Chưa cập nhật'}</Text>
+                    </View>
+                    <View style={styles.detailRow}>
+                        <Text style={styles.label}>{t('shippingStatus')}:</Text>
+                        <Text style={styles.value}>
+                            {shipment?.status
+                                ? language === 'VN'
+                                    ? statusShipmentMapVN[shipment.status] || shipment.status
+                                    : shipment.status
+                                : 'Không có'}
+                        </Text>
+
+                    </View>
+                </View>
+
+                {/* Danh sách sản phẩm */}
+                <View style={styles.section}>
+                    <Text style={styles.subHeader}>{t('common.proList')}</Text>
+                    {items.length > 0 ? (
+                        items.map((item, index) => (
+                            <View key={index} style={styles.itemBox}>
+                                <Image source={{ uri: item.imageUrl }} style={styles.image} />
+                                <View style={styles.itemInfo}>
+                                    <Text style={styles.itemName}>{item.proName}</Text>
+                                    <Text style={styles.itemDetail}>{t('quantity')}: {item.quantity}</Text>
+                                    <Text style={styles.itemDetail}>{t('size')}: {item.size}</Text>
+                                    <Text style={styles.itemPrice}>{formatPrice(item.totalPrice)}đ</Text>
+                                </View>
+                            </View>
+                        ))
+                    ) : (
+                        <Text style={styles.emptyText}>{t('prodcutContent.noPro')}</Text>
+                    )}
+                </View>
             </View>
         </ScrollView>
     );
@@ -216,14 +268,17 @@ const styles = StyleSheet.create({
         color: '#555',
         flexWrap: 'wrap', // Cho phép xuống dòng
     },
-
-
     header: {
         fontSize: 24,
-        fontWeight: 'bold',
+        fontFamily: FONTFAMILY.lobster_regular,
         textAlign: 'center',
-        marginBottom: 16,
+        marginBottom: 8,
         color: '#333',
+    },
+    backIcon: {
+        position: "absolute",
+        top: 10,
+        left: 5,
     },
     orderIdBox: {
         backgroundColor: '#ffcccb',
@@ -249,9 +304,9 @@ const styles = StyleSheet.create({
         elevation: 3,
     },
     sectionTitle: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        marginBottom: 8,
+        fontSize: 20,
+        fontFamily: FONTFAMILY.lobster_regular,
+        marginBottom: 5,
         color: '#0275d8',
     },
     detailRow: {
@@ -260,12 +315,15 @@ const styles = StyleSheet.create({
         marginBottom: 8,
     },
     label: {
-        fontSize: 16,
-        fontWeight: 'bold',
+        fontFamily: FONTFAMILY.dongle_regular,
+        fontSize: 26,
+        lineHeight: 18,
         color: '#444',
     },
     value: {
-        fontSize: 16,
+        fontFamily: FONTFAMILY.dongle_light,
+        fontSize: 26,
+        lineHeight: 18,
         color: '#666',
     },
     subHeader: {
@@ -298,18 +356,22 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     itemName: {
-        fontSize: 16,
-        fontWeight: 'bold',
+        fontSize: 26,
+        fontFamily: FONTFAMILY.dongle_bold,
         color: '#333',
+        lineHeight:16
     },
     itemDetail: {
-        fontSize: 14,
+        fontSize: 24,
+        fontFamily: FONTFAMILY.dongle_light,
         color: '#666',
+        lineHeight:24
     },
     itemPrice: {
-        fontSize: 16,
-        fontWeight: 'bold',
+        fontSize: 26,
+        fontFamily: FONTFAMILY.dongle_bold,
         color: '#d9534f',
+        lineHeight:18
     },
     emptyText: {
         textAlign: 'center',

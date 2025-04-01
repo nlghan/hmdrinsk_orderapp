@@ -1,5 +1,5 @@
 import { StyleSheet } from 'react-native';
-import { COLORS } from '../theme/theme';
+import { COLORS, FONTFAMILY } from '../theme/theme';
 
 const styles = StyleSheet.create({
   categoryOrderContainer: {
@@ -14,7 +14,7 @@ const styles = StyleSheet.create({
   },
   categoryTitle: {
     fontSize: 18, // Giảm kích thước chữ tiêu đề
-    fontWeight: "bold",
+    fontFamily: FONTFAMILY.lobster_regular,
     color: "#333",
   },
   servicesOrder: {
@@ -33,8 +33,8 @@ const styles = StyleSheet.create({
     marginBottom: 3,
   },
   serviceOrderText: {
-    fontSize: 13, // Giảm kích thước chữ danh mục
-    fontWeight: "500",
+    fontSize: 20, // Giảm kích thước chữ danh mục
+    fontFamily:FONTFAMILY.dongle_regular
   },
  
   imageWrapper: {
@@ -51,6 +51,7 @@ const styles = StyleSheet.create({
   },
   serviceOrderTextSelected: {
     color: "#fa9269", // Đổi màu khi được chọn
+    fontFamily:FONTFAMILY.dongle_bold
   },
   // 🔹 Thanh cuộn mượt hơn
   scrollBarContainer: {
@@ -81,26 +82,28 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowRadius: 4,
     elevation: 3, // Bóng đổ trên Android
+    
   },
   productImage: {
     width: 80,
     height: 80,
-    borderRadius: 20,
+    borderRadius: 10,
     resizeMode: "cover",
   },
   productInfo: {
     flex: 1,
     marginLeft: 10,
+   
   },
   productName: {
-    fontWeight: "bold",
-    fontSize: 16,
+    fontFamily:FONTFAMILY.dongle_bold,
+    fontSize: 28,
     color: "#333",
   },
   productPrice: {
     color: 'green',
-    fontWeight: "bold",
-    marginTop: 5,
+    fontFamily:FONTFAMILY.dongle_regular,
+    fontSize: 26
   },
   productDesc: {
     color: "#666",
@@ -108,7 +111,6 @@ const styles = StyleSheet.create({
     marginVertical: 5,
   },
   addToCartButton: {
-    backgroundColor: "#FF5722",
     paddingVertical: 6,
     paddingHorizontal: 12,
     borderRadius: 5,

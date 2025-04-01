@@ -3,6 +3,7 @@ import { View, Image, FlatList, StyleSheet, Dimensions, Animated, Text, Touchabl
 import { useCategoryStore } from '../store/store';
 import sliderStyles from '../styles/slider';
 
+
 const { width } = Dimensions.get('window');
 
 interface Post {

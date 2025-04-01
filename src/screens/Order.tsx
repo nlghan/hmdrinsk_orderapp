@@ -19,6 +19,9 @@ import { useTranslation } from "react-i18next";
 import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { RootStackParamList } from "../navigation/RootStackParamList";
+import Icon from "react-native-vector-icons/MaterialIcons";
+import { COLORS } from "../theme/theme";
+import FastImage from "react-native-fast-image";
 
 // 🔹 Component hiển thị danh mục dịch vụ
 const ServiceItem: React.FC<{ image: string; text?: string; onPress: () => void; isSelected: boolean }> = ({
@@ -38,6 +41,99 @@ const ServiceItem: React.FC<{ image: string; text?: string; onPress: () => void;
   </TouchableOpacity>
 );
 
+// 🔹 Component hiển thị từng sản phẩm
+const ProductItem = ({ item, navigation }: { item: any; navigation: any }) => {
+  const imageOpacity = useRef(new Animated.Value(0)).current;
+
+  const onImageLoad = () => {
+    Animated.timing(imageOpacity, {
+      toValue: 1,
+      duration: 400,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const price0 = item.listProductVariants[0]?.stock !== 0 ? item.listProductVariants[0]?.price : 0;
+  const price1 = item.listProductVariants[1]?.stock !== 0 ? item.listProductVariants[1]?.price : 0;
+  const price2 = item.listProductVariants[2]?.stock !== 0 ? item.listProductVariants[2]?.price : 0;
+
+  const isOutOfStock =
+    (item.listProductVariants[0]?.stock || 0) === 0 &&
+    (item.listProductVariants[1]?.stock || 0) === 0 &&
+    (item.listProductVariants[2]?.stock || 0) === 0;
+
+  const formatPrice = (price: number) => {
+    return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  };
+
+  const AnimatedFastImage = Animated.createAnimatedComponent(FastImage);
+
+  return (
+    <TouchableOpacity
+      style={[
+        homeStyles.productItem,
+        isOutOfStock && { backgroundColor: "#D3D3D3", opacity: 0.5 },
+      ]}
+      onPress={() =>
+        navigation.navigate("ProductDetail", {
+          product: { 
+            ...item, 
+            isFavourited: item.isFavourited ?? false,
+            images: item.productImageResponseList.map((img: any) => img.linkImage), // Truyền danh sách ảnh
+          },
+        })
+      }
+      disabled={isOutOfStock}
+    >
+      <AnimatedFastImage
+        source={{
+          uri: item.productImageResponseList[0]?.linkImage,
+          priority: FastImage.priority.high,
+        }}
+        style={[homeStyles.productImage, { opacity: imageOpacity }]}
+        resizeMode={FastImage.resizeMode.cover}
+        onLoad={onImageLoad}
+      />
+
+      <View style={homeStyles.productInfo}>
+        <Text style={homeStyles.productName}>{item.proName}</Text>
+
+        {isOutOfStock ? (
+          <Text style={[homeStyles.productPrice, { color: "red", fontWeight: "bold" }]}>
+            Sản phẩm hiện tại đã hết!
+          </Text>
+        ) : (
+          <Text style={homeStyles.productPrice}>
+            {`${formatPrice(price0 || price1 || price2)}đ`}
+          </Text>
+        )}
+
+        <TouchableOpacity
+          style={[
+            homeStyles.addToCartButton,
+            isOutOfStock && { backgroundColor: "#A9A9A9" },
+          ]}
+          onPress={() =>
+            navigation.navigate("ProductDetail", {
+              product: { 
+                ...item, 
+                isFavourited: item.isFavourited ?? false,
+                images: item.productImageResponseList.map((img: any) => img.linkImage), // Truyền danh sách ảnh
+              },
+            })
+          }
+          disabled={isOutOfStock}
+        >
+          <Text style={homeStyles.addToCartText}>
+            <Icon name="arrow-forward" size={20} color={COLORS.primaryGreenHex} />
+          </Text>
+        </TouchableOpacity>
+      </View>
+    </TouchableOpacity>
+  );
+};
+
+
 const OrderScreen = () => {
   const { data, fetchProducts } = useCategoryStore();
   const { categories = [], products = [] } = data;
@@ -45,24 +141,22 @@ const OrderScreen = () => {
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
 
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
-  const [visibleProducts, setVisibleProducts] = useState(6); // Hiển thị 6 sản phẩm ban đầu
+  const [visibleProducts, setVisibleProducts] = useState(6);
   const [refreshing, setRefreshing] = useState(false);
 
   const scrollX = useRef(new Animated.Value(0)).current;
   const scrollViewRef = useRef<ScrollView>(null);
 
   useEffect(() => {
-    fetchProducts(); // Fetch danh sách sản phẩm một lần duy nhất
+    fetchProducts();
   }, []);
 
-  // ✅ Lọc sản phẩm theo danh mục
   const filteredProducts = useMemo(() => {
     return selectedCategory
       ? products.filter((product) => product.cateId === selectedCategory)
       : products;
   }, [selectedCategory, products]);
 
-  // ✅ Chia danh mục thành từng nhóm 2 cái
   const groupedCategories = useMemo(() => {
     return categories.reduce((acc: any[][], curr, index) => {
       if (index % 2 === 0) {
@@ -74,31 +168,42 @@ const OrderScreen = () => {
     }, []);
   }, [categories]);
 
-  // ✅ Tải thêm sản phẩm khi cuộn xuống
   const loadMoreProducts = () => {
     if (visibleProducts < filteredProducts.length) {
       setVisibleProducts((prev) => prev + 6);
     }
   };
 
-  // ✅ Làm mới danh sách sản phẩm
   const onRefresh = async () => {
     setRefreshing(true);
     await fetchProducts();
-    setVisibleProducts(6); // Reset về 6 sản phẩm
+    setVisibleProducts(6);
     setRefreshing(false);
   };
 
   return (
     <SafeAreaView style={{ flex: 1 }}>
       <LinearGradient colors={["#fff", "#fff"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
-        <Header style={{ paddingHorizontal: 14, paddingTop: 10, paddingBottom: 10, backgroundColor: "white" }} />
+        <Header
+          style={{
+            paddingHorizontal: 14,
+            paddingTop: 10,
+            paddingBottom: 10,
+            backgroundColor: 'white',
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.2,
+            shadowRadius: 4,
+            elevation: 5,
+          }}
+        />
       </LinearGradient>
 
       <FlatList
-        data={filteredProducts.slice(0, visibleProducts)} // Chỉ hiển thị sản phẩm cần thiết
+        data={filteredProducts.slice(0, visibleProducts)}
         keyExtractor={(item) => item.proId.toString()}
-        contentContainerStyle={{ paddingVertical: 10, paddingHorizontal: 10 }}
+        contentContainerStyle={{ paddingVertical: 10, paddingHorizontal: 10 ,  paddingBottom: 60}}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         ListHeaderComponent={
           <View style={homeStyles.categoryOrderContainer}>
             <Text style={homeStyles.categoryTitle}>{t("category")}</Text>
@@ -132,7 +237,6 @@ const OrderScreen = () => {
               </View>
             </ScrollView>
 
-            {/* 🔹 Thanh cuộn (Scroll Bar) */}
             <View style={homeStyles.scrollBarContainer}>
               <Animated.View
                 style={[
@@ -153,37 +257,11 @@ const OrderScreen = () => {
             </View>
           </View>
         }
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            style={homeStyles.productItem}
-            onPress={() =>
-              navigation.navigate("ProductDetail", {
-                product: { ...item, isFavourited: item.isFavourited ?? false },
-              })
-            }
-          >
-            <Image source={{ uri: item.productImageResponseList[0]?.linkImage }} style={homeStyles.productImage} />
-            <View style={homeStyles.productInfo}>
-              <Text style={homeStyles.productName}>{item.proName}</Text>
-              <Text style={homeStyles.productPrice}>{item.listProductVariants[0]?.price} đ</Text>
-              <TouchableOpacity
-                style={homeStyles.addToCartButton}
-                onPress={() =>
-                  navigation.navigate("ProductDetail", {
-                    product: { ...item, isFavourited: item.isFavourited ?? false },
-                  })
-                }
-              >
-                <Text style={homeStyles.addToCartText}>{t("detail")}</Text>
-              </TouchableOpacity>
-            </View>
-          </TouchableOpacity>
-        )}
+        renderItem={({ item }) => <ProductItem item={item} navigation={navigation} />}
         ListFooterComponent={
           visibleProducts < filteredProducts.length ? <ActivityIndicator size="large" color="blue" /> : null
         }
-       
-        onEndReached={loadMoreProducts} // Cuộn xuống để tải thêm 6 sản phẩm
+        onEndReached={loadMoreProducts}
         onEndReachedThreshold={0.5}
         showsVerticalScrollIndicator={false}
       />

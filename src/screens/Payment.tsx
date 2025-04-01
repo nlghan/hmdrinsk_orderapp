@@ -1,32 +1,95 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert, ActivityIndicator } from 'react-native';
 import { useCartStore } from '../store/useCartStore';
-import { useNavigation } from '@react-navigation/native';
+import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import axiosInstance from "../utils/axiosInstance";
 import { useCategoryStore } from '../store/store';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../navigation/RootStackParamList';
+import { useTranslation } from 'react-i18next';
+import { FONTFAMILY } from '../theme/theme';
 
+type PaymentScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Payment'>;
+type PaymentScreenRouteProp = RouteProp<RootStackParamList, 'Payment'>;
 const Payment = () => {
 
     // Lấy thông tin đơn hàng từ store
-    const order = useCartStore((state) => state.order);
-    console.log('Order:', order);
-    const [paymentMethod, setPaymentMethod] = useState('cash'); // Mặc định là tiền mặt
+    const route = useRoute<PaymentScreenRouteProp>();
+    const { t } = useTranslation();
 
-    // Kiểm tra nếu không có đơn hàng
-    if (!order || !order.listItem || order.listItem.length === 0) {
+    // Nhận orderId từ navigation
+    const orderId = route.params?.orderId;
+    console.log('Received orderId:', orderId);
+
+    const [order, setOrder] = useState<any>(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [paymentMethod, setPaymentMethod] = useState('cash'); // Mặc định là tiền mặt
+    const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
+    const { language } = useCategoryStore();
+    const formatPrice = (price: number) => {
+        return (price).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    };
+
+    useEffect(() => {
+        const fetchOrderDetails = async () => {
+            setLoading(true);
+            try {
+                const token = await AsyncStorage.getItem('access_token');
+                if (!token) {
+                    setError('Không tìm thấy token đăng nhập, vui lòng đăng nhập lại.');
+                    return;
+                }
+
+                const response = await axiosInstance.get(`/orders/detail/${orderId}?language=${language}`, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        'Content-Type': 'application/json',
+                    },
+                });
+
+                console.log('Order Detail Response:', response.data);
+                setOrder(response.data.order);
+            } catch (err) {
+                console.error('Lỗi khi lấy thông tin đơn hàng:', err);
+                setError('Có lỗi xảy ra khi lấy thông tin đơn hàng.');
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        if (orderId) {
+            fetchOrderDetails();
+        }
+    }, [orderId]);
+
+    if (loading) {
         return (
             <View style={styles.container}>
-                <Text style={styles.emptyText}>Không có đơn hàng nào</Text>
+                <ActivityIndicator size="large" color="#ff6347" />
             </View>
         );
     }
 
-    const [loading, setLoading] = useState(false);
-    const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
+    if (error) {
+        return (
+            <View style={styles.container}>
+                <Text style={styles.emptyText}>{error}</Text>
+            </View>
+        );
+    }
+
+    if (!order || !order.listItem || order.listItem.length === 0) {
+        return (
+            <View style={styles.container}>
+                <Text style={styles.emptyText}>{t('dashboardContent.noOrder')}</Text>
+            </View>
+        );
+    }
+
+
 
     const handleOrder = async () => {
         console.log('handleOrder called'); // Kiểm tra xem có vào hàm không
@@ -37,31 +100,31 @@ const Payment = () => {
                 Alert.alert('Lỗi', 'Không tìm thấy token đăng nhập, vui lòng đăng nhập lại.');
                 return;
             }
-    
+
             if (!order || !order.orderId) {
                 Alert.alert('Lỗi', 'Không tìm thấy thông tin đơn hàng.');
                 return;
             }
-    
+
             console.log('Bắt đầu xử lý đơn hàng với ID:', order.orderId);
-    
+
             const headers = {
                 Authorization: `Bearer ${token}`,
                 'Content-Type': 'application/json',
             };
-    
+
             console.log('Gửi yêu cầu xác nhận đơn hàng...');
             const confirmResponse = await axiosInstance.post(
                 `/orders/confirm`,
                 { userId: order.userId, orderId: order.orderId },
                 { headers }
             );
-    
+
             console.log('Phản hồi xác nhận đơn hàng:', confirmResponse.data);
             if (confirmResponse.status !== 200) {
                 throw new Error('Lỗi khi xác nhận đơn hàng');
             }
-    
+
             console.log(`Tạo thanh toán với phương thức: ${paymentMethod}`);
             const paymentUrl = `/payment/create/${paymentMethod}`;
             const paymentResponse = await axiosInstance.post(
@@ -69,13 +132,15 @@ const Payment = () => {
                 { orderId: order.orderId, userId: order.userId },
                 { headers }
             );
-    
+
             console.log('Phản hồi tạo thanh toán:', paymentResponse.data);
             if (paymentResponse.status === 200) {
-                
+
                 navigation.navigate('OrderComplete');
             } else {
+                navigation.navigate('OrderFailed');
                 throw new Error('Lỗi khi tạo thanh toán');
+               
             }
         } catch (error) {
             console.error('Lỗi đặt hàng:', error);
@@ -84,23 +149,23 @@ const Payment = () => {
             setLoading(false);
         }
     };
-    
-    
+
+
 
 
     return (
         <View style={styles.container}>
             <ScrollView style={styles.contentContainer}>
                 {/* Thông tin giao hàng */}
-                <Text style={styles.sectionTitle}>Giao hàng tận nơi</Text>
+                <Text style={styles.sectionTitle}>{t('android.payment.title')}</Text>
                 <View style={styles.infoBox}>
-                    <Text style={styles.infoText}>Số điện thoại: {order.phone || 'N/A'}</Text>
-                    <Text style={styles.infoText}>Địa chỉ: {order.address || 'N/A'}</Text>
-                    <Text style={styles.infoText}>Thời gian giao hàng: {order.dateDelivered || 'N/A'}</Text>
+                    <Text style={styles.infoText}>{t('phone')}: {order.phone || 'N/A'}</Text>
+                    <Text style={styles.infoText}>{t('address')}: {order.address || 'N/A'}</Text>
+                    <Text style={styles.infoText}>{t('history.order_date')} {order.dateDelivered || 'N/A'}</Text>
                 </View>
 
                 {/* Danh sách sản phẩm */}
-                <Text style={styles.sectionTitle}>Sản phẩm đã chọn</Text>
+                <Text style={styles.sectionTitle}>{t('android.payment.product')}</Text>
                 <View style={styles.itemsContainer}>
                     {order.listItem?.map((item: {
                         cartItemId: number;
@@ -118,19 +183,19 @@ const Payment = () => {
                             </TouchableOpacity>
                             <Text style={styles.itemText}>{item.quantity}x {item.proName} ({item.size})</Text>
                             <View style={styles.priceContainer}>
-                                <Text style={styles.itemPrice}>{item.totalPrice?.toLocaleString()}đ</Text>
+                                <Text style={styles.itemPrice}>{formatPrice(item.totalPrice)}đ</Text>
                             </View>
                         </View>
                     ))}
                 </View>
                 {/* Phương thức thanh toán */}
-                <Text style={styles.sectionTitle}>Phương thức thanh toán</Text>
+                <Text style={styles.sectionTitle}>{t('paymentMethod')}</Text>
                 <View style={styles.paymentContainer}>
                     <TouchableOpacity
                         style={[styles.paymentOption, paymentMethod === 'cash' && styles.selectedPayment]}
                         onPress={() => setPaymentMethod('cash')}>
-                        <Icon name="attach-money" size={24} color={paymentMethod === 'cash' ? "#FF9800" : "#555"} />
-                        <Text style={styles.paymentText}>Tiền mặt</Text>
+                        <Icon name="attach-money" size={20} color={paymentMethod === 'cash' ? "#FF9800" : "#555"} />
+                        <Text style={styles.paymentText}>{t('order.orderDetail.method.method1')}</Text>
                     </TouchableOpacity>
                     {/* <TouchableOpacity 
                         style={[styles.paymentOption, paymentMethod === 'bank' && styles.selectedPayment]}
@@ -142,7 +207,19 @@ const Payment = () => {
                         style={[styles.paymentOption, paymentMethod === 'e-wallet' && styles.selectedPayment]}
                         onPress={() => setPaymentMethod('e-wallet')}>
                         <Icon name="account-balance-wallet" size={24} color={paymentMethod === 'e-wallet' ? "#FF9800" : "#555"} />
-                        <Text style={styles.paymentText}>Ví điện tử</Text>
+                        <Text style={styles.paymentText}>Momo</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity 
+                        style={[styles.paymentOption, paymentMethod === 'e-wallet' && styles.selectedPayment]}
+                        onPress={() => setPaymentMethod('e-wallet')}>
+                        <Icon name="account-balance-wallet" size={24} color={paymentMethod === 'e-wallet' ? "#FF9800" : "#555"} />
+                        <Text style={styles.paymentText}>ZaloPay</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity 
+                        style={[styles.paymentOption, paymentMethod === 'e-wallet' && styles.selectedPayment]}
+                        onPress={() => setPaymentMethod('e-wallet')}>
+                        <Icon name="account-balance-wallet" size={24} color={paymentMethod === 'e-wallet' ? "#FF9800" : "#555"} />
+                        <Text style={styles.paymentText}>VNPay</Text>
                     </TouchableOpacity> */}
                 </View>
             </ScrollView>
@@ -152,23 +229,27 @@ const Payment = () => {
                 {/* Tổng cộng */}
                 <View style={styles.summaryContainer}>
                     <View style={styles.row}>
-                        <Text style={styles.summaryText}>Thành tiền</Text>
-                        <Text style={styles.summaryAmount}>{order.totalPrice?.toLocaleString()}đ</Text>
+                        <Text style={styles.summaryText}>{t('products.subTotal')}</Text>
+                        <Text style={styles.summaryAmount}>{formatPrice(order.totalPrice)}đ</Text>
                     </View>
                     <View style={styles.row}>
-                        <Text style={styles.summaryText}>Phí giao hàng</Text>
-                        <Text style={styles.summaryAmount}>{order.deliveryFee}đ</Text>
+                        <Text style={styles.summaryText}>{t('order.shipFee')}</Text>
+                        <Text style={styles.summaryAmount}>{formatPrice(order.deliveryFee)}đ</Text>
                     </View>
                     <View style={styles.row}>
-                        <Text style={styles.summaryText}>Số xu đã dùng</Text>
-                        <Text style={styles.summaryAmount}>{order.pointCoinUse}đ</Text>
+                        <Text style={styles.summaryText}>{t('order.discount')}</Text>
+                        <Text style={styles.summaryAmount}>{formatPrice(order.discountPrice)}đ</Text>
+                    </View>
+                    <View style={styles.row}>
+                        <Text style={styles.summaryText}>{t('cart.coin')}</Text>
+                        <Text style={styles.summaryAmount}>{formatPrice(order.pointCoinUse)}đ</Text>
                     </View>
                 </View>
 
                 {/* Số tiền thanh toán */}
                 <View style={styles.totalContainer}>
-                    <Text style={styles.totalText}>Số tiền thanh toán</Text>
-                    <Text style={styles.totalAmount}>{(order.totalPrice - order.pointCoinUse - order.deliveryFee).toLocaleString()}đ</Text>
+                    <Text style={styles.totalText}>{t('order.orderDetail.totalBill')}</Text>
+                    <Text style={styles.totalAmount}>{formatPrice(order.totalPrice - order.pointCoinUse + order.deliveryFee - order.discountPrice)}đ</Text>
                 </View>
 
                 {/* Nút đặt hàng */}
@@ -177,7 +258,7 @@ const Payment = () => {
                     onPress={handleOrder}
                     disabled={loading}
                 >
-                    <Text style={styles.orderText}>{loading ? 'Đang xử lý...' : 'ĐẶT HÀNG'}</Text>
+                    <Text style={styles.orderText}>{loading ? t('loading') : t('pay')}</Text>
                 </TouchableOpacity>
 
             </View>
@@ -196,11 +277,11 @@ const styles = StyleSheet.create({
     contentContainer: {
         flex: 1,
         paddingHorizontal: 20,
-        marginBottom: 250, // Chừa khoảng trống cho footer
+        marginBottom: 280, // Chừa khoảng trống cho footer
     },
     sectionTitle: {
-        fontSize: 18,
-        fontWeight: 'bold',
+        fontSize: 20,
+        fontFamily: FONTFAMILY.lobster_regular,
         marginBottom: 10,
         color: '#333',
         marginTop: 10
@@ -217,7 +298,9 @@ const styles = StyleSheet.create({
         elevation: 3,
     },
     infoText: {
-        fontSize: 16,
+        fontSize: 24,
+        fontFamily: FONTFAMILY.dongle_light,
+        lineHeight: 18,
         color: '#333',
         marginBottom: 5,
     },
@@ -245,8 +328,8 @@ const styles = StyleSheet.create({
     },
     itemText: {
         flex: 1,
-        fontSize: 16,
-        fontWeight: '500',
+        fontSize: 24,
+        fontFamily: FONTFAMILY.dongle_bold,
         marginLeft: 15,
     },
     priceContainer: {
@@ -254,8 +337,8 @@ const styles = StyleSheet.create({
         alignItems: 'flex-end',
     },
     itemPrice: {
-        fontSize: 16,
-        fontWeight: 'bold',
+        fontSize: 24,
+        fontFamily: FONTFAMILY.dongle_bold,
         color: '#E53935',
         textAlign: 'right',
     },
@@ -282,12 +365,15 @@ const styles = StyleSheet.create({
         paddingVertical: 5,
     },
     summaryText: {
-        fontSize: 16,
+        fontSize: 26,
+        fontFamily: FONTFAMILY.dongle_bold,
+        lineHeight:20,
         color: '#555',
     },
     summaryAmount: {
-        fontSize: 16,
-        fontWeight: 'bold',
+        fontSize: 26,
+        fontFamily: FONTFAMILY.dongle_bold,
+        lineHeight:20,
     },
     promoText: {
         color: '#1E88E5',
@@ -306,19 +392,21 @@ const styles = StyleSheet.create({
         paddingHorizontal: 20,
     },
     totalText: {
-        fontSize: 18,
-        fontWeight: 'bold',
+        fontSize: 32,
+        fontFamily: FONTFAMILY.dongle_bold,
+        lineHeight:24,
     },
     totalAmount: {
-        fontSize: 18,
-        fontWeight: 'bold',
+        fontSize: 32,
+        fontFamily: FONTFAMILY.dongle_bold,
+        lineHeight:24,
         color: '#E53935',
     },
 
     /* Nút đặt hàng */
     orderButton: {
         backgroundColor: '#FF9800',
-        paddingVertical: 15,
+        paddingVertical: 10,
         alignItems: 'center',
         justifyContent: 'center',
         borderRadius: 10,
@@ -327,12 +415,13 @@ const styles = StyleSheet.create({
         zIndex: 1000,
     },
     orderText: {
-        fontSize: 18,
-        fontWeight: 'bold',
+        fontSize: 30,
+        fontFamily: FONTFAMILY.dongle_bold,
         color: '#fff',
     },
     emptyText: {
-        fontSize: 18,
+        fontSize: 26,
+        fontFamily: FONTFAMILY.dongle_bold,
         textAlign: 'center',
         marginTop: 50,
         color: 'gray',
@@ -354,7 +443,8 @@ const styles = StyleSheet.create({
         backgroundColor: '#FFF3E0',
     },
     paymentText: {
-        fontSize: 16,
-        marginLeft: 10,
+        fontSize: 24,
+        fontFamily: FONTFAMILY.dongle_regular,
+        marginLeft: 5,
     },
 });

@@ -86,6 +86,11 @@ interface Spacing {
     inter_regular: string;
     inter_bold: string;
     inder_regular: string;
+    comfortaa_bold: string;
+    dongle_bold: string,
+    dongle_light: string,
+    dongle_regular: string,
+    pacifico_regular: string,
   }
   
   export const FONTFAMILY: FontFamily = {
@@ -102,6 +107,11 @@ interface Spacing {
     inter_regular: 'Inter-Regular',
     inter_bold: 'Inter-Bold',
     inder_regular: 'Inder-Regular',
+    comfortaa_bold: 'Comfortaa-Bold',
+    dongle_bold: 'Dongle-Bold',
+    dongle_light: 'Dongle-Light',
+    dongle_regular: 'Dongle-Regular',
+    pacifico_regular: 'Pacifico-Regular',
   };
   
   

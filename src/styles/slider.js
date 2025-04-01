@@ -1,5 +1,11 @@
 import { StyleSheet, Dimensions } from 'react-native';
 const { width } = Dimensions.get('window');
+import {
+  BORDERRADIUS,
+  COLORS,
+  FONTFAMILY,
+  SPACING,
+} from '../theme/theme';
 
 const styles = StyleSheet.create({
   container: {
@@ -12,7 +18,7 @@ const styles = StyleSheet.create({
   },
   imageContainer: {
     width: width,
-    height: 250,
+    height: 260,
   },
   imageWrapper: {
     flex: 1,
@@ -40,8 +46,8 @@ const styles = StyleSheet.create({
   },
   title: {
     color: '#fff',
-    fontSize: 16, 
-    fontWeight: 'bold',
+    fontSize: 27, 
+    fontFamily:FONTFAMILY.dongle_bold,
     textAlign: 'center',
     maxWidth: width * 0.8, 
     flexWrap: 'wrap', 

@@ -13,6 +13,11 @@ import { useNavigation } from "@react-navigation/native";
 import styles from "../styles/listVoucher";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { RootStackParamList } from "../navigation/RootStackParamList";
+import Icon from "react-native-vector-icons/MaterialIcons";
+import { COLORS } from "../theme/theme";
+import { Image } from "react-native";
+import { useTranslation } from 'react-i18next';
+
 
 const ListVoucher = () => {
   const {
@@ -28,6 +33,7 @@ const ListVoucher = () => {
   const [showAutocomplete, setShowAutocomplete] = useState(false);
 
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
+  const { t } = useTranslation()
 
   useEffect(() => {
     const loadVouchers = async () => {
@@ -87,7 +93,13 @@ const ListVoucher = () => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Chọn Voucher</Text>
+      <View style={styles.headerContainer}>
+        <TouchableOpacity onPress={() => navigation.goBack()}>
+          <Icon name="arrow-back" size={24} color={COLORS.primaryGreenHex} />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>{t('information.voucherList')}</Text>
+
+      </View>
 
       {/* Autocomplete nhập mã voucher */}
       <View style={styles.autocompleteWrapper}>
@@ -95,7 +107,7 @@ const ListVoucher = () => {
           data={showAutocomplete ? filteredVouchers : []}
           defaultValue={voucherName}
           onChangeText={handleSearch}
-          placeholder="Nhập tên voucher"
+          placeholder={t('getVoucher')}
           flatListProps={{
             keyExtractor: (item) => item.voucherId.toString(),
             renderItem: ({ item }) => (
@@ -105,7 +117,7 @@ const ListVoucher = () => {
                   handleSelectVoucher(item.voucherId, item.name, item.discountAmount, item.status)
                 }
               >
-                <Text>{item.name}</Text>
+                <Text style={styles.textName}>{item.name}</Text>
               </TouchableOpacity>
             ),
           }}
@@ -119,9 +131,9 @@ const ListVoucher = () => {
       {loading ? (
         <ActivityIndicator size="large" color="#ff0000" />
       ) : sortedVouchers.length === 0 ? (
-        <Text>❌ Không có voucher khả dụng</Text>
+        <Text>{t('information.noVoucher')}</Text>
       ) : (
-        <ScrollView style={styles.voucherList}>
+        <ScrollView style={styles.voucherList} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }} >
           {sortedVouchers.map((voucher) => {
             const isUsed = voucher.status === "USED";
             const isSelected = selectedVoucher.selectedVoucherId === voucher.voucherId;
@@ -137,35 +149,20 @@ const ListVoucher = () => {
                   onPress={() =>
                     handleSelectVoucher(voucher.voucherId, voucher.name, voucher.discountAmount, voucher.status)
                   }
-                  
+
                   disabled={isUsed}
                 >
-                  <Checkbox
-                    status={isSelected ? "checked" : "unchecked"}
-                    disabled={isUsed}
-                  />
-                  <View style={styles.voucherText}>
-                    <Text style={styles.voucherTitle}>
-                      Mã Voucher: {voucher.name}
-                    </Text>
-                    <Text
-                      style={[
-                        styles.voucherStatus,
-                        isUsed && styles.disabledText,
-                      ]}
-                    >
-                      Trạng thái: {voucher.status}
-                    </Text>
-                    <Text style={isUsed ? styles.disabledText : null}>
-                      📝 {voucher.description}
-                    </Text>
-                    <Text style={isUsed ? styles.disabledText : null}>
-                      💰 Giảm giá:{" "}
-                      {voucher.discountAmount || voucher.discountPercentage + "%"}
-                    </Text>
-                    <Text style={isUsed ? styles.disabledText : null}>
-                      📅 HSD: {voucher.expiryDate}
-                    </Text>
+                  <Image source={require("../assets/app_images/vc-b.png")} style={styles.voucherImage} />
+                  <View style={styles.voucherInfo}>
+                    <Text style={styles.voucherCode}>{voucher.name}</Text>
+                    <Text style={styles.voucherAmount}>{t('order.discount')}: {voucher.discountAmount}đ</Text>
+                    <Text style={styles.voucherDate}>{t('postContent.endDate')}: {voucher.expiryDate}</Text>
+                    <Text style={styles.voucherDate}>{t('information.useStatus')}: <Text style={styles.claimButtonText}>
+                      {voucher.status === "INACTIVE" ? t('information.inactive') :
+                        voucher.status === "USED" ? t('information.used') :
+                          voucher.status === "EXPIRED" ? t('information.expired') : voucher.status}
+                    </Text> </Text>
+
                   </View>
                 </TouchableOpacity>
 
@@ -181,16 +178,6 @@ const ListVoucher = () => {
           })}
         </ScrollView>
       )}
-
-      {/* Nút xác nhận */}
-      <TouchableOpacity
-        style={styles.confirmButton}
-        onPress={() => {
-          navigation.navigate("Cart"); // Điều hướng về trang Cart
-        }}
-      >
-        <Text style={styles.confirmText}>Đồng ý</Text>
-      </TouchableOpacity>
     </View>
   );
 };

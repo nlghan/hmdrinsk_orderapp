@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import { COLORS } from '../theme/theme';
+import { COLORS, FONTFAMILY } from '../theme/theme';
 
 interface RewardCardProps {
   icon: string;   // Tên icon từ MaterialCommunityIcons
@@ -43,14 +43,14 @@ const styles = StyleSheet.create({
     marginRight: 6,
   },
   title: {
-    fontSize: 13,
-    fontWeight: 'bold',
+    fontSize: 22,
+    fontFamily:FONTFAMILY.dongle_bold,
     color: '#7B614F',
     textTransform:'uppercase'
   },
   points: {
-    fontSize: 16,
-    fontWeight: 'bold',
+    fontSize: 24,
+    fontFamily:FONTFAMILY.dongle_bold,
     color: '#000',
     marginTop: 5,
   },

@@ -1,5 +1,5 @@
 import { StyleSheet, Dimensions } from 'react-native';
-import { COLORS } from '../theme/theme';
+import { COLORS, FONTFAMILY } from '../theme/theme';
 
 const { height, width } = Dimensions.get('window');
 
@@ -12,7 +12,7 @@ export default StyleSheet.create({
     imageContainer: {
         position: 'absolute',
         top: height * 0.1, 
-        left: width * 0.5 - (height * 0.25), // Căn giữa hình
+        left: width * 0.51 - (height * 0.25), // Căn giữa hình
         zIndex: 100, // Đảm bảo ảnh nằm trên nội dung
         alignItems: 'center',
         width: '100%',
@@ -41,20 +41,24 @@ export default StyleSheet.create({
         backgroundColor: '#FFDCC0',
     },
     title: {
-        fontSize: 25,
-        fontWeight: 'bold',
+        fontSize: 40,
+        fontFamily:FONTFAMILY.dongle_bold,
         color: '#333',
         textAlign: 'center',
+        marginBottom:-10
     },
     description: {
-        fontSize: 16,
+        fontSize: 26,
+        fontFamily:FONTFAMILY.dongle_light,
         color: '#666',
         textAlign: 'justify',
         paddingHorizontal: 10,
+        marginTop:-15
     },
     readMore: {
+        fontSize: 18,
         color: COLORS.primaryGreenHex,
-        fontWeight: 'bold',
+        fontFamily:FONTFAMILY.dongle_regular,
     },
     detailRow: {
         flexDirection: 'row',
@@ -117,50 +121,56 @@ export default StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         marginVertical: 8,
+        
     },
     ratingText: {
-        fontSize: 20,
+        fontSize: 30,
+        fontFamily:FONTFAMILY.dongle_bold,
         marginLeft: 4,
         color: '#555',
     },
     reviewCount: {
-        fontSize: 14,
+        fontSize: 26,
+        fontFamily:FONTFAMILY.dongle_regular,
         color: '#888',
         marginLeft: 6,
     },
     sizeContainer: {
         width: '100%',
-        marginTop: 20,
-        paddingBottom: 20, // Tăng padding để tránh bị che khuất
+        marginTop: 10,
+        paddingBottom: 30, // Tăng padding để tránh bị che khuất
     },
     sizeLabel: {
-        fontSize: 18,
-        fontWeight: 'bold',
+        fontSize: 32,
+        fontFamily:FONTFAMILY.dongle_bold,
         color: '#333',
         marginBottom: 8,
     },
     sizeOptions: {
         flexDirection: 'row',
+        flexWrap: 'wrap',
         justifyContent: 'space-between',
         width: '100%',
     },
+    
     sizeButton: {
-        flex: 1,
+        width: '30%', // Chia đều thành 3 cột
         borderWidth: 1.5,
         borderColor: '#777',
-        paddingVertical: 12,
+        paddingVertical: 5,
         borderRadius: 20,
-        marginHorizontal: 4,
         backgroundColor: '#f7f7f7',
         alignItems: 'center',
+        height:45
     },
+    
     selectedSize: {
         backgroundColor: '#FFDCC0',
         borderColor: COLORS.primaryGreenHex,
     },
     favoriteButton: {
         position: 'absolute',
-        top: 10,
+        top: 20,
         right: 10,
     },
     topButtons: {
@@ -177,7 +187,7 @@ export default StyleSheet.create({
         top: 0,
         left: 10,
         zIndex: 10,
-        backgroundColor: 'rgba(255, 255, 255, 0.7)',
+        backgroundColor: 'rgb(255, 255, 255)',
         padding: 10,
         borderRadius: 50,
         elevation: 3,
@@ -231,15 +241,15 @@ export default StyleSheet.create({
     },
     cartButton: {
         backgroundColor: '#D87D2A',
-        paddingVertical: 10,
+        paddingVertical: 3,
         paddingHorizontal: 10,
         borderRadius: 20,
         width:200,
-        
+        height:45
     },
     cartText: {
-        fontSize:20,
-        fontWeight: 'bold',
+        fontSize:32,
+        fontFamily:FONTFAMILY.dongle_bold,
         color: 'white',
         textAlign:'center'
     },
@@ -258,14 +268,14 @@ export default StyleSheet.create({
         borderColor: 'transparent',
         marginHorizontal: 5,
         padding: 2,
-        borderRadius: 20, // Bo tròn khung chứa ảnh
+        borderRadius: 10, // Bo tròn khung chứa ảnh
         overflow: 'hidden', // Đảm bảo ảnh không bị tràn ra ngoài
     },
    
     thumbnail: {
         width: 60,
         height: 60,
-        borderRadius: 20, // Bo tròn ảnh nhỏ theo tỷ lệ
+        borderRadius: 10, // Bo tròn ảnh nhỏ theo tỷ lệ
         resizeMode: 'cover',
     },
     selectedThumbnail: {

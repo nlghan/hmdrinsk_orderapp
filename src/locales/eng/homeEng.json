@@ -25,7 +25,7 @@
     "reorder": "Reorder",
     "payment": "Payment",
     "print_invoice": "Print Invoice"
-},
+  },
   "login": "Login",
   "signUp": "Sign Up",
   "favourite": {
@@ -162,7 +162,8 @@
     "useStatus": "Status",
     "used": "USED",
     "inactive": "INACTIVE",
-    "noVoucher": "There are no vouchers available"
+    "noVoucher": "There are no vouchers available",
+    "expired":"EXPIRED"
   },
   "updateBtn": "Update",
   "backBtn": "Back",
@@ -230,6 +231,8 @@
   "orderDetail": "Order Details",
   "shippingStatus": "Delivery status",
   "note": "Note",
+  "takeNote":"Take note...",
+  "getVoucher":"Enter voucher code",
   "infoPayment": "Payment Information",
   "statusPayment": "Payment status",
   "product": "Product",
@@ -319,7 +322,7 @@
     "label": "Hmdrinks coins",
     "coinErr": "Invalid amount of coins",
     "messCoinErr": "The entered amount of coins cannot exceed the accumulated coins",
-    "voucher":"Vouchers"
+    "voucher": "Vouchers"
   },
   "products": {
     "header1": "Image",
@@ -408,15 +411,15 @@
     "invalidEmail": "Invalid email address.",
     "max": "Maximize",
     "min": "Minimize",
-    "hide":"Hide",
+    "hide": "Hide",
     "noti": "Notification",
     "mark": "Mark all read",
     "noNoti": "There are no new notifications.",
-    "proList":"List of products",
-    "greet":"Dear friend, Coffee!",
-    "chooseLanguage":"Choose language",
+    "proList": "List of products",
+    "greet": "Dear friend, Coffee!",
+    "chooseLanguage": "Choose language",
     "listComment": "All of reviews",
-    "addCmt":"Add reviews"
+    "addCmt": "Add reviews"
   },
   "productContent": {
     "page": "Page",
@@ -444,7 +447,9 @@
       "wait": "Waiting",
       "ship": "Shipping",
       "complete": "Success",
-      "cancel": "Cancelled"
+      "cancel": "Cancelled",
+      "confirm":"Confirm",
+      "refund":"Refund"
     },
     "price": "Total amout",
     "deliveryDate": "Delivery Date",
@@ -539,5 +544,11 @@
     "hello": "Hello",
     "needShip": "Assigned orders",
     "chart": "Monthly order chart"
+  },
+  "android": {
+    "payment": {
+      "title": "Delivery to your door",
+      "product": "Selected product"
+    }
   }
 }

@@ -1,4 +1,5 @@
 import { StyleSheet } from "react-native";
+import { COLORS, FONTFAMILY } from "../theme/theme";
 
 const styles = StyleSheet.create({
   container: {
@@ -12,6 +13,12 @@ const styles = StyleSheet.create({
     elevation: 4,
     position: "relative",
     zIndex: 10,
+  },
+  headerTitle: {
+    fontSize: 24,
+    fontFamily:FONTFAMILY.lobster_regular,
+    textAlign: 'center', // Căn giữa văn bản trong Text
+    flex: 1, // Giúp chữ "Giỏ hàng" mở rộng để căn giữa
   },
   title: {
     fontSize: 20,
@@ -35,7 +42,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#ddd",
     borderRadius: 8,
-    
     backgroundColor: "#f9f9f9",
   },
   listContainer: {
@@ -53,6 +59,12 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderColor: "#eee",
     backgroundColor: "#ffffff",
+    
+  },
+  textName:{
+    fontSize:24,
+    lineHeight:16,
+    fontFamily:FONTFAMILY.dongle_regular,
   },
   removeButton: {
     position: "absolute",
@@ -73,7 +85,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     marginBottom: 10,
   },
-  
+
   voucherList: {
     maxHeight: '75%',
   },
@@ -85,7 +97,7 @@ const styles = StyleSheet.create({
     borderColor: "#ddd",
     borderRadius: 10,
     marginBottom: 10,
-    backgroundColor: "#f5f5f5",
+    backgroundColor: "#f2fffa",
   },
   selectedVoucher: {
     borderColor: "#ff3b30",
@@ -107,7 +119,7 @@ const styles = StyleSheet.create({
   confirmButton: {
     marginTop: 16,
     paddingVertical: 14,
-    backgroundColor: "#ff3b30",
+    backgroundColor: "black",
     borderRadius: 10,
     alignItems: "center",
     shadowColor: "#ff3b30",
@@ -117,7 +129,7 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   confirmText: {
-    color: "white",
+    color: "black",
     fontWeight: "bold",
     fontSize: 16,
   },
@@ -127,6 +139,76 @@ const styles = StyleSheet.create({
   },
   disabledText: {
     color: "#888",
+  },
+  headerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center', // Căn giữa nội dung theo chiều ngang
+    marginBottom: 10,
+  },
+
+  noVoucherText: {
+    textAlign: "center",
+    fontSize: 16,
+    color: "red",
+  },
+  voucherList: {
+    marginBottom: 20,
+  },
+  voucherCard: {
+    flexDirection: "row",
+    backgroundColor: '#f2fffa',
+    borderRadius: 10,
+    padding: 15,
+    marginBottom: 10,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  voucherImage: {
+    width: 100,
+    height: 100,
+    borderRadius: 10,
+    marginRight: 15,
+  },
+  voucherInfo: {
+    flex: 1,
+  },
+  voucherCode: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: COLORS.darkGreen,
+  },
+  voucherAmount: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: '#00796b',
+    marginVertical: 5,
+  },
+  voucherDate: {
+    fontSize: 14,
+    color: COLORS.gray,
+  },
+  claimButton: {
+    backgroundColor:'#50b495',
+    borderRadius: 5,
+    paddingVertical: 8,
+    marginTop: 10,
+    alignItems: "center",
+  },
+  claimButtonText: {
+    fontSize: 16,
+    color: "black",
+    fontWeight: "bold",
+  },
+  selectedVoucher: {
+    borderWidth: 2,
+    borderColor: COLORS.primaryGreenHex,
+  },
+  disabledVoucher: {
+   backgroundColor:'#efefef'
   },
 });
 

@@ -22,6 +22,14 @@
       "sha1": "30fb90c80e14a2aebca174e560ca606aff6d4656"
     },
     {
+      "path": "src/assets/app_images/barcode.png",
+      "sha1": "efb265a1f8a32201fd7f028a903eb6c1922d91e1"
+    },
+    {
+      "path": "src/assets/app_images/bg.jpg",
+      "sha1": "567e4b2a340d15131bd0cf715e70089f03f3fb64"
+    },
+    {
       "path": "src/assets/app_images/cart.png",
       "sha1": "bbfee996047508ae7a9f4db9920896d96ef8fdce"
     },
@@ -50,6 +58,10 @@
       "sha1": "6e379b78ebd5966fb944789b2b10470d3263c63c"
     },
     {
+      "path": "src/assets/app_images/logomini.png",
+      "sha1": "1a5f7187fdcdaa9ce039e4985ebcc4759c4a38a4"
+    },
+    {
       "path": "src/assets/app_images/logout.png",
       "sha1": "5392807eb39ffb7edadfae1cd5a0744c0d2d43d8"
     },
@@ -64,6 +76,14 @@
     {
       "path": "src/assets/app_images/marker_1.png",
       "sha1": "15e90324ea08fd07fff4682a1b2de5ec880a5d72"
+    },
+    {
+      "path": "src/assets/app_images/nen.png",
+      "sha1": "f95309cd932e561abdc50d679ce38e12c22d8f39"
+    },
+    {
+      "path": "src/assets/app_images/nenthe.png",
+      "sha1": "1c25cf43b00f2170091407e204bd543d6c84854e"
     },
     {
       "path": "src/assets/app_images/pencil.png",
@@ -90,8 +110,32 @@
       "sha1": "889d3053761ee08f52617bc4b1ebfc422c37bac7"
     },
     {
+      "path": "src/assets/app_images/vc-b.png",
+      "sha1": "dcdbcd3b4c25e1ada4aa5329e70887f1263cb91d"
+    },
+    {
+      "path": "src/assets/app_images/voucher_2.jpeg",
+      "sha1": "aacc8787aab38be6c9635922cf12c450f607fe6b"
+    },
+    {
       "path": "src/assets/fonts/app_icons.ttf",
       "sha1": "18e5fe2f93c853bbb495975f04df56438d595de5"
+    },
+    {
+      "path": "src/assets/fonts/Comfortaa-Bold.ttf",
+      "sha1": "160e0e5a1010cd45ea124f08a894156e02236551"
+    },
+    {
+      "path": "src/assets/fonts/Dongle-Bold.ttf",
+      "sha1": "4071e0b013aa9f1efbd76b93b129ef9ecda9c92f"
+    },
+    {
+      "path": "src/assets/fonts/Dongle-Light.ttf",
+      "sha1": "d1aa81b2cbdbcfcfcfca150f0538d63c838f22c2"
+    },
+    {
+      "path": "src/assets/fonts/Dongle-Regular.ttf",
+      "sha1": "e36e2152293998725661c6dfe47571ca8b9f004a"
     },
     {
       "path": "src/assets/fonts/Inder-Regular.ttf",
@@ -138,6 +182,14 @@
       "sha1": "120c751cd7a77174037c2409ab883ef7efc5edbb"
     },
     {
+      "path": "src/assets/fonts/OFL.txt",
+      "sha1": "2e4483beff08220ddcc318cc5aeae6396a28b285"
+    },
+    {
+      "path": "src/assets/fonts/Pacifico-Regular.ttf",
+      "sha1": "baca1fca7fe74b61cb33aa0da48ec1a3a77bcf49"
+    },
+    {
       "path": "src/assets/fonts/Poppins-Black.ttf",
       "sha1": "645e04c53c6b5b35bce654a811ebce16af8aa721"
     },
@@ -172,6 +224,10 @@
     {
       "path": "src/assets/fonts/Poppins-Thin.ttf",
       "sha1": "09ba4dcd5509c8085bf88c665dcc51cbdfced27b"
+    },
+    {
+      "path": "src/assets/img/logoGG.png",
+      "sha1": "75a9d5f8e41475067f3fe5062bcfd93008048fda"
     }
   ]
 }

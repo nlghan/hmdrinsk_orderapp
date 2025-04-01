@@ -5,7 +5,7 @@ import Favourite from '../screens/Favourite';
 import Order from '../screens/Order';
 import Orther from '../screens/Orther';
 import News from '../screens/News';
-import { COLORS } from '../theme/theme';
+import { COLORS, FONTFAMILY } from '../theme/theme';
 import { BlurView } from '@react-native-community/blur';
 import { StyleSheet } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
@@ -122,8 +122,8 @@ const styles = StyleSheet.create({
     right: 0,
   },
   labelStyle: {
-    fontSize: 12,
-    fontWeight: 'bold',
+    fontSize: 10,
+    fontFamily:FONTFAMILY.lobster_regular,
     marginBottom: 5,
   },
 });

@@ -10,6 +10,7 @@ import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from "@react-navigation/stack";
 import { RootStackParamList } from "../navigation/RootStackParamList";
 import { useTranslation } from 'react-i18next';
+import { FONTFAMILY } from '../theme/theme';
 
 const DeliveringOrders = () => {
     // Định nghĩa kiểu dữ liệu
@@ -102,7 +103,7 @@ const DeliveringOrders = () => {
                     } : null,
                 }));
 
-                setConfirmedOrders(orders);                
+                setConfirmedOrders(orders);
             } else {
                 setConfirmedOrders([]);
             }
@@ -114,6 +115,9 @@ const DeliveringOrders = () => {
         }
     };
 
+    const formatPrice = (price: number) => {
+        return (price).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    };
 
 
     if (loading) return <ActivityIndicator size="large" color="#0000ff" />;
@@ -150,18 +154,18 @@ const DeliveringOrders = () => {
                                         <View style={styles.productContainer}>
                                             <Image source={{ uri: product.imageUrl }} style={styles.image} />
                                             <View style={styles.info}>
-                                                <Text style={styles.title}><Text style={styles.boldText}>{t('history.name')}</Text> {product.proName}</Text>
-                                                <Text style={styles.size}><Text style={styles.boldText}>{t('history.quantity')}</Text> {product.quantity}</Text>
-                                                <Text style={styles.price}><Text style={styles.boldText}>{t('history.price')}</Text> {product.totalPrice} VND</Text>
+                                                <Text style={styles.title}>{t('history.name')} {product.proName}</Text>
+                                                <Text style={styles.size}>{t('history.quantity')} {product.quantity}</Text>
+                                                <Text style={styles.price}>{t('history.price')} {formatPrice(product.totalPrice)}đ</Text>
                                             </View>
                                         </View>
                                     )}
                                 />
 
-                                <Text style={styles.totalPrice}><Text style={styles.boldText}>{t('history.total_price')}</Text> {Math.max(item.totalPrice + item.deliveryFee - item.discountPrice, 0)} VND</Text>
-                                <Text><Text style={styles.boldText}>{t('history.order_date')}</Text> {item.dateOders}</Text>
-                                <Text><Text style={styles.boldText}>{t('history.shipper')}</Text> {item.shipment?.nameShipper}</Text>
-                                <Text><Text style={styles.boldText}>{t('history.delivery_date')}</Text> {item.shipment?.dateDeliver}</Text>
+                                <Text style={styles.totalPrice}><Text style={styles.boldText1}>{t('history.total_price')}</Text> {formatPrice(Math.max(item.totalPrice + item.deliveryFee - item.discountPrice, 0))}đ</Text>
+                                <Text  style={styles.boldText2}><Text style={styles.boldText1}>{t('history.order_date')}</Text> {item.dateOders}</Text>
+                                <Text  style={styles.boldText2}><Text style={styles.boldText1}>{t('history.shipper')}</Text> {item.shipment?.nameShipper}</Text>
+                                <Text  style={styles.boldText2}><Text style={styles.boldText1}>{t('order.deliveryTime')}</Text> {item.shipment?.dateDeliver}</Text>
                             </View>
                         </TouchableOpacity>
                     )}
@@ -190,26 +194,25 @@ const styles = StyleSheet.create({
         paddingVertical: 10,
     },
     header: {
-        fontSize: 20,
-        fontWeight: 'bold',
-        marginBottom: 16,
+        fontSize: 24,
+        fontFamily: FONTFAMILY.lobster_regular,     
         textAlign: 'center',
     },
     title: {
-        fontSize: 16,
-        fontWeight: 'bold',
+        fontSize: 28,
+        fontFamily: FONTFAMILY.dongle_regular,
         color: '#333',
-        marginBottom: 4,
+        
     },
     size: {
-        fontSize: 14,
+        fontSize: 24,
+        fontFamily: FONTFAMILY.dongle_regular,
         color: 'gray',
     },
     price: {
-        fontSize: 15,
-        fontWeight: 'bold',
+        fontSize: 26,
+        fontFamily: FONTFAMILY.dongle_regular,
         color: '#27ae60',
-        marginTop: 4,
     },
     card: {
         backgroundColor: 'white',
@@ -224,13 +227,13 @@ const styles = StyleSheet.create({
         elevation: 4,
     },
     boldText: {
-        fontSize: 16,
-        fontWeight: 'bold',
+        fontSize: 30,
+        fontFamily: FONTFAMILY.dongle_bold,
     },
     orderId: {
         marginBottom: 8,
-        fontSize: 16,
-        fontWeight: 'bold',
+        fontSize: 30,
+        fontFamily: FONTFAMILY.dongle_bold,
     },
     productContainer: {
         flexDirection: 'row',
@@ -238,8 +241,8 @@ const styles = StyleSheet.create({
         marginBottom: 10,
     },
     image: {
-        width: 70,
-        height: 70,
+        width: 80,
+        height: 80,
         borderRadius: 10,
         marginRight: 12,
     },
@@ -248,9 +251,18 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
     },
     totalPrice: {
-        marginTop: 10,
-        fontWeight: 'bold',
+        fontFamily: FONTFAMILY.dongle_bold,
+        fontSize:28,
+        color: '#e74c3c',
     },
+    boldText1:{
+        fontFamily: FONTFAMILY.dongle_regular,
+        fontSize:24
+    },
+    boldText2:{
+        fontFamily: FONTFAMILY.dongle_light,
+        fontSize:24
+    }
 });
 
 export default DeliveringOrders;

@@ -124,7 +124,6 @@ export const useCategoryStore = create<CategoryStore>()(
           set((state) => ({
             data: { ...state.data, categories: response.data.categoryResponseList || [] },
           }));
-          console.log("✅ [After Fetch] Categories:", response.data.categoryResponseList);
         } catch (error) {
           console.error("❌ [fetchCategories] Error fetching categories:", error);
         }
@@ -137,8 +136,7 @@ export const useCategoryStore = create<CategoryStore>()(
           const response = await axiosInstance.get(`/post/view/all/desc?page=1&limit=4&language=${lang}`);
           set((state) => ({
             data: { ...state.data, posts: response.data.listPosts || [] },
-          }));
-          console.log("✅ [After Fetch] Posts:", response.data.listPosts);
+          }));          
         } catch (error) {
           console.error("❌ [fetchPosts] Error fetching posts:", error);
         }
@@ -148,8 +146,6 @@ export const useCategoryStore = create<CategoryStore>()(
         try {
           const lang = get().language;
           const response = await axiosInstance.get(`/product/list-product-android?language=${lang}`);
-
-          console.log("📥 [fetchProducts] Raw API response:", response.data);
 
           const favoriteItems = get().data.favoriteItems || [];
           const newProducts = (response.data.productResponses || []).map((product: {
@@ -174,8 +170,6 @@ export const useCategoryStore = create<CategoryStore>()(
             })) || [],
             isFavourited: favoriteItems.some((fav) => fav.proId === product.proId),
           }));
-
-          console.log("✅ [fetchProducts] Processed products:", newProducts);
 
           set((state) => ({
             data: { ...state.data, products: newProducts },
@@ -345,8 +339,6 @@ export const useCategoryStore = create<CategoryStore>()(
             },
           }));
       
-          console.log("✅ [After Fetch] Favorite Items:", favoriteItems);
-          console.log("✅ [Updated Products] Products with isFavourited:", updatedProducts);
         } catch (error) {
           console.error("❌ [fetchFavoriteItems] Error fetching favorite items:", error);
         }

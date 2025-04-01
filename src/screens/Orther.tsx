@@ -8,11 +8,14 @@ import { StackNavigationProp } from "@react-navigation/stack";
 import { RootStackParamList } from "../navigation/RootStackParamList";
 import Notification from '../components/Notification';
 import OrderCount from '../components/OrderCount';
+import NotificationPopup from '../components/NotificationPopup';
+import { FONTFAMILY } from "../theme/theme";
 
 const Other = () => {
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
   const { t } = useTranslation();
   const logout = useCategoryStore((state) => state.logout);
+  const { language, userId } = useCategoryStore();
   const [orderCounts, setOrderCounts] = useState({
     confirmed: 0,
     // waiting: 0,
@@ -33,16 +36,18 @@ const Other = () => {
   };
   return (
     <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
+      {/* <NotificationPopup userId={userId ?? 0} /> */}
       <View style={styles.container}>
         <Notification message={notification.message} visible={notification.visible} onHide={() => setNotification({ ...notification, visible: false })} />
         {/* Tiện ích */}
+        <Text style={styles.title}>{t('information.other')}</Text>
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>{t('features')}</Text>
           <View style={styles.centered}>
 
             <TouchableOpacity style={styles.box1} onPress={() => navigation.navigate('HistoryOrders')}>
               <MaterialIcons name="history" style={styles.iconOrange} size={30} />
-              <Text>{t('history.history')}</Text>
+              <Text style={styles.textOther}>{t('history.history')}</Text>
             </TouchableOpacity>
           </View>
           {/* Fetch số lượng đơn hàng */}
@@ -51,6 +56,7 @@ const Other = () => {
           <View style={styles.row}>
             <TouchableOpacity style={styles.box} onPress={() => navigation.navigate('DeliveringOrders')}>
               <MaterialIcons name="local-shipping" style={styles.iconBlue} size={30} />
+              <View style={styles.badge}>
               {orderCounts ? (
                 orderCounts.confirmed > 0 ? (
                   <Text style={styles.badgeText}>{orderCounts.confirmed}</Text>
@@ -58,7 +64,8 @@ const Other = () => {
               ) : (
                 <ActivityIndicator size="small" color="#fff" />
               )}
-              <Text style={styles.statusText}>Đang giao</Text>
+              </View>             
+              <Text style={styles.textSubOther}>{t('orderContent.status.ship')}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.box} onPress={() => navigation.navigate('WaitingOrders')}>
@@ -68,7 +75,7 @@ const Other = () => {
                   <Text style={styles.badgeText}>{orderCounts.waiting}</Text>
                 </View>
               )} */}
-              <Text style={styles.statusText}>Chờ giao</Text>
+              <Text style={styles.textSubOther}>{t('orderContent.status.wait')}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.box} onPress={() => navigation.navigate('CancelledOrders')}>
@@ -82,7 +89,7 @@ const Other = () => {
                   <ActivityIndicator size="small" color="white" />
                 )}
               </View>
-              <Text style={styles.statusText}>Đã hủy</Text>
+              <Text style={styles.textSubOther}>{t('orderContent.status.cancel')}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.box} onPress={() => navigation.navigate('PendingOrders')}>
@@ -96,7 +103,7 @@ const Other = () => {
                   <ActivityIndicator size="small" color="#fff" />
                 )}
               </View>
-              <Text style={styles.statusText}>Xác nhận</Text>
+              <Text style={styles.textSubOther}>{t('orderContent.status.confirm')}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.box} onPress={() => navigation.navigate('RefundOrders')}>
@@ -110,7 +117,7 @@ const Other = () => {
                   <ActivityIndicator size="large" color="#fff" />
                 )}
               </View>
-              <Text style={styles.statusText}>Hoàn tiền</Text>
+              <Text style={styles.textSubOther}>{t('orderContent.status.refund')}</Text>
             </TouchableOpacity>
           </View>
 
@@ -122,17 +129,12 @@ const Other = () => {
           <View style={styles.list}>
             <TouchableOpacity style={styles.listItem}>
               <MaterialIcons name="star" style={styles.icon} size={24} />
-              <Text>{t('about.stat4')}</Text>
+              <Text style={styles.textOther}>{t('about.stat4')}</Text>
               <MaterialIcons name="arrow-forward-ios" style={styles.iconrow} size={18} />
             </TouchableOpacity>
             <TouchableOpacity style={styles.listItem}>
               <MaterialIcons name="comment" style={styles.icon} size={24} />
-              <Text>{t('contact1')}</Text>
-              <MaterialIcons name="arrow-forward-ios" style={styles.iconrow} size={18} />
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.listItem} onPress={() => showNotification('✅ ⚠️ ❌ Test!')}>
-              <MaterialIcons name="receipt" style={styles.icon} size={24} />
-              <Text>Test nút Notification</Text>
+              <Text style={styles.textOther}>{t('contact1')}</Text>
               <MaterialIcons name="arrow-forward-ios" style={styles.iconrow} size={18} />
             </TouchableOpacity>
           </View>
@@ -144,23 +146,18 @@ const Other = () => {
           <View style={styles.list}>
             <TouchableOpacity style={styles.listItem} onPress={() => navigation.navigate('Info')}>
               <MaterialIcons name="person" style={styles.icon} size={24} />
-              <Text>{t('personalInfo')}</Text>
+              <Text style={styles.textOther}>{t('personalInfo')}</Text>
               <MaterialIcons name="arrow-forward-ios" style={styles.iconrow} size={18} />
             </TouchableOpacity>
-            {/* <TouchableOpacity style={styles.listItem}>
-              <MaterialIcons name="bookmark" style={styles.icon} size={24} />
-              <Text>Địa chỉ đã lưu</Text>
-              <MaterialIcons name="arrow-forward-ios" style={styles.iconrow} size={18} />
-            </TouchableOpacity> */}
             <TouchableOpacity style={styles.listItem} onPress={() => navigation.navigate('LanguageChange')}>
               <MaterialIcons name="settings" style={styles.icon} size={24} />
-              <Text>{t('language')}</Text>
+              <Text style={styles.textOther}>{t('language')}</Text>
               <MaterialIcons name="arrow-forward-ios" style={styles.iconrow} size={18} />
             </TouchableOpacity>
 
             <TouchableOpacity style={[styles.listItem, styles.logout]} onPress={handleLogout}>
               <MaterialIcons name="logout" style={styles.icon} size={24} />
-              <Text style={{ color: "red" }}>{t('logout')}</Text>
+              <Text style={styles.textOther1}>{t('logout')}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -174,6 +171,11 @@ const styles = StyleSheet.create({
   scrollContainer: {
     flexGrow: 1,
     paddingBottom: 20,
+  },
+  title:{
+    textAlign:'center',
+    fontFamily:FONTFAMILY.lobster_regular,
+    fontSize:24
   },
   row: {
     flexDirection: "row",
@@ -230,8 +232,8 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
+    fontSize: 20,
+    fontFamily:FONTFAMILY.lobster_regular,
     marginBottom: 10,
   },
   grid: {
@@ -295,4 +297,18 @@ const styles = StyleSheet.create({
     color: "orange",
     marginRight: 10,
   },
+  textOther:{
+    fontFamily:FONTFAMILY.dongle_light,
+    fontSize:24
+  },
+  textOther1:{
+    fontFamily:FONTFAMILY.dongle_light,
+    fontSize:24,
+    color:'red'
+  },
+  textSubOther:{
+    fontFamily:FONTFAMILY.dongle_regular,
+    fontSize:14,
+    color: "#333",
+  }
 });
