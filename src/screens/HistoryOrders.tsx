@@ -121,58 +121,62 @@ const HistoryOrders = () => {
                                 data={historyOrders}
                                 keyExtractor={(item) => item?.orderId?.toString() || `order-${Math.random()}`}
                                 renderItem={({ item }) => (
-                                    <TouchableOpacity
-                                        onPress={() => navigation.navigate('MyOrderDetails', { shipmentId: Number(item?.orderId) })}>
+                                    <View style={styles.container}>
+                                        <TouchableOpacity
+                                            onPress={() => navigation.navigate('MyOrderDetails', { shipmentId: Number(item?.orderId) })}>
+                                            <View style={styles.card}>
+                                                <Text style={styles.orderId}>
+                                                    <Text style={styles.boldText}>{t('history.order_id')}</Text> {item?.orderId}
+                                                </Text>
 
-                                        <View style={styles.card}>
-                                            <Text style={styles.orderId}>
-                                                <Text style={styles.boldText}>{t('history.order_id')}</Text> {item?.orderId}
-                                            </Text>
-
-                                            <FlatList
-                                                data={item?.listItem}
-                                                keyExtractor={(product) => product?.cartItemId?.toString() ?? `product-${Math.random()}`}
-                                                renderItem={({ item: product }) => (
-                                                    <View style={styles.productContainer}>
-                                                        <Image source={{ uri: product.imageUrl }} style={styles.image} />
-                                                        <View style={styles.info}>
-                                                            <Text style={styles.title}>
-                                                                <Text style={styles.boldText}>{t('history.name')}</Text> {product.proName}
-                                                            </Text>
-                                                            <Text style={styles.size}>
-                                                                <Text style={styles.boldText}>{t('history.quantity')}</Text> {product.quantity}
-                                                            </Text>
-                                                            <Text style={styles.price}>
-                                                                <Text style={styles.boldText}>{t('history.price')}</Text> {product.totalPrice} VND
-                                                            </Text>
+                                                <FlatList
+                                                    data={item?.listItem}
+                                                    keyExtractor={(product) => product?.cartItemId?.toString() ?? `product-${Math.random()}`}
+                                                    renderItem={({ item: product }) => (
+                                                        <View style={styles.productContainer}>
+                                                            <Image source={{ uri: product.imageUrl }} style={styles.image} />
+                                                            <View style={styles.info}>
+                                                                <Text style={styles.title}>
+                                                                    <Text style={styles.boldText}>{t('history.name')}</Text> {product.proName}
+                                                                </Text>
+                                                                <Text style={styles.size}>
+                                                                    <Text style={styles.boldText}>{t('history.quantity')}</Text> {product.quantity}
+                                                                </Text>
+                                                                <Text style={styles.price}>
+                                                                    <Text style={styles.boldText}>{t('history.price')}</Text> {product.totalPrice} VND
+                                                                </Text>
+                                                            </View>
                                                         </View>
-                                                    </View>
-                                                )}
-                                            />
+                                                    )}
+                                                />
 
-                                            <Text style={styles.totalPrice}>
-                                                <Text style={styles.boldText}>{t('history.total_price')}</Text> {Math.max(item.totalPrice + item.deliveryFee - item.discountPrice, 0)} VND
-                                            </Text>
-                                            <Text>
-                                                <Text style={styles.boldText}>{t('history.order_date')}</Text> {item.dateOders}
-                                            </Text>
-                                            <Text>
-                                                <Text style={styles.boldText}>{t('history.shipper')}</Text> {item.shipment?.nameShipper}
-                                            </Text>
-                                            <Text>
-                                                <Text style={styles.boldText}>{t('history.delivery_date')}</Text>{' '}
-                                                {item.shipment?.dateShipped ? item.shipment.dateShipped : t('history.delivery_failed')}
-                                            </Text>
-                                            <View style={styles.buttonContainer}>
-                                                <TouchableOpacity onPress={() => handleRestoreOrder(item.orderId)} style={styles.button}>
-                                                    <Text style={styles.buttonText}>{t('history.reorder')}</Text>
-                                                </TouchableOpacity>
-                                                <TouchableOpacity onPress={() => handlePrint(item.orderId)} style={styles.button}>
-                                                    <Text style={styles.buttonText}>{t('history.print_invoice')}</Text>
-                                                </TouchableOpacity>
+                                                <Text style={styles.totalPrice}>
+                                                    <Text style={styles.boldText}>{t('history.total_price')}</Text> {Math.max(item.totalPrice + item.deliveryFee - item.discountPrice, 0)} VND
+                                                </Text>
+                                                <Text>
+                                                    <Text style={styles.boldText}>{t('history.order_date')}</Text> {item.dateOders}
+                                                </Text>
+                                                <Text>
+                                                    <Text style={styles.boldText}>{t('history.shipper')}</Text> {item.shipment?.nameShipper}
+                                                </Text>
+                                                <Text>
+                                                    <Text style={styles.boldText}>{t('history.delivery_date')}</Text>{' '}
+                                                    {item.shipment?.dateShipped ? item.shipment.dateShipped : t('history.delivery_failed')}
+                                                </Text>
+                                                <View style={styles.buttonContainer}>
+                                                    <TouchableOpacity onPress={() => handleRestoreOrder(item.orderId)} style={styles.button}>
+                                                        <Text style={styles.buttonText}>{t('history.reorder')}</Text>
+                                                    </TouchableOpacity>
+                                                    <TouchableOpacity onPress={() => handlePrint(item.orderId)} style={styles.button}>
+                                                        <Text style={styles.buttonText}>{t('history.print_invoice')}</Text>
+                                                    </TouchableOpacity>
+                                                    <TouchableOpacity onPress={() => navigation.navigate('ChatWithShipper', { shipmentId: Number(item.shipment?.shipmentId) })} style={styles.button}>
+                                                        <Text style={styles.buttonText}>{t('chat.title')}</Text>
+                                                    </TouchableOpacity>
+                                                </View>
                                             </View>
-                                        </View>
-                                    </TouchableOpacity>
+                                        </TouchableOpacity>
+                                    </View>
                                 )}
                             />
                         )}

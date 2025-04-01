@@ -24,6 +24,7 @@ export type RootStackParamList = {
     WaitingOrders: undefined;
     RefundOrders: undefined;
     MyOrderDetails: { shipmentId: number };
+    ChatWithShipper: { shipmentId: number };
     Orther: undefined;
     Payment: undefined;
     OrderComplete:undefined;

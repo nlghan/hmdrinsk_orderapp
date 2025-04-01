@@ -32,6 +32,13 @@
     "title": "Wishlist",
     "list": "Wishlist"
   },
+  "chat": {
+    "title": "Contact",
+    "withUser": "Contact Customer",
+    "withShipper": "Contact Shipper",
+    "input": "Enter your message...",
+    "disable": "Contact is only available while the order is being delivered"
+  },
   "features": "Features",
   "terms": "Terms",
   "orderDelivering": "Orders in transit",

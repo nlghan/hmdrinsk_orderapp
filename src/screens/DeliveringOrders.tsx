@@ -102,7 +102,7 @@ const DeliveringOrders = () => {
                     } : null,
                 }));
 
-                setConfirmedOrders(orders);                
+                setConfirmedOrders(orders);
             } else {
                 setConfirmedOrders([]);
             }
@@ -162,6 +162,11 @@ const DeliveringOrders = () => {
                                 <Text><Text style={styles.boldText}>{t('history.order_date')}</Text> {item.dateOders}</Text>
                                 <Text><Text style={styles.boldText}>{t('history.shipper')}</Text> {item.shipment?.nameShipper}</Text>
                                 <Text><Text style={styles.boldText}>{t('history.delivery_date')}</Text> {item.shipment?.dateDeliver}</Text>
+                                <View style={styles.buttonContainer}></View>
+                                <TouchableOpacity onPress={() => navigation.navigate('ChatWithShipper', { shipmentId: Number(item.shipment?.shipmentId) })} style={styles.button}>
+                                    <Text style={styles.buttonText}>{t('chat.title')}</Text>
+                                </TouchableOpacity>
+                                <View />
                             </View>
                         </TouchableOpacity>
                     )}
@@ -172,6 +177,22 @@ const DeliveringOrders = () => {
 };
 
 const styles = StyleSheet.create({
+    buttonContainer: {
+        flexDirection: 'row',
+        marginTop: 10,
+    },
+    button: {
+        backgroundColor: '#ff6347',
+        padding: 10,
+        borderRadius: 5,
+        marginRight: 10,
+        width: '30%',
+        alignItems: 'center',
+    },
+    buttonText: {
+        color: 'white',
+        fontWeight: 'bold',
+    },
     container: {
         flex: 1,
         padding: 12,

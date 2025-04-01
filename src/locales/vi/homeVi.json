@@ -34,6 +34,13 @@
         "title": "Yêu thích",
         "list": "Danh sách yêu thích"
     },
+    "chat": {
+        "title": "Liên hệ",
+        "withUser": "Liên hệ với khách hàng",
+        "withShipper": "Liên hệ với nhân viên",
+        "input": "Nhập tin nhắn...",
+        "disable": "Chỉ liên hệ khi đơn hàng đang trong quá trình giao"
+      },
     "features": "Tiện ích",
     "terms": "Điều khoản",
     "orderDelivering": "Đơn hàng đang giao",
