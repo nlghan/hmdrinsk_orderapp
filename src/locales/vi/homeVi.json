@@ -165,7 +165,7 @@
         "used": "Đã sử dụng",
         "inactive": "Chưa sử dụng",
         "noVoucher": "Không có voucher nào",
-        "expired":"Hết hạn"
+        "expired": "Hết hạn"
     },
     "updateBtn": "Cập nhật",
     "backBtn": "Trở lại",
@@ -233,8 +233,8 @@
     "orderDetail": "Chi tiết đơn hàng",
     "shippingStatus": "Trạng thái giao hàng",
     "note": "Ghi chú",
-    "takeNote":"Nhập ghi chú...",
-    "getVoucher":"Nhập mã khuyễn mãi",
+    "takeNote": "Nhập ghi chú...",
+    "getVoucher": "Nhập mã khuyễn mãi",
     "infoPayment": "Thông Tin Thanh Toán",
     "statusPayment": "Trạng thái thanh toán",
     "product": "Sản phẩm",
@@ -450,8 +450,8 @@
             "ship": "Đang giao",
             "complete": "Đã giao",
             "cancel": "Đã hủy",
-            "confirm":"Xác nhận",
-            "refund":"Hoàn tiền"
+            "confirm": "Xác nhận",
+            "refund": "Hoàn tiền"
         },
         "price": "Tổng tiền",
         "deliveryDate": "Ngày giao hàng",
@@ -547,10 +547,17 @@
         "needShip": "Đơn hàng được phân công",
         "chart": "Biểu đồ đơn hàng trong tháng"
     },
-    "android":{
-        "payment":{
+    "android": {
+        "payment": {
             "title": "Giao hàng tận nơi",
-            "product":"Sản phẩm đã chọn"
+            "product": "Sản phẩm đã chọn"
         }
+    },
+    "chat": {
+        "title": "Liên hệ",
+        "withUser": "Liên hệ với khách hàng",
+        "withShipper": "Liên hệ với nhân viên",
+        "input": "Nhập tin nhắn...",
+        "disable": "Chỉ liên hệ khi đơn hàng đang trong quá trình giao"
     }
 }

@@ -29,5 +29,6 @@ export type RootStackParamList = {
     OrderComplete:undefined;
     OrderFailed:undefined;
     Notification: { userId: number } | undefined;
+    ChatWithShipper: { shipmentId: number };
   };
   

@@ -145,7 +145,7 @@ const HistoryOrders = () => {
                                                                 {t('history.name')} {product.proName}
                                                             </Text>
                                                             <Text style={styles.size}>
-                                                               {t('history.quantity')} {product.quantity}
+                                                                {t('history.quantity')} {product.quantity}
                                                             </Text>
                                                             <Text style={styles.price}>
                                                                 {t('history.price')} {formatPrice(product.totalPrice)}đ
@@ -169,6 +169,9 @@ const HistoryOrders = () => {
                                                 {item.shipment?.dateShipped ? item.shipment.dateShipped : t('history.delivery_failed')}
                                             </Text>
                                             <View style={styles.buttonContainer}>
+                                                <TouchableOpacity onPress={() => navigation.navigate('ChatWithShipper', { shipmentId: Number(item.shipment?.shipmentId) })} style={styles.button}>
+                                                    <Text style={styles.buttonText}>{t('chat.title')}</Text>
+                                                </TouchableOpacity>
                                                 <TouchableOpacity onPress={() => handleRestoreOrder(item.orderId)} style={styles.button}>
                                                     <Text style={styles.buttonText}>{t('history.reorder')}</Text>
                                                 </TouchableOpacity>
@@ -284,9 +287,9 @@ const styles = StyleSheet.create({
     buttonContainer: {
         flexDirection: 'row',
         marginTop: 10,
-        justifyContent: 'flex-end', // Đưa nút về lề phải
+        justifyContent: 'space-around', // Đưa nút về lề phải
         alignItems: 'center', // Căn giữa theo chiều dọc,
-        gap:5
+        gap: 5
     },
     button: {
         backgroundColor: '#ff6347',

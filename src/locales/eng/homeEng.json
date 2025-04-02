@@ -163,7 +163,7 @@
     "used": "USED",
     "inactive": "INACTIVE",
     "noVoucher": "There are no vouchers available",
-    "expired":"EXPIRED"
+    "expired": "EXPIRED"
   },
   "updateBtn": "Update",
   "backBtn": "Back",
@@ -231,8 +231,8 @@
   "orderDetail": "Order Details",
   "shippingStatus": "Delivery status",
   "note": "Note",
-  "takeNote":"Take note...",
-  "getVoucher":"Enter voucher code",
+  "takeNote": "Take note...",
+  "getVoucher": "Enter voucher code",
   "infoPayment": "Payment Information",
   "statusPayment": "Payment status",
   "product": "Product",
@@ -448,8 +448,8 @@
       "ship": "Shipping",
       "complete": "Success",
       "cancel": "Cancelled",
-      "confirm":"Confirm",
-      "refund":"Refund"
+      "confirm": "Confirm",
+      "refund": "Refund"
     },
     "price": "Total amout",
     "deliveryDate": "Delivery Date",
@@ -550,5 +550,12 @@
       "title": "Delivery to your door",
       "product": "Selected product"
     }
+  },
+  "chat": {
+    "title": "Contact",
+    "withUser": "Contact Customer",
+    "withShipper": "Contact Shipper",
+    "input": "Enter your message...",
+    "disable": "Contact is only available while the order is being delivered"
   }
 }

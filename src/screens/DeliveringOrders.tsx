@@ -163,9 +163,14 @@ const DeliveringOrders = () => {
                                 />
 
                                 <Text style={styles.totalPrice}><Text style={styles.boldText1}>{t('history.total_price')}</Text> {formatPrice(Math.max(item.totalPrice + item.deliveryFee - item.discountPrice, 0))}đ</Text>
-                                <Text  style={styles.boldText2}><Text style={styles.boldText1}>{t('history.order_date')}</Text> {item.dateOders}</Text>
-                                <Text  style={styles.boldText2}><Text style={styles.boldText1}>{t('history.shipper')}</Text> {item.shipment?.nameShipper}</Text>
-                                <Text  style={styles.boldText2}><Text style={styles.boldText1}>{t('order.deliveryTime')}</Text> {item.shipment?.dateDeliver}</Text>
+                                <Text style={styles.boldText2}><Text style={styles.boldText1}>{t('history.order_date')}</Text> {item.dateOders}</Text>
+                                <Text style={styles.boldText2}><Text style={styles.boldText1}>{t('history.shipper')}</Text> {item.shipment?.nameShipper}</Text>
+                                <Text style={styles.boldText2}><Text style={styles.boldText1}>{t('order.deliveryTime')}</Text> {item.shipment?.dateDeliver}</Text>
+                                <View style={styles.buttonContainer}>
+                                <TouchableOpacity onPress={() => navigation.navigate('ChatWithShipper', { shipmentId: Number(item.shipment?.shipmentId) })} style={styles.button}>
+                                    <Text style={styles.buttonText}>{t('chat.title')}</Text>
+                                </TouchableOpacity>
+                                </View>
                             </View>
                         </TouchableOpacity>
                     )}
@@ -195,14 +200,14 @@ const styles = StyleSheet.create({
     },
     header: {
         fontSize: 24,
-        fontFamily: FONTFAMILY.lobster_regular,     
+        fontFamily: FONTFAMILY.lobster_regular,
         textAlign: 'center',
     },
     title: {
         fontSize: 28,
         fontFamily: FONTFAMILY.dongle_regular,
         color: '#333',
-        
+
     },
     size: {
         fontSize: 24,
@@ -252,17 +257,36 @@ const styles = StyleSheet.create({
     },
     totalPrice: {
         fontFamily: FONTFAMILY.dongle_bold,
-        fontSize:28,
+        fontSize: 28,
         color: '#e74c3c',
     },
-    boldText1:{
+    boldText1: {
         fontFamily: FONTFAMILY.dongle_regular,
-        fontSize:24
+        fontSize: 24
     },
-    boldText2:{
+    boldText2: {
         fontFamily: FONTFAMILY.dongle_light,
-        fontSize:24
-    }
+        fontSize: 24
+    },
+    buttonContainer: {
+        flexDirection: 'row',
+        marginTop: 10,
+        justifyContent: 'flex-end', // Đưa nút về lề phải
+        alignItems: 'center', // Căn giữa theo chiều dọc,
+        gap:5
+    },
+    button: {
+        backgroundColor: '#ff6347',
+        padding: 8,
+        borderRadius: 5,
+        width: 100
+    },
+    buttonText: {
+        color: 'white',
+        fontSize: 22,
+        fontFamily: FONTFAMILY.dongle_bold,
+        textAlign: 'center'
+    },
 });
 
 export default DeliveringOrders;
