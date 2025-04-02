@@ -9,8 +9,8 @@ const styles = StyleSheet.create({
     borderColor: "#ddd",
     paddingHorizontal: 12, // Giảm padding ngang
     borderRadius: 15,
-    height:220, // Giảm chiều cao (hoặc bạn có thể thử 180, 160)
-    marginBottom:10
+    height: 220, // Giảm chiều cao (hoặc bạn có thể thử 180, 160)
+    marginBottom: 10
   },
   categoryTitle: {
     fontSize: 18, // Giảm kích thước chữ tiêu đề
@@ -18,7 +18,7 @@ const styles = StyleSheet.create({
     color: "#333",
   },
   servicesOrder: {
-    flexDirection: "row",   
+    flexDirection: "row",
   },
   serviceOrderItem: {
     paddingVertical: 5, // Giảm padding mỗi mục danh mục
@@ -34,9 +34,9 @@ const styles = StyleSheet.create({
   },
   serviceOrderText: {
     fontSize: 20, // Giảm kích thước chữ danh mục
-    fontFamily:FONTFAMILY.dongle_regular
+    fontFamily: FONTFAMILY.dongle_regular
   },
- 
+
   imageWrapper: {
     position: "relative",
   },
@@ -51,7 +51,7 @@ const styles = StyleSheet.create({
   },
   serviceOrderTextSelected: {
     color: "#fa9269", // Đổi màu khi được chọn
-    fontFamily:FONTFAMILY.dongle_bold
+    fontFamily: FONTFAMILY.dongle_bold
   },
   // 🔹 Thanh cuộn mượt hơn
   scrollBarContainer: {
@@ -67,7 +67,7 @@ const styles = StyleSheet.create({
     width: 35,
     backgroundColor: "#ff914d",
     borderRadius: 10, // Bo tròn thanh trượt
-    
+
   },
 
   productItem: {
@@ -82,7 +82,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowRadius: 4,
     elevation: 3, // Bóng đổ trên Android
-    
+
   },
   productImage: {
     width: 80,
@@ -93,16 +93,16 @@ const styles = StyleSheet.create({
   productInfo: {
     flex: 1,
     marginLeft: 10,
-   
+
   },
   productName: {
-    fontFamily:FONTFAMILY.dongle_bold,
+    fontFamily: FONTFAMILY.dongle_bold,
     fontSize: 28,
     color: "#333",
   },
   productPrice: {
     color: 'green',
-    fontFamily:FONTFAMILY.dongle_regular,
+    fontFamily: FONTFAMILY.dongle_regular,
     fontSize: 26
   },
   productDesc: {
@@ -134,7 +134,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
   },
-  
+  categoryOrderHeader: {
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'space-between'
+  },
+
 });
 
 export default styles;

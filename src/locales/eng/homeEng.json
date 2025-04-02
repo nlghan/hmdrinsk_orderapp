@@ -257,7 +257,7 @@
     "success": "The request to cancel has been sent"
   },
   "menuCustomer": {
-    "want": "🔍 What would you like to drink?",
+    "want": "What would you like to drink?",
     "all": "❤️ All",
     "filter": "Choose a filter",
     "opt0": "Price Low to High",
@@ -423,7 +423,7 @@
   },
   "productContent": {
     "page": "Page",
-    "search": "Find product...",
+    "search": "Find product",
     "noPro": "Not found product.",
     "name": "Product name",
     "image": "Image",
@@ -549,7 +549,8 @@
     "payment": {
       "title": "Delivery to your door",
       "product": "Selected product"
-    }
+    },
+    "suggest":"Search suggestions"
   },
   "chat": {
     "title": "Contact",

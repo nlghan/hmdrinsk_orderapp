@@ -115,7 +115,7 @@ const styles = StyleSheet.create({
     serviceImage: {
       width: 65,
       height: 65,
-      borderRadius: 30,
+      borderRadius: 33,
     },
     notificationDot: {
       width: 8,
@@ -149,7 +149,29 @@ const styles = StyleSheet.create({
       fontSize: 10,
       fontWeight: "bold",
   },
-  
+  searchBar: {
+  flexDirection: "row",
+  alignItems: "center",
+  backgroundColor: "#F1F1F1",
+  borderRadius: 8,
+  paddingHorizontal: 10,
+  paddingVertical: 5,
+  marginBottom: 10,
+},
+searchInput: {
+  flex: 1,
+  marginLeft: 10,
+  fontSize: 16,
+},
+searchItem: {
+  padding: 10,
+  borderBottomWidth: 1,
+  borderBottomColor: "#ddd",
+},
+searchItemText: {
+  fontSize: 16,
+},
+
     
     
     

@@ -259,7 +259,7 @@
         "success": "Yêu cầu hủy đơn đã được gửi đi"
     },
     "menuCustomer": {
-        "want": "🔍 Bạn muốn uống gì?",
+        "want": "Bạn muốn uống gì?",
         "all": "❤️ Tất cả",
         "filter": "Chọn bộ lọc",
         "opt0": "Giá thấp đến cao",
@@ -425,7 +425,7 @@
     },
     "productContent": {
         "page": "Trang",
-        "search": "Tìm kiếm sản phẩm...",
+        "search": "Tìm kiếm sản phẩm",
         "noPro": "Không có sản phẩm tương ứng.",
         "name": "Tên sản phẩm",
         "image": "Hình ảnh",
@@ -551,7 +551,8 @@
         "payment": {
             "title": "Giao hàng tận nơi",
             "product": "Sản phẩm đã chọn"
-        }
+        },
+        "suggest":"Gợi ý tìm kiếm"
     },
     "chat": {
         "title": "Liên hệ",

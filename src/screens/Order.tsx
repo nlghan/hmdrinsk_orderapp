@@ -22,6 +22,7 @@ import { RootStackParamList } from "../navigation/RootStackParamList";
 import Icon from "react-native-vector-icons/MaterialIcons";
 import { COLORS } from "../theme/theme";
 import FastImage from "react-native-fast-image";
+import { useRoute, RouteProp } from '@react-navigation/native';
 
 // 🔹 Component hiển thị danh mục dịch vụ
 const ServiceItem: React.FC<{ image: string; text?: string; onPress: () => void; isSelected: boolean }> = ({
@@ -76,8 +77,8 @@ const ProductItem = ({ item, navigation }: { item: any; navigation: any }) => {
       ]}
       onPress={() =>
         navigation.navigate("ProductDetail", {
-          product: { 
-            ...item, 
+          product: {
+            ...item,
             isFavourited: item.isFavourited ?? false,
             images: item.productImageResponseList.map((img: any) => img.linkImage), // Truyền danh sách ảnh
           },
@@ -115,8 +116,8 @@ const ProductItem = ({ item, navigation }: { item: any; navigation: any }) => {
           ]}
           onPress={() =>
             navigation.navigate("ProductDetail", {
-              product: { 
-                ...item, 
+              product: {
+                ...item,
                 isFavourited: item.isFavourited ?? false,
                 images: item.productImageResponseList.map((img: any) => img.linkImage), // Truyền danh sách ảnh
               },
@@ -147,9 +148,27 @@ const OrderScreen = () => {
   const scrollX = useRef(new Animated.Value(0)).current;
   const scrollViewRef = useRef<ScrollView>(null);
 
+  const route = useRoute<RouteProp<RootStackParamList, 'Order'>>();
+
+  const cateIdFromHome = route.params?.state?.cateId || null;
+
   useEffect(() => {
-    fetchProducts();
-  }, []);
+    if (cateIdFromHome !== null) {
+      console.log("CateId from Home:", cateIdFromHome);
+      setSelectedCategory(cateIdFromHome); // Cập nhật selectedCategory với cateIdFromHome
+    }
+  }, [cateIdFromHome]);
+
+  // useEffect(() => {
+  //   const unsubscribe = navigation.addListener('blur', () => {
+  //     setSelectedCategory(null); // Reset selectedCategory khi rời khỏi trang
+  //   });
+
+  //   return unsubscribe;
+  // }, [navigation]);
+  // useEffect(() => {
+  //   fetchProducts();
+  // }, []);
 
   const filteredProducts = useMemo(() => {
     return selectedCategory
@@ -202,11 +221,18 @@ const OrderScreen = () => {
       <FlatList
         data={filteredProducts.slice(0, visibleProducts)}
         keyExtractor={(item) => item.proId.toString()}
-        contentContainerStyle={{ paddingVertical: 10, paddingHorizontal: 10 ,  paddingBottom: 60}}
+        contentContainerStyle={{ paddingVertical: 10, paddingHorizontal: 10, paddingBottom: 60 }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         ListHeaderComponent={
           <View style={homeStyles.categoryOrderContainer}>
-            <Text style={homeStyles.categoryTitle}>{t("category")}</Text>
+            <View style={homeStyles.categoryOrderHeader}>
+              <Text style={homeStyles.categoryTitle}>{t("category")}</Text>
+              <TouchableOpacity onPress={() => navigation.navigate("Search")}>
+  <Icon name="search" size={25} color={COLORS.primaryGreenHex} />
+</TouchableOpacity>
+
+            </View>
+
             <ScrollView
               ref={scrollViewRef}
               horizontal

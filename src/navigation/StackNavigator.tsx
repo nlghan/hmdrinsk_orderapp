@@ -32,6 +32,7 @@ import Notification from '../screens/Notification';
 import NotificationScreen from '../screens/Notification';
 import OrderFailed from '../screens/OrderFailed';
 import ChatWithShipper from '../screens/ChatWithShipper';
+import Search from '../screens/Search';
 
 
 // ✅ Định nghĩa kiểu cho danh sách các màn hình
@@ -44,7 +45,7 @@ export type RootStackParamList = {
   ProductDetail: { product: Product };
   News: undefined;
   NewDetails: undefined;
-  Order: undefined;
+  Order: { state: { cateId: number } };
   LanguageChange: undefined;
   AllReviews: { productId: number };
   AddReview: { productId: number };
@@ -63,7 +64,7 @@ export type RootStackParamList = {
   OrderComplete:undefined;
   Notification: undefined;
   ChatWithShipper: { shipmentId: number};
-
+  Search: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -116,7 +117,7 @@ const StackNavigator = () => {
       <Stack.Screen name="OrderComplete" component={OrderComplete} options={{ headerShown: false, animation: 'slide_from_right' }} />
       <Stack.Screen name="OrderFailed" component={OrderFailed} options={{ headerShown: false, animation: 'slide_from_right' }} />
       <Stack.Screen name="Notification" component={NotificationScreen} options={{ headerShown: false, animation: 'slide_from_right' }}/>
-
+      <Stack.Screen name="Search" component={Search} options={{ headerShown: false, animation: 'slide_from_right' }} />
       
     </Stack.Navigator>
   );

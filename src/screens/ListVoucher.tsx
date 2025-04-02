@@ -50,7 +50,7 @@ const ListVoucher = () => {
   }, [fetchVoucher]);
 
   const handleSelectVoucher = (id: number, name: string, discountAmount: number, status: string) => {
-    if (status === "USED") return;
+    if (status === "USED" || status === "EXPIRED") return;
 
     setSelectedVoucher({
       selectedVoucherId: id,
@@ -135,7 +135,7 @@ const ListVoucher = () => {
       ) : (
         <ScrollView style={styles.voucherList} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }} >
           {sortedVouchers.map((voucher) => {
-            const isUsed = voucher.status === "USED";
+            const isUsed = voucher.status === "USED" || voucher.status === "EXPIRED" ;
             const isSelected = selectedVoucher.selectedVoucherId === voucher.voucherId;
 
             return (

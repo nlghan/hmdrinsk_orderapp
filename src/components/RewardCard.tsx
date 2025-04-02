@@ -7,11 +7,12 @@ interface RewardCardProps {
   icon: string;   // Tên icon từ MaterialCommunityIcons
   title: string;  // Tiêu đề thẻ (text)
   points: number; // Số điểm (dạng số)
+  onPress?: () => void; // Hàm xử lý khi nhấn vào thẻ
 }
 
-const RewardCard: React.FC<RewardCardProps> = ({ icon, title, points }) => {
+const RewardCard: React.FC<RewardCardProps> = ({ icon, title, points, onPress }) => {
   return (
-    <TouchableOpacity style={styles.card}>
+    <TouchableOpacity style={styles.card} onPress={onPress}>
       <View style={styles.content}>
         <Icon name={icon} size={20} color={COLORS.primaryGreenHex} style={styles.icon} />
         <Text style={styles.title}>{title}</Text>
@@ -32,7 +33,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     elevation: 2,
-    marginVertical:5,
+    marginVertical: 5,
     minWidth: 150,
   },
   content: {
@@ -44,13 +45,13 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 22,
-    fontFamily:FONTFAMILY.dongle_bold,
+    fontFamily: FONTFAMILY.dongle_bold,
     color: '#7B614F',
-    textTransform:'uppercase'
+    textTransform: 'uppercase',
   },
   points: {
     fontSize: 24,
-    fontFamily:FONTFAMILY.dongle_bold,
+    fontFamily: FONTFAMILY.dongle_bold,
     color: '#000',
     marginTop: 5,
   },

@@ -37,7 +37,7 @@ const Home = () => {
   const [selectedProduct, setSelectedProduct] = useState<number | null>(null);
   const token = AsyncStorage.getItem('access_token');
   const { language, userId } = useCategoryStore();
-
+  const { fetchCartItem } = useCartStore();
   const [products, setProducts] = useState<Product[]>([]);
 
   const fetchProducts = async () => {
@@ -98,17 +98,18 @@ const Home = () => {
     setRefreshing(true);
 
     try {
-        // Cập nhật ngôn ngữ nếu cần (nếu setLanguage là sync thì không cần await)
-        useCategoryStore.getState().setLanguage(useCategoryStore.getState().language);
-        
-        // Chờ lấy dữ liệu sản phẩm
-        await fetchProducts();
+      // Cập nhật ngôn ngữ nếu cần (nếu setLanguage là sync thì không cần await)
+      useCategoryStore.getState().setLanguage(useCategoryStore.getState().language);
+
+      // Chờ lấy dữ liệu sản phẩm
+      await fetchProducts();
+      await fetchCartItem();
     } catch (error) {
-        console.error("❌ Lỗi khi làm mới dữ liệu:", error);
+      console.error("❌ Lỗi khi làm mới dữ liệu:", error);
     } finally {
-        setRefreshing(false);
+      setRefreshing(false);
     }
-};
+  };
 
 
 
@@ -133,7 +134,12 @@ const Home = () => {
     <>
       <MemberCard userInfo={userInfo} />
       <View style={homeStyles.rewardsContainer}>
-        <RewardCard icon="confirmation-number" title={t('cart.voucher')} points={useCartStore.getState().voucherTotal} />
+          <RewardCard
+            icon="confirmation-number"
+            title={t('cart.voucher')}
+            points={useCartStore.getState().voucherTotal}
+            onPress={() => navigation.navigate('ListVoucher')}
+          />
         <RewardCard icon="savings" title={t('cart.coinname')} points={userCoin ?? 0} />
       </View>
       <Text style={homeStyles.categoryTitle}>{t('category')}</Text>
@@ -149,7 +155,10 @@ const Home = () => {
       <View style={homeStyles.productHeader}>
         <Text style={homeStyles.productTitle}>{t('products.maybe')}</Text>
         <TouchableOpacity onPress={() => {
-          navigation.navigate('Order');
+          navigation.navigate('Order', {
+            state: { cateId: 0 } // Truyền cateId qua state
+          }
+          )
         }}>
           <Text style={homeStyles.productTitle2}>{t('viewMore')}</Text>
         </TouchableOpacity>
@@ -159,8 +168,18 @@ const Home = () => {
   ), [userInfo, userCoin, categories, t]);
 
   const renderCategoryItem: ListRenderItem<Category> = useCallback(({ item }) => (
-    <ServiceItem image={item.cateImg} text={item.cateName} />
+    <ServiceItem
+      image={item.cateImg}
+      text={item.cateName}
+      onPress={() => {
+        navigation.navigate('Order', {
+          state: { cateId: item.cateId } // Truyền cateId qua state
+        });
+      }}
+    />
   ), []);
+
+
 
   return (
     <View style={{ flex: 1 }}>
@@ -225,11 +244,12 @@ const Home = () => {
 };
 
 // 🔹 Component hiển thị danh mục
-const ServiceItem: React.FC<{ image: string; text: string }> = ({ image, text }) => (
-  <TouchableOpacity style={homeStyles.serviceItem}>
+const ServiceItem: React.FC<{ image: string; text: string; onPress: () => void }> = ({ image, text, onPress }) => (
+  <TouchableOpacity style={homeStyles.serviceItem} onPress={onPress}>
     <Image source={{ uri: image }} style={homeStyles.serviceImage} />
     <Text style={homeStyles.serviceText}>{text}</Text>
   </TouchableOpacity>
 );
+
 
 export default Home;
