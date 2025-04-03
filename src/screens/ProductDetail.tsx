@@ -19,7 +19,7 @@ export interface Product {
     description: string;
     proId: number;
     proName: string;
-    isFavourited?: boolean;
+    isFavourited: boolean;
     productImageResponseList: { linkImage: string }[];
     listProductVariants: { price: number; size: string; stock: number }[];
 }
@@ -29,7 +29,7 @@ type ProductDetailRouteProp = RouteProp<RootStackParamList, 'ProductDetail'>;
 const ProductDetail = () => {
     const [notification, setNotification] = useState({ message: '', visible: false });
     const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
-    const { language } = useCategoryStore();
+    const { language, fetchProducts, deleteFavItem } = useCategoryStore();
     const route = useRoute<ProductDetailRouteProp>();
     const { product } = route.params;
     const price0 = product.listProductVariants[0]?.stock !== 0 ? product.listProductVariants[0]?.price : 0
@@ -114,15 +114,29 @@ const ProductDetail = () => {
             showNotification("⚠️ Vui lòng đăng nhập để thêm vào yêu thích!");
             return;
         }
-
+    
         setIsFavorite((prev) => !prev);
-
+    
         try {
             if (!isFavorite) {
+                // Thêm sản phẩm vào danh sách yêu thích
                 await insertFavoriteItem(1, product.proId, selectedSize);
                 showNotification("Đã thêm vào yêu thích!");
             } else {
-                showNotification("Đã xóa khỏi yêu thích!");
+                // Kiểm tra nếu sản phẩm đã có trong danh sách yêu thích
+                const existingFavItem = data.favoriteItems?.find(item => item.proId === product.proId);
+    
+                if (existingFavItem) {
+                    // Lấy favItemId từ dữ liệu yêu thích
+                    const favItemId = existingFavItem.favItemId;
+                    if (favItemId) {
+                        // Gọi API để xóa mục yêu thích
+                        await deleteFavItem(favItemId);
+                        showNotification("Đã xóa khỏi yêu thích!");
+                    }
+                } else {
+                    showNotification("⚠️ Sản phẩm không có trong danh sách yêu thích.");
+                }
             }
         } catch (error) {
             console.error("❌ Lỗi cập nhật yêu thích:", error);
@@ -130,6 +144,7 @@ const ProductDetail = () => {
             showNotification("⚠️ Có lỗi xảy ra, thử lại sau!");
         }
     };
+    
 
 
     const [currentImageIndex, setCurrentImageIndex] = useState(0);

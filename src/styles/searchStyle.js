@@ -86,7 +86,7 @@ const styles = StyleSheet.create({
     },
     item: {
         flex: 1,
-        backgroundColor: 'white',
+       
         borderRadius: 15,
         marginBottom: 15,
         marginHorizontal: 8,
@@ -97,11 +97,9 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.1,
         shadowRadius: 8,
         elevation: 5,
-        overflow: 'hidden',
         borderWidth: 1,
         borderColor: '#ddd',
         backgroundColor: '#fff',
-        height: 210
     },
 
     // Có thể bổ sung thêm style cho hover

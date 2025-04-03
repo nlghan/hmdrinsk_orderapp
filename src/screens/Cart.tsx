@@ -20,6 +20,7 @@ import styles from '../styles/cartStyles';
 import { Swipeable } from 'react-native-gesture-handler';
 import { Picker } from '@react-native-picker/picker';
 import { useTranslation } from 'react-i18next';
+import Notification from '../components/Notification';
 
 interface CartItem {
     cartItemId: number;
@@ -51,6 +52,7 @@ const Cart = () => {
     const { data } = useCategoryStore();
     const { userCoin } = data;
     const shopeeXuAmount = userCoin ?? 0;
+    const halfShopeeXuAmount = shopeeXuAmount * 0.5;
     const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
     const { selectedVoucher } = useCartStore();
     const { selectedVoucherKey, selectedVoucherDiscountAmount } = selectedVoucher;
@@ -59,9 +61,18 @@ const Cart = () => {
     const [note, setNote] = useState('');  // State for note input
     const { t } = useTranslation();
     const { cartTotal } = useCartStore();
+    const [inputCoin, setInputCoin] = useState<string>('');  // state riêng cho giá trị xu nhập vào
+
+    const [notification, setNotification] = useState({ message: '', visible: false });
+    const showNotification = (message: string) => {
+        setNotification({ message, visible: true });
+        // Ẩn thông báo sau 3 giây
+        setTimeout(() => setNotification({ ...notification, visible: false }), 4000);
+      };
+
 
     const formatPrice = (price: number) => {
-        return (price ).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+        return (price).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
     };
 
     useEffect(() => {
@@ -116,6 +127,34 @@ const Cart = () => {
         });
     };
 
+    const handleInputShopeeXu = (value: string) => {
+        const numericValue = parseInt(value, 10);
+        
+        // Nếu người dùng nhập vào một giá trị hợp lệ hoặc chuỗi rỗng
+        if (value === '') {
+            setInputCoin('');  // Đặt lại giá trị xu về chuỗi rỗng khi xóa hết
+        } else if (!isNaN(numericValue) && numericValue >= 0 && numericValue <= halfShopeeXuAmount) {
+            setInputCoin(value);  // Cập nhật giá trị xu nhập vào nếu hợp lệ
+        } else if (numericValue > halfShopeeXuAmount) {
+            setInputCoin('');  // Đặt lại giá trị khi nhập vượt quá giới hạn
+            showNotification(`Số xu bạn nhập vượt quá 50% số xu tích lũy`);
+        }
+    };
+    
+    
+
+    const handleSubmitCoin = () => {
+        const numericCoin = parseInt(inputCoin, 10);
+        if (!isNaN(numericCoin) && numericCoin >= 0 && numericCoin <= shopeeXuAmount) {
+            setCoin(numericCoin);  // Cập nhật giá trị xu vào store khi người dùng hoàn tất
+            setUseShopeeXu(true);
+        } else {
+            setCoin(0);  // Nếu nhập không hợp lệ, đặt về 0
+            setUseShopeeXu(false);
+        }
+    };
+
+
     const groupedCart = groupCartItems(cart);
     const totalCartPrice = groupedCart.reduce(
         (sum, group) =>
@@ -124,8 +163,9 @@ const Cart = () => {
     );
 
     const finalTotal = useShopeeXu
-        ? Math.max(0, totalCartPrice - (selectedVoucherDiscountAmount || 0) - shopeeXuAmount)
-        : Math.max(0, totalCartPrice - (selectedVoucherDiscountAmount || 0));
+    ? Math.max(0, totalCartPrice - (selectedVoucherDiscountAmount || 0) - parseInt(inputCoin || '0'))
+    : Math.max(0, totalCartPrice - (selectedVoucherDiscountAmount || 0));
+
 
     const renderItem = ({ item }: { item: CartItem[] }) => {
         const totalPrice = item.reduce((sum, i) => sum + i.totalPrice, 0);
@@ -226,31 +266,32 @@ const Cart = () => {
     const handleCreateOrder = async () => {
         try {
             const orderId = await createOrder(note);  // Nhận orderId từ API
-            
+
             if (!orderId) {
                 throw new Error("❌ orderId không hợp lệ.");
             }
-    
+
             const orderIdNumber = Number(orderId); // Ép kiểu orderId thành number
             if (isNaN(orderIdNumber)) {
                 throw new Error("❌ orderId không phải là số hợp lệ.");
             }
-    
+
             await fetchCartItem();  // Cập nhật giỏ hàng sau khi đặt hàng
             console.log("✅ Đặt hàng thành công với orderId:", orderIdNumber);
-    
+
             // Chuyển sang màn hình Payment và truyền orderId dạng số
-            navigation.navigate('Payment', { orderId: orderIdNumber });  
-    
+            navigation.navigate('Payment', { orderId: orderIdNumber });
+
         } catch (error) {
             console.error("❌ Lỗi khi tạo đơn hàng:", error);
         }
     };
 
-    
+
 
     return (
         <View style={styles.container}>
+            <Notification message={notification.message} visible={notification.visible} onHide={() => setNotification({ ...notification, visible: false })} />
             {(!cart || cart.length === 0) ? (
                 <EmptyListAnimation title={t('cart.empty')} />
             ) : (
@@ -313,13 +354,24 @@ const Cart = () => {
                                 <Text style={styles.coinText}>{t('cart.coin')} ({shopeeXuAmount} {t('cart.coinname')})</Text>
                             </View>
 
-                            <TouchableOpacity onPress={handleToggleShopeeXu}>
+                            {/* <TouchableOpacity onPress={handleToggleShopeeXu}>
                                 <Icon
                                     name={useShopeeXu ? "toggle-on" : "toggle-off"}
                                     size={30}
                                     color={useShopeeXu ? COLORS.primaryDarkHex : "#ccc"}
                                 />
-                            </TouchableOpacity>
+                            </TouchableOpacity> */}
+
+                            <TextInput
+                                style={styles.coinInput}
+                                keyboardType="numeric"
+                                placeholder={halfShopeeXuAmount ? halfShopeeXuAmount.toString() : 'Nhập số xu'} // Chuyển số thành chuỗi hoặc sử dụng giá trị mặc định
+                                value={inputCoin}
+                                onChangeText={handleInputShopeeXu}
+                                onSubmitEditing={handleSubmitCoin}
+                                returnKeyType="done"
+                            />
+
                         </View>
 
                         {/* Note input */}

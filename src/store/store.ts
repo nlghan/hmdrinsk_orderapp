@@ -107,9 +107,14 @@ interface CategoryStore {
   addReviewToProduct: (proId: number, review: Omit<ProductReview, 'reviewId' | 'isDelete' | 'dateDeleted' | 'dateUpdated' | 'dateCreated'>) => Promise<void>;
   insertFavoriteItem: (favId: number, proId: number, size: string) => Promise<void>; // ✅ Thêm hàm insertFavoriteItem
   deleteAllFavItem: (favId: number) => Promise<void>; // ✅ Thêm hàm insertFavoriteItem
+  deleteFavItem: (favItemId: number) => Promise<void>; 
   fetchProducts: () => Promise<void>;
   fetchFavoriteItems:() => Promise<void>;
   logout: () => void;
+  checkShipment: () => Promise<any | null>;
+  editReview: (review: Omit<ProductReview, 'isDelete' | 'dateDeleted' | 'dateUpdated' | 'dateCreated'>) => Promise<void>;
+  deleteReview: (reviewId: number) => Promise<void>; 
+  
 }
 
 export const useCategoryStore = create<CategoryStore>()(
@@ -128,6 +133,37 @@ export const useCategoryStore = create<CategoryStore>()(
           console.error("❌ [fetchCategories] Error fetching categories:", error);
         }
       };
+
+      const checkShipment = async () => {
+        try {
+          console.log("🚚 [checkShipment] Checking shipment time...");
+      
+          const token = await AsyncStorage.getItem('access_token'); // ✅ Đảm bảo lấy đúng access_token
+          if (!token) {
+            console.error("❌ [checkShipment] Không tìm thấy access_token!");
+            return null;
+          }
+      
+          const response = await axiosInstance.get('/shipment/check-time', {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          });
+      
+          if (response.status === 200) {
+            console.log("✅ [checkShipment] API trả về thành công nhưng không có dữ liệu.");
+            return { message: "API trả về 200 nhưng không có nội dung cụ thể." }; // ✅ Tránh return undefined
+          } else {
+            console.error("⚠️ [checkShipment] API trả về mã khác 200:", response.status);
+            return null;
+          }
+        } catch (error) {
+          console.error("❌ [checkShipment] Lỗi khi kiểm tra shipment:", error);
+          return null;
+        }
+      };
+      
+      
 
       const fetchPosts = async () => {
         try {
@@ -215,6 +251,174 @@ export const useCategoryStore = create<CategoryStore>()(
         }
       };
 
+      const deleteReview = async (reviewId: number) => {
+        try {
+          const userId = get().userId;
+          if (!userId) {
+            console.error("❌ [deleteReview] User not logged in");
+            return;
+          }
+      
+          const accessToken = await AsyncStorage.getItem("access_token");
+          if (!accessToken) {
+            console.error("❌ [deleteReview] Missing access token");
+            return;
+          }
+      
+          const response = await axiosInstance.delete(
+            "/review/delete",
+            {
+              headers: {
+                Authorization: `Bearer ${accessToken}`,
+                accept: "*/*",
+                "Content-Type": "application/json",
+              },
+              data: {
+                userId,
+                reviewId,
+              },
+            }
+          );
+      
+          // Cập nhật store sau khi xóa review
+          set((state) => ({
+            data: {
+              ...state.data,
+              products: state.data.products?.map((product) =>
+                product.reviews
+                  ? {
+                      ...product,
+                      reviews: product.reviews.filter((review) => review.reviewId !== reviewId),
+                      totalReviews: (product.totalReviews || 0) - 1, // Giảm tổng số đánh giá
+                    }
+                  : product
+              ),
+            },
+          }));
+      
+          console.log("✅ [deleteReview] Review deleted successfully:", response.data);
+        } catch (error) {
+          console.error("❌ [deleteReview] Error deleting review:", error);
+        }
+      };
+      
+
+      const addReviewToProduct = async (proId: number, review: Omit<ProductReview, 'reviewId' | 'isDelete' | 'dateDeleted' | 'dateUpdated' | 'dateCreated'>) => {
+        try {
+          const userId = get().userId;
+          if (!userId) {
+            console.error("❌ [addReviewToProduct] User not logged in");
+            return;
+          }
+
+          const accessToken = await AsyncStorage.getItem("access_token");
+          if (!accessToken) {
+            console.error("❌ [addReviewToProduct] Missing access token");
+            return;
+          }
+
+          const response = await axiosInstance.post(
+            "/review/create",
+            {
+              userId,
+              proId,
+              content: review.content,
+              ratingStart: review.ratingStart,
+            },
+            {
+              headers: { Authorization: `Bearer ${accessToken}` },
+            }
+          );
+
+          const newReview: ProductReview = {
+            ...response.data, // Lấy dữ liệu từ API trả về
+            isDelete: false,
+            dateDeleted: null,
+            dateUpdated: null,
+          };
+
+          // Cập nhật store với đánh giá mới
+          set((state) => ({
+            data: {
+              ...state.data,
+              products: state.data.products?.map((product) =>
+                product.proId === proId
+                  ? {
+                    ...product,
+                    reviews: [newReview, ...(product.reviews || [])],
+                    totalReviews: (product.totalReviews || 0) + 1, // Cập nhật tổng số đánh giá
+                  }
+                  : product
+              ),
+            },
+          }));
+
+          console.log("✅ [addReviewToProduct] Review added successfully:", newReview);
+        } catch (error) {
+          console.error("❌ [addReviewToProduct] Error adding review:", error);
+        }
+      };
+
+      const editReview = async (review: Omit<ProductReview,  'isDelete' | 'dateDeleted' | 'dateUpdated' | 'dateCreated'>) => {
+        try {
+          const userId = get().userId;
+          if (!userId) {
+            console.error("❌ [editReview] User not logged in");
+            return;
+          }
+      
+          const accessToken = await AsyncStorage.getItem("access_token");
+          if (!accessToken) {
+            console.error("❌ [editReview] Missing access token");
+            return;
+          }
+      
+          // Gửi request PUT để cập nhật review
+          const response = await axiosInstance.put(
+            "/review/update",
+            {
+              reviewId: review.reviewId,    // Đảm bảo reviewId có mặt
+              userId: review.userId,
+              proId: review.proId,
+              content: review.content,
+              ratingStart: review.ratingStart,
+            },
+            {
+              headers: { Authorization: `Bearer ${accessToken}` },
+            }
+          );
+      
+          // Cập nhật review từ API response
+          const updatedReview: ProductReview = {
+            ...response.data,  // Dữ liệu trả về từ API
+            isDelete: false,  // Đảm bảo trạng thái isDelete là false
+            dateDeleted: null, // Đảm bảo dateDeleted là null
+            dateUpdated: response.data.dateUpdated || new Date().toISOString(),  // Nếu không có dateUpdated từ API thì dùng thời gian hiện tại
+          };
+      
+          // Cập nhật lại store với đánh giá đã chỉnh sửa
+          set((state) => ({
+            data: {
+              ...state.data,
+              products: state.data.products?.map((product) =>
+                product.proId === review.proId
+                  ? {
+                      ...product,
+                      reviews: product.reviews?.map((r) =>
+                        r.reviewId === review.reviewId ? updatedReview : r
+                      ),
+                    }
+                  : product
+              ),
+            },
+          }));
+      
+          console.log("✅ [editReview] Review updated successfully:", updatedReview);
+        } catch (error) {
+          console.error("❌ [editReview] Error updating review:", error);
+        }
+      };
+      
 
       const fetchUserCoin = async () => {
         const userId = get().userId;
@@ -344,62 +548,7 @@ export const useCategoryStore = create<CategoryStore>()(
         }
       };
       
-      
-      const addReviewToProduct = async (proId: number, review: Omit<ProductReview, 'reviewId' | 'isDelete' | 'dateDeleted' | 'dateUpdated' | 'dateCreated'>) => {
-        try {
-          const userId = get().userId;
-          if (!userId) {
-            console.error("❌ [addReviewToProduct] User not logged in");
-            return;
-          }
 
-          const accessToken = await AsyncStorage.getItem("access_token");
-          if (!accessToken) {
-            console.error("❌ [addReviewToProduct] Missing access token");
-            return;
-          }
-
-          const response = await axiosInstance.post(
-            "/review/create",
-            {
-              userId,
-              proId,
-              content: review.content,
-              ratingStart: review.ratingStart,
-            },
-            {
-              headers: { Authorization: `Bearer ${accessToken}` },
-            }
-          );
-
-          const newReview: ProductReview = {
-            ...response.data, // Lấy dữ liệu từ API trả về
-            isDelete: false,
-            dateDeleted: null,
-            dateUpdated: null,
-          };
-
-          // Cập nhật store với đánh giá mới
-          set((state) => ({
-            data: {
-              ...state.data,
-              products: state.data.products?.map((product) =>
-                product.proId === proId
-                  ? {
-                    ...product,
-                    reviews: [newReview, ...(product.reviews || [])],
-                    totalReviews: (product.totalReviews || 0) + 1, // Cập nhật tổng số đánh giá
-                  }
-                  : product
-              ),
-            },
-          }));
-
-          console.log("✅ [addReviewToProduct] Review added successfully:", newReview);
-        } catch (error) {
-          console.error("❌ [addReviewToProduct] Error adding review:", error);
-        }
-      };
       const insertFavoriteItem = async (favId: number, proId: number, size: string) => {
         try {
           const userId = get().userId;
@@ -431,6 +580,8 @@ export const useCategoryStore = create<CategoryStore>()(
           console.error("❌ [insertFavoriteItem] Error:", error.response?.status, error.response?.data || error.message);
         }
       };
+
+      
 
       const deleteAllFavItem = async (favId: number) => {
         try {
@@ -476,8 +627,52 @@ export const useCategoryStore = create<CategoryStore>()(
          
         }
       };
-      
 
+      const deleteFavItem = async (favItemId: number) => {
+        try {
+          console.log("ℹ️ [deleteFavItem] Start deleting favorite item, favItemId:", favItemId);
+      
+          const userId = get().userId;
+          if (!userId) {
+            console.error("❌ [deleteFavItem] User not logged in");
+            return;
+          }
+          console.log("✅ [deleteFavItem] User ID:", userId);
+      
+          const accessToken = await AsyncStorage.getItem("access_token");
+          if (!accessToken) {
+            console.error("❌ [deleteFavItem] Missing access token");
+            return;
+          }
+          console.log("✅ [deleteFavItem] Access token retrieved");
+      
+          console.log("🔄 [deleteFavItem] Sending DELETE request to API...");
+          const response = await axiosInstance.delete(`/fav-item/delete/${favItemId}`, {
+            headers: { Authorization: `Bearer ${accessToken}` },
+            data: { userId, favItemId },
+          });
+      
+          console.log("✅ [deleteFavItem] API Response:", response.data);
+      
+          // Cập nhật store: Xóa mục yêu thích khỏi danh sách và cập nhật trạng thái sản phẩm
+          set((state) => ({
+            data: {
+              ...state.data,
+              favoriteItems: state.data.favoriteItems?.filter((item) => item.favItemId !== favItemId) ?? [],
+              products: state.data.products?.map((product) => ({
+                ...product,
+                isFavourited: false,
+              })),
+            },
+          }));
+      
+          console.log("✅ [deleteFavItem] Deleted favorite item successfully");
+        } catch (error) {
+          console.error("❌ [deleteFavItem] Error deleting favorite item:", error);
+        }
+      };
+    
+      
       const logout = async () => {
         try {
           console.log("🔴 Logging out...");
@@ -528,6 +723,10 @@ export const useCategoryStore = create<CategoryStore>()(
         fetchProducts,
         logout,
         fetchFavoriteItems,
+        checkShipment,
+        deleteFavItem,
+        editReview,
+        deleteReview,
 
         setUserId: async (id) => {
           set({ userId: id });

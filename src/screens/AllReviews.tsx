@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { View, Text, FlatList, ActivityIndicator, TouchableOpacity } from 'react-native';
+import { View, Text, FlatList, ActivityIndicator, TouchableOpacity, Alert, TouchableWithoutFeedback, Keyboard } from 'react-native';
 import { useRoute, useNavigation, RouteProp } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { RootStackParamList } from '../navigation/RootStackParamList';
@@ -10,6 +10,14 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import { useTranslation } from 'react-i18next';
 
 type AllReviewsRouteProp = RouteProp<RootStackParamList, 'AllReviews'>;
+export type ProductReview = {
+    reviewId: number;
+    userId: number;
+    fullName: string;
+    content: string;
+    ratingStart: number;
+    dateCreated: string;
+  };
 
 const AllReviews = () => {
     const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
@@ -17,22 +25,23 @@ const AllReviews = () => {
     const { productId } = route.params;
     const { t } = useTranslation();
 
-    const { data, fetchProductReviews } = useCategoryStore();
+    const { data, fetchProductReviews, userId, deleteReview } = useCategoryStore();
     const [page, setPage] = useState(1);
     const [loading, setLoading] = useState(false);
+    const [activeReviewId, setActiveReviewId] = useState<number | null>(null);
 
     const product = data.products?.find(p => p.proId === productId);
     const reviews = product?.reviews || [];
     const totalReviews = product?.totalReviews || 0;
 
-    const pageRef = useRef<number>(page); // 🔹 Tránh gọi API trùng lặp
+    const pageRef = useRef<number>(page);
 
     useEffect(() => {
         const loadReviews = async () => {
             if (loading || pageRef.current === page || reviews.length >= totalReviews) return;
 
             setLoading(true);
-            pageRef.current = page; // ✅ Cập nhật page đã tải
+            pageRef.current = page;
             await fetchProductReviews(productId, page, 5);
             setLoading(false);
         };
@@ -47,7 +56,7 @@ const AllReviews = () => {
     };
 
     const navigateToAddReview = () => {
-        navigation.navigate('AddReview', { productId }); // 🔥 Chuyển đến trang thêm review
+        navigation.navigate('AddReview', { productId });
     };
 
     const renderStars = (rating: number) => {
@@ -65,61 +74,114 @@ const AllReviews = () => {
         );
     };
 
+    const [reviewToEdit, setReviewToEdit] = useState<ProductReview | null>(null);
+
+    const handleEditReview = (reviewId: number) => {
+        const reviewToEdit = reviews.find(review => review.reviewId === reviewId);
+        
+        if (reviewToEdit) {
+            setReviewToEdit(reviewToEdit);
+            setActiveReviewId(null);
+            navigation.navigate('AddReview', {
+                productId,
+                reviewToEdit,
+            });
+        }
+    };
+    const handleDeleteReview = (reviewId: number) => {
+        Alert.alert(
+          t('common.confirmDelete'),
+          t('common.areYouSure'),
+          [
+            { 
+              text: t('order.orderDetail.confirm'), 
+              onPress: () => {
+                // Gọi hàm deleteReview từ store để xóa review
+                deleteReview(reviewId);
+              } 
+            },
+            { 
+              text: t('order.orderDetail.cancel'), 
+              style: 'cancel' 
+            },
+          ]
+        );
+      };      
+
     return (
-        <View style={reviewStyles.container}>
-            <Header
-                style={{
-                    paddingHorizontal: 14,
-                    paddingTop: 10,
-                    paddingBottom: 10,
-                    marginBottom: 10,
-                    backgroundColor: 'white', // Giữ nền rõ hơn với shadow
-                    shadowColor: '#000',
-                    shadowOffset: { width: 0, height: 2 },
-                    shadowOpacity: 0.2,
-                    shadowRadius: 4,
-                    elevation: 5, // Dành cho Android
-                }}
-            />
-            <View style={reviewStyles.nestedContainer}>
-                <View style={reviewStyles.header}>
-                    <TouchableOpacity onPress={() => navigation.goBack()} style={reviewStyles.backButton}>
-                        <Icon name="arrow-back" size={20} color="#000" />
-                    </TouchableOpacity>
-                    <Text style={reviewStyles.headerTitle}>{t('common.listComment')}</Text>
-
-                    {/* 🔥 Nút Thêm Đánh Giá */}
-                    <TouchableOpacity onPress={navigateToAddReview} style={reviewStyles.addReviewButton}>
-                        <Icon name="add" size={16} color="#FF8247" />
-
-                    </TouchableOpacity>
-                </View>
-
-                <FlatList
-                    data={reviews}
-                    keyExtractor={(item) => item.reviewId.toString()}
-                    renderItem={({ item }) => (
-                        <View style={reviewStyles.reviewItem}>
-                            <Text style={reviewStyles.userName}>{item.fullName}</Text>
-                            {renderStars(item.ratingStart)}
-                            <Text style={reviewStyles.reviewText}>{item.content}</Text>
-                            <Text style={reviewStyles.reviewDate}>{item.dateCreated}</Text>
-                        </View>
-                    )}
-                    ListFooterComponent={() => (
-                        <View style={{ height: 5 }} /> // 👈 Tạo khoảng trống để tránh bị khuất
-                    )}
-                    onEndReached={loadMoreReviews}
-                    onEndReachedThreshold={0.2}
-                    showsVerticalScrollIndicator
-                    keyboardShouldPersistTaps="handled" // 👈 Cho phép cuộn khi bàn phím hiển thị 
+        <TouchableWithoutFeedback onPress={() => { setActiveReviewId(null); Keyboard.dismiss(); }}>
+            <View style={reviewStyles.container}>
+                <Header
+                    style={{
+                        paddingHorizontal: 14,
+                        paddingTop: 10,
+                        paddingBottom: 10,
+                        marginBottom: 10,
+                        backgroundColor: 'white',
+                        shadowColor: '#000',
+                        shadowOffset: { width: 0, height: 2 },
+                        shadowOpacity: 0.2,
+                        shadowRadius: 4,
+                        elevation: 5,
+                    }}
                 />
+                <View style={reviewStyles.nestedContainer}>
+                    <View style={reviewStyles.header}>
+                        <TouchableOpacity onPress={() => navigation.goBack()} style={reviewStyles.backButton}>
+                            <Icon name="arrow-back" size={20} color="#000" />
+                        </TouchableOpacity>
+                        <Text style={reviewStyles.headerTitle}>{t('common.listComment')}</Text>
 
+                        <TouchableOpacity onPress={navigateToAddReview} style={reviewStyles.addReviewButton}>
+                            <Icon name="add" size={16} color="#FF8247" />
+                        </TouchableOpacity>
+                    </View>
 
+                    <FlatList
+                        data={reviews}
+                        keyExtractor={(item) => item.reviewId.toString()}
+                        renderItem={({ item }) => (
+                            <View style={reviewStyles.reviewItem}>
+                                <View style={reviewStyles.reviewItem1}>
+                                    <Text style={reviewStyles.userName}>{item.fullName}</Text>
+                                    <View style={reviewStyles.reviewItem2}>
+                                        {item.userId === userId && (
+                                            <TouchableOpacity onPress={() => setActiveReviewId(activeReviewId === item.reviewId ? null : item.reviewId)}>
+                                                <Text style={reviewStyles.editText}>
+                                                    <Icon name="more-horiz" size={20} color="#000" />
+                                                </Text>
+                                            </TouchableOpacity>
+                                        )}
+                                    </View>
+                                </View>
 
+                                {renderStars(item.ratingStart)}
+                                <Text style={reviewStyles.reviewText}>{item.content}</Text>
+                                <Text style={reviewStyles.reviewDate}>{item.dateCreated}</Text>
+
+                                {item.userId === userId && activeReviewId === item.reviewId && (
+                                    <View style={reviewStyles.actions}>
+                                        <TouchableOpacity onPress={() => handleEditReview(item.reviewId)}>
+                                            <Text style={reviewStyles.actionText}>Sửa</Text>
+                                        </TouchableOpacity>
+                                        <TouchableOpacity onPress={() => handleDeleteReview(item.reviewId)}>
+                                            <Text style={reviewStyles.actionText}>Xóa</Text>
+                                        </TouchableOpacity>
+                                    </View>
+                                )}
+                            </View>
+                        )}
+                        ListFooterComponent={() => (
+                            <View style={{ height: 5 }} />
+                        )}
+                        onEndReached={loadMoreReviews}
+                        onEndReachedThreshold={0.2}
+                        showsVerticalScrollIndicator
+                        keyboardShouldPersistTaps="handled"
+                    />
+                </View>
             </View>
-
-        </View>
+        </TouchableWithoutFeedback>
     );
 };
 

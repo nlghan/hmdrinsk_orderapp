@@ -421,7 +421,11 @@
         "greet": "Bạn ơi, Cà Phê nhé!",
         "chooseLanguage": "Chọn ngôn ngữ",
         "listComment": "Tất cả đánh giá",
-        "addCmt": "Thêm đánh giá"
+        "addCmt": "Thêm đánh giá",
+        "editCmt":"Chỉnh sửa đánh giá",
+        "confirmDelete":"Xóa đánh giá",
+        "areYouSure":"Bạn chắn chắn muốn xóa đánh giá này?"
+      
     },
     "productContent": {
         "page": "Trang",

@@ -200,8 +200,8 @@ const ChatWithShipper = () => {
                 if (response.data.length === 0) {
                     // Nếu không có tin nhắn, gửi tin nhắn hệ thống tự động
                     const systemMessage = {
-                        senderId: userId,
-                        receiverId: shipperId,
+                        senderId: shipperId,
+                        receiverId: userId,
                         shipmentId,
                         message: "Đơn hàng của bạn đã được tiếp nhận, chúng tôi sẽ giao đơn cho bạn sớm nhất có thể!",
                         messageType: "text",
@@ -241,7 +241,7 @@ const ChatWithShipper = () => {
             if (socketRef.current) return;
             const token = await AsyncStorage.getItem('access_token');
             if (!token) return;
-            const ws = new WebSocket(`ws://192.168.9.195:1010/ws-raw?token=${encodeURIComponent(token)}&userId=${userId}`);
+            const ws = new WebSocket(`ws://192.168.1.9:1010/ws-raw?token=${encodeURIComponent(token)}&userId=${userId}`);
 
             socketRef.current = ws;
             ws.onmessage = (event) => {

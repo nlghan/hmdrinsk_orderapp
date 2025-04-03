@@ -38,10 +38,10 @@ const Notification: React.FC<NotificationProps> = ({ message, visible, onHide })
 const styles = StyleSheet.create({
     container: {
       position: 'absolute',
-      top: '5%',
+      top: '8%',
       left: '10%',
       right: '10%',
-      backgroundColor: 'rgb(255, 249, 243)', // Màu cam nhạt
+      backgroundColor: 'rgb(253, 254, 247)', // Màu cam nhạt
       paddingVertical: 12,
       paddingHorizontal: 20,
       borderRadius: 8, // Bo góc mềm mại
@@ -54,8 +54,8 @@ const styles = StyleSheet.create({
       zIndex: 1000,
     },
     text: {
-      color: 'rgb(33, 19, 6)', // Màu chữ trắng
-      fontSize: 14,
+      color: 'rgb(3, 3, 3)', // Màu chữ trắng
+      fontSize: 12,
       fontWeight: '600',
     },
   });  

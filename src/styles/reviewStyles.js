@@ -123,8 +123,41 @@ const reviewStyles = StyleSheet.create({
         marginHorizontal: 8,
        height:'90%'
     },
+    editText: {
+        fontSize: 18,
+        color: '#FF8247',
+        marginTop: 5,
+        textAlign: 'center',
+    },
+    reviewItem1:{
+        display:'flex',
+        flexDirection:'row',
+        justifyContent:'space-between'
+    },
+    reviewItem2:{
+        display:'flex',
+        flexDirection:'row',
+        justifyContent:'center',
+        gap:15
+    },
+    actions: {
+        position: 'absolute',
+        top: 30, // Điều chỉnh khoảng cách từ dấu ba chấm
+        right: 15,
+        backgroundColor: 'black',
+        padding: 10,
+        borderRadius: 5,
+        boxShadow: '0px 4px 6px rgba(0,0,0,0.1)',
+        width: 120, // Có thể thay đổi để vừa với các nút
+    },
+    actionText: {
+        fontSize: 14,
+        color: 'white',
+        paddingVertical: 5,
+        textAlign: 'center',
+    },
     
-
+   
 });
 
 export default reviewStyles;
