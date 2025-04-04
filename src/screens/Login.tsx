@@ -216,7 +216,7 @@ const Login: React.FC<Props> = ({ navigation }) => {
         <LanguageSwitcher />
       </View>
       {/* Hiệu ứng tiêu đề */}
-      <Animated.Text style={[loginStyles.animatedTitle, { color: textColor, textShadowColor: shadowColor }]}>
+      <Animated.Text style={[loginStyles.animatedTitle, { color: textColor, textShadowColor: shadowColor, textAlign: 'center' }]}>
         HMDRINKS
       </Animated.Text>
       <Text style={loginStyles.title}>{t('login')}</Text>

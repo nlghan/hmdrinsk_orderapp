@@ -27,6 +27,7 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         color: '#FF8247', // Màu cam đậm
         marginBottom: 20,
+        textAlign: 'center',
     },
     input: {
         width: '100%',

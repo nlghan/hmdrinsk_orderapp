@@ -38,10 +38,16 @@ const Contact: React.FC = () => {
       return;
     }
 
-    const contactData = { userId, description: formData.message };
+    const contactData = {
+      userId: userId,
+      email: formData.email,
+      phone: formData.phone,
+      fullName: formData.name,
+      description: formData.message
+    };
 
     try {
-    const token = await AsyncStorage.getItem('access_token');
+      const token = await AsyncStorage.getItem('access_token');
       await axiosInstance.post(`/contact/create`, contactData, {
         headers: {
           'Content-Type': 'application/json',
@@ -59,58 +65,70 @@ const Contact: React.FC = () => {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>{t('contactUs')}</Text>
+      <TouchableOpacity style={styles.backIcon} onPress={() => navigation.goBack()}>
+        <IconM name="arrow-back" size={20} color="#FF9800" />
+      </TouchableOpacity>
+      {/* Thông tin liên hệ cửa hàng */}
+      <Text style={styles.sectionTitle}>{t('infoContact')}</Text>
 
-      <TextInput 
-        style={styles.input} placeholder={t('fullName')} 
-        value={formData.name} onChangeText={text => handleChange('name', text)} 
-        placeholderTextColor="#999"
-      />
-      <TextInput 
-        style={styles.input} placeholder={t('email')} keyboardType="email-address"
-        value={formData.email} onChangeText={text => handleChange('email', text)}
-        placeholderTextColor="#999"
-      />
-      <TextInput 
-        style={styles.input} placeholder={t('phone')} keyboardType="phone-pad"
-        value={formData.phone} onChangeText={text => handleChange('phone', text)}
-        placeholderTextColor="#999"
-      />
-      <TextInput 
-        style={[styles.input, styles.textArea]} placeholder={t('message')} multiline numberOfLines={4}
-        value={formData.message} onChangeText={text => handleChange('message', text)}
-        placeholderTextColor="#999"
-      />
+      <View style={styles.infoItem}>
+        <Text style={styles.infoTitle}>{t('phoneNow')}</Text>
+        <Text style={styles.infoText}>{t('notice')}</Text>
+        <Text style={styles.infoText}>{t('phone')}: +84 123 456 789</Text>
+      </View>
+
+      <View style={styles.infoItem}>
+        <Text style={styles.infoTitle}>{t('sendContact')}</Text>
+        <Text style={styles.infoText}>{t('solve')}</Text>
+        <Text style={styles.infoText}>{t('email')}: contact@example.com</Text>
+      </View>
+      <View style={styles.infoItem}>
+        <Text style={styles.infoTitle}>{t('hours')}</Text>
+        <Text style={styles.infoText}>{t('from')}</Text>
+        <Text style={styles.infoText}>{t('from2')}</Text>
+      </View>
+      <View style={styles.infoItem}>
+        <Text style={styles.infoTitle}>{t('address')}</Text>
+        <Text style={styles.infoText}>{t('add')}</Text>
+      </View>
+
+      {/* Biểu mẫu liên hệ */}
+      <Text style={styles.sectionTitle}>{t('contactUs')}</Text>
+
+      <TextInput style={styles.input} placeholder={t('fullName')} placeholderTextColor="gray"
+        value={formData.name} onChangeText={text => handleChange('name', text)} />
+      <TextInput style={styles.input} placeholder={t('email')} placeholderTextColor="gray"
+        keyboardType="email-address" value={formData.email} onChangeText={text => handleChange('email', text)} />
+      <TextInput style={styles.input} placeholder={t('phone')} placeholderTextColor="gray"
+        keyboardType="phone-pad" value={formData.phone} onChangeText={text => handleChange('phone', text)} />
+      <TextInput style={[styles.input, styles.textArea]} placeholder={t('message')} placeholderTextColor="gray"
+        multiline numberOfLines={4} value={formData.message} onChangeText={text => handleChange('message', text)} />
 
       <TouchableOpacity style={styles.button} onPress={handleSubmit} disabled={isLoading}>
         {isLoading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>{t('send')}</Text>}
       </TouchableOpacity>
 
-      {/* Modal Success */}
+      {/* Các modal thông báo */}
       <Modal visible={showSuccess} transparent>
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
-            <Text style={[styles.modalText, { color: '#4CAF50' }]}>✅ {t('sendSuccess')}</Text>
+            <Text style={styles.modalText}>{t('sendSuccess')}</Text>
             <TouchableOpacity onPress={() => setShowSuccess(false)}>
               <Text style={styles.modalButton}>{t('close')}</Text>
             </TouchableOpacity>
           </View>
         </View>
       </Modal>
-
-      {/* Modal Error */}
       <Modal visible={showError} transparent>
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
-            <Text style={[styles.modalText, { color: '#E53935' }]}>❌ {t('sendFail')}</Text>
+            <Text style={styles.modalTextred}>{t('sendFail')}</Text>
             <TouchableOpacity onPress={() => setShowError(false)}>
               <Text style={styles.modalButton}>{t('close')}</Text>
             </TouchableOpacity>
           </View>
         </View>
       </Modal>
-
-      {/* Modal Login Prompt */}
       <Modal visible={showLoginPrompt} transparent>
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
@@ -124,24 +142,94 @@ const Contact: React.FC = () => {
     </ScrollView>
   );
 };
-
 const styles = StyleSheet.create({
-  container: { flexGrow: 1, padding: 20, backgroundColor: '#FFF' },
-  title: { fontSize: 24, fontWeight: 'bold', textAlign: 'center', marginBottom: 20, color: '#FB8C00' },
-  input: { 
-    borderWidth: 1, borderColor: '#FFA726', padding: 12, borderRadius: 8, 
-    marginBottom: 12, color: '#333', backgroundColor: '#FFF' 
+  backIcon: {
+    position: "absolute",
+    top: 25,
+    left: 10,
   },
-  textArea: { height: 100, textAlignVertical: 'top' },
-  button: { 
-    backgroundColor: '#FB8C00', padding: 15, borderRadius: 8, 
-    alignItems: 'center', opacity: 0.9 
+  container: {
+    flexGrow: 1,
+    padding: 20,
+    backgroundColor: '#fff',
   },
-  buttonText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
-  modalContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.5)' },
-  modalContent: { backgroundColor: '#fff', padding: 20, borderRadius: 10, alignItems: 'center' },
-  modalText: { fontSize: 18, marginBottom: 10 },
-  modalButton: { color: '#FB8C00', fontSize: 16, fontWeight: 'bold' }
+  sectionTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    marginBottom: 10,
+    color: '#e67e22',
+textAlign: 'center',
+  },
+  infoItem: {
+    backgroundColor: '#fef5ec',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 10,
+    borderLeftWidth: 5,
+    borderLeftColor: '#f39c12',
+  },
+  infoTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#d35400',
+    marginBottom: 4,
+  },
+  infoText: {
+    fontSize: 14,
+    color: '#555',
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    padding: 10,
+    borderRadius: 8,
+    marginBottom: 12,
+    backgroundColor: '#fff8f3',
+    color: '#333',
+  },
+  textArea: {
+    height: 100,
+    textAlignVertical: 'top',
+  },
+  button: {
+    backgroundColor: '#e67e22',
+    padding: 15,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  buttonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    padding: 20,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  modalText: {
+    fontSize: 18,
+    marginBottom: 10,
+    color:'green'
+  },
+  modalTextred: {
+    fontSize: 18,
+    marginBottom: 10,
+    color:'redred'
+  },
+  modalButton: {
+    color: '#e67e22',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
 });
 
 export default Contact;
