@@ -10,6 +10,18 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: '#fff',
     },
+    coinInput: {
+        
+        height: 40,  // Chiều cao của input
+        borderColor:'#ccc',  // Màu viền
+        borderWidth: 1,  // Độ dày viền
+        borderRadius: BORDERRADIUS.radius_10,  // Bo góc
+        paddingHorizontal: 10,  // Khoảng cách giữa nội dung và viền
+        fontSize: 14,  // Kích thước chữ
+        color: '#000',  // Màu chữ
+        backgroundColor: '#fff',  // Màu nền của input
+        width:90
+    },
     list: {
         paddingBottom: 30,
         paddingHorizontal: SPACING.space_12,
@@ -67,7 +79,6 @@ const styles = StyleSheet.create({
         fontSize: 28,
         fontFamily:FONTFAMILY.dongle_bold,
         color: 'red',
-       
         alignItems: 'flex-end',
         textAlign: 'left'
     },

@@ -1,7 +1,7 @@
 import { Product } from "../screens/ProductDetail";
+import { ProductReview } from "../screens/AllReviews"
 
 export type RootStackParamList = {
-
     Home: undefined;
     Login: undefined;
     Register: undefined;
@@ -12,7 +12,7 @@ export type RootStackParamList = {
     ProductDetail: { product: Product };
     LanguageChange:  undefined;
     AllReviews: { productId: number };  // 👈 Thêm dòng này
-    AddReview: { productId: number };
+    AddReview: { productId: number; reviewToEdit?: ProductReview };
     Info: undefined;
     Order: { state: { cateId: number } };
     Cart:undefined;

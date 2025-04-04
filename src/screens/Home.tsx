@@ -24,6 +24,7 @@ import { useCartStore } from '../store/useCartStore';
 import useWebSocket from '../utils/Socket';
 import NotificationPopup from '../components/NotificationPopup';
 import axiosInstance from '../utils/axiosInstance';
+import Notification from '../components/Notification';
 
 
 const Home = () => {
@@ -31,17 +32,18 @@ const Home = () => {
   const { categories, userInfo, userCoin } = data;
   const { t } = useTranslation();
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
+  const [notification, setNotification] = useState({ message: '', visible: false });
 
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<number | null>(null);
   const token = AsyncStorage.getItem('access_token');
-  const { language, userId } = useCategoryStore();
+  const { language, userId, checkShipment } = useCategoryStore();
   const { fetchCartItem } = useCartStore();
   const [products, setProducts] = useState<Product[]>([]);
+  const { addToCart } = useCartStore();
 
   const fetchProducts = async () => {
-    setLoading(true);
     try {
       const token = await AsyncStorage.getItem("access_token");
 
@@ -53,7 +55,7 @@ const Home = () => {
 
       setProducts(response.data.productResponses || []);
     } catch (error) {
-      console.log('❌ Lỗi khi lấy sản phẩm:', error);
+      console.error('❌ Lỗi khi lấy sản phẩm:', error);
     } finally {
       setLoading(false);
     }
@@ -102,6 +104,7 @@ const Home = () => {
       useCategoryStore.getState().setLanguage(useCategoryStore.getState().language);
 
       // Chờ lấy dữ liệu sản phẩm
+      await checkShipment();
       await fetchProducts();
       await fetchCartItem();
     } catch (error) {
@@ -110,11 +113,50 @@ const Home = () => {
       setRefreshing(false);
     }
   };
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchProducts();
 
+    }, []) // Mỗi khi searchTerm thay đổi
+  );
 
+  const showNotification = (message: string) => {
+    setNotification({ message, visible: true });
+    // Ẩn thông báo sau 3 giây
+    setTimeout(() => setNotification({ ...notification, visible: false }), 3000);
+  };
+
+  const handleAddToCart = (proId: number, size: string ) => {
+   
+    const quantity = 1; // Mặc định thêm 1 sản phẩm
+
+    if (!proId || !size) {
+      showNotification("⚠️ Thông tin sản phẩm không hợp lệ!");
+      return;
+    }
+
+    const payload = { proId, size, quantity, language };
+
+    console.log("📦 Payload gửi đi:", payload);
+
+    addToCart(proId, size, quantity, language)
+      .then(() => {
+        showNotification("✅ Sản phẩm đã được thêm vào giỏ hàng!");
+      })
+      .catch((error: { message: string; }) => {
+        console.error("❌ Lỗi khi thêm vào giỏ hàng:", error);
+        const message = error.message || "";
+        if (message.includes("Vượt quá số lượng tồn kho")) {
+          showNotification("⚠️ Số lượng sản phẩm vượt quá số lượng tồn kho!");
+        } else {
+          showNotification("❌ Lỗi khi thêm sản phẩm vào giỏ hàng. Vui lòng thử lại!");
+        }
+      });
+  };
 
   const renderProductItem = useCallback(({ item }: { item: Product }) => (
     <ProductCard
+      proId ={item.proId}
       image={item.productImageResponseList?.[0]?.linkImage || 'https://via.placeholder.com/150'}
       name={item.proName || 'No name'}
       price={item.listProductVariants?.[0]?.price || 0}
@@ -127,6 +169,7 @@ const Home = () => {
       isSelected={selectedProduct === item.proId}
       isFavourited={item.isFavourited ?? false}
       insertFavoriteItem={insertFavoriteItem}
+      onAddToCart={async (proId: number, size: string) => handleAddToCart(proId, size)}
     />
   ), [selectedProduct, navigation]);
 
@@ -134,12 +177,12 @@ const Home = () => {
     <>
       <MemberCard userInfo={userInfo} />
       <View style={homeStyles.rewardsContainer}>
-          <RewardCard
-            icon="confirmation-number"
-            title={t('cart.voucher')}
-            points={useCartStore.getState().voucherTotal}
-            onPress={() => navigation.navigate('ListVoucher')}
-          />
+        <RewardCard
+          icon="confirmation-number"
+          title={t('cart.voucher')}
+          points={useCartStore.getState().voucherTotal}
+          onPress={() => navigation.navigate('ListVoucher')}
+        />
         <RewardCard icon="savings" title={t('cart.coinname')} points={userCoin ?? 0} />
       </View>
       <Text style={homeStyles.categoryTitle}>{t('category')}</Text>
@@ -183,6 +226,7 @@ const Home = () => {
 
   return (
     <View style={{ flex: 1 }}>
+      <Notification message={notification.message} visible={notification.visible} onHide={() => setNotification({ ...notification, visible: false })} />
       <NotificationPopup userId={userId ?? 0} />
       <View>
         <LinearGradient

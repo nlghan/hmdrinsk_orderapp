@@ -102,8 +102,23 @@ const StackNavigator = () => {
       <Stack.Screen name="Order" component={OrderScreen} options={{ headerShown: false, animation: 'slide_from_right' }} />
       <Stack.Screen name="NewDetails" component={NewDetails} options={{ headerShown: false, animation: 'slide_from_right' }} />
       <Stack.Screen name="LanguageChange" component={LanguageChange} options={{ title: t('common.selectLanguage'), headerShown: false, animation: 'slide_from_right' as const }} />
+      <Stack.Screen name="ProductDetail" component={ProductDetail} options={{
+        headerShown: false,
+        animation: 'slide_from_right'  // Thử đổi thành 'slide_from_right' hoặc 'fade'
+      }} />
+      <Stack.Screen name="Cart" component={Cart} options={{
+        headerShown: false,
+        animation: 'slide_from_right'  // Thử đổi thành 'slide_from_right' hoặc 'fade'
+      }} />
+      <Stack.Screen name="News" component={News} options={{ headerShown: false, animation: 'slide_from_right' }} />
+
+      <Stack.Screen name="Order" component={OrderScreen} options={{ headerShown: false, animation: 'slide_from_right' }} />
+      <Stack.Screen name="NewDetails" component={NewDetails} options={{ headerShown: false, animation: 'slide_from_right' }} />
+      <Stack.Screen name="LanguageChange" component={LanguageChange} options={{ title: t('common.selectLanguage'), headerShown: false, animation: 'slide_from_right' as const }} />
       <Stack.Screen name="AllReviews" component={AllReviewsScreen} options={{ title: t('common.allReviews'), headerShown: false, animation: 'slide_from_right' as const }} />
       <Stack.Screen name="AddReview" component={AddReviewScreen} options={{ title: t('common.addReview'), headerShown: false, animation: 'slide_from_right' as const }} />
+
+      <Stack.Screen name="ListVoucher" component={ListVoucher} options={{ title: t('common.addReview'), headerShown: false, animation: 'slide_from_right' as const }} />
 
       <Stack.Screen name="ListVoucher" component={ListVoucher} options={{ title: t('common.addReview'), headerShown: false, animation: 'slide_from_right' as const }} />
       <Stack.Screen name="DeliveringOrders" component={DeliveringOrders} options={{ headerShown: false, animation: 'slide_from_right' }} />
@@ -111,6 +126,7 @@ const StackNavigator = () => {
       <Stack.Screen name="HistoryOrders" component={HistoryOrders} options={{ headerShown: false, animation: 'slide_from_right' }} />
       <Stack.Screen name="CancelledOrders" component={CancelledOrders} options={{ headerShown: false, animation: 'slide_from_right' }} />
       <Stack.Screen name="WaitingOrders" component={WaitingOrders} options={{ headerShown: false, animation: 'slide_from_right' }} />
+      <Stack.Screen name="RefundOrders" component={RefundOrder} options={{ headerShown: false, animation: 'slide_from_right' }} />
       <Stack.Screen name="RefundOrders" component={RefundOrder} options={{ headerShown: false, animation: 'slide_from_right' }} />
       <Stack.Screen name="Orther" component={Orther} options={{ headerShown: false, animation: 'slide_from_right' }} />
       <Stack.Screen name="MyOrderDetails" component={MyOrderDetails} options={{ headerShown: false, animation: 'slide_from_right' }} />

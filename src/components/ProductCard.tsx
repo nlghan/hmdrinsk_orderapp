@@ -4,6 +4,7 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import { FONTFAMILY } from '../theme/theme';
 
 interface ProductCardProps {
+    proId:number;
     image: string;
     name: string;
     price: number;
@@ -13,10 +14,11 @@ interface ProductCardProps {
     isSelected: boolean;
     isFavourited: boolean;
     insertFavoriteItem: (favId: number, proId: number, size: string) => Promise<void>; // ✅ Thêm dòng này
+    onAddToCart: (proId: number, size: string) => Promise<void>;
   }
   
 
-const ProductCard: React.FC<ProductCardProps> = ({ image, name, price, size, onLongPress, onPress, isSelected, isFavourited, insertFavoriteItem }) => {
+const ProductCard: React.FC<ProductCardProps> = ({ proId,image, name, price, size, onLongPress, onPress, isSelected, isFavourited, insertFavoriteItem, onAddToCart }) => {
     const [isFavorite, setIsFavorite] = useState(isFavourited); 
 
     // ✅ Cập nhật `isFavorite` mỗi khi `isFavourited` thay đổi từ props
@@ -111,7 +113,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ image, name, price, size, onL
                 </TouchableOpacity>
 
                 {/* 🛒 Nút giỏ hàng */}
-                <TouchableOpacity style={styles.cartButton}>
+                <TouchableOpacity style={styles.cartButton} onPress={() => onAddToCart(proId, size)}  >
                     <Icon name="shopping-cart" size={24} color="green" />
                 </TouchableOpacity>
             </Animated.View>

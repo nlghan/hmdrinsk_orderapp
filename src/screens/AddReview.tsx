@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Alert } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
@@ -10,17 +10,30 @@ import { useTranslation } from 'react-i18next';
 
 type AddReviewRouteProp = RouteProp<RootStackParamList, 'AddReview'>;
 
+
 const AddReview = () => {
     const { t } = useTranslation();
     const navigation = useNavigation();
     const route = useRoute<AddReviewRouteProp>();
-    const { productId } = route.params;
+    const { productId, reviewToEdit } = route.params || {}; // Lấy thông tin review nếu có
 
-    const { addReviewToProduct } = useCategoryStore();
+    const { addReviewToProduct, editReview } = useCategoryStore();
 
     const [fullName, setFullName] = useState('');
     const [rating, setRating] = useState(0);
     const [content, setContent] = useState('');
+    const [isEditing, setIsEditing] = useState(false); // Biến để kiểm tra xem có đang chỉnh sửa không
+    
+
+    // Nếu có review cần chỉnh sửa
+    useEffect(() => {
+        if (reviewToEdit) {
+            setFullName(reviewToEdit.fullName);
+            setRating(reviewToEdit.ratingStart);
+            setContent(reviewToEdit.content);
+            setIsEditing(true);
+        }
+    }, [reviewToEdit]);
 
     const handleSubmit = async () => {
         const { language } = useCategoryStore.getState(); // Lấy ngôn ngữ từ store
@@ -37,21 +50,25 @@ const AddReview = () => {
             return;
         }
 
+
         const newReview = {
+            reviewId: reviewToEdit?.reviewId ?? 0,
             userId,
             proId: productId,
-            fullName,
             ratingStart: rating,
             content,
+            fullName,  // Đảm bảo trường fullName có mặt ở đây
         };
 
-        await addReviewToProduct(productId, newReview);
-        Alert.alert(isEnglish ? "Success" : "Thành công", isEnglish ? "Your review has been submitted!" : "Đánh giá của bạn đã được gửi!");
+        if (isEditing && reviewToEdit) {
+            await editReview(newReview); // Chỉnh sửa review
+            Alert.alert(isEnglish ? "Success" : "Thành công", isEnglish ? "Your review has been updated!" : "Đánh giá của bạn đã được cập nhật!");
+        } else {
+            await addReviewToProduct(productId, newReview); // Thêm review mới
+            Alert.alert(isEnglish ? "Success" : "Thành công", isEnglish ? "Your review has been submitted!" : "Đánh giá của bạn đã được gửi!");
+        }
         navigation.goBack();
     };
-
-
-
 
     const renderStars = () => (
         <View style={{ flexDirection: 'row' }}>
@@ -89,7 +106,7 @@ const AddReview = () => {
                     <TouchableOpacity onPress={() => navigation.goBack()} style={reviewStyles.backButton}>
                         <Icon name="arrow-back" size={20} color="#000" />
                     </TouchableOpacity>
-                    <Text style={reviewStyles.headerTitle}>{t('common.addCmt')}</Text>
+                    <Text style={reviewStyles.headerTitle}>{isEditing ? t('common.editCmt') : t('common.addCmt')}</Text>
                 </View>
 
                 <Text style={reviewStyles.label}>{t('products.rating')}:</Text>
@@ -107,9 +124,7 @@ const AddReview = () => {
                 <TouchableOpacity style={reviewStyles.submitButton} onPress={handleSubmit}>
                     <Text style={reviewStyles.submitButtonText}>{t('send')}</Text>
                 </TouchableOpacity>
-
             </View>
-
         </View>
     );
 };

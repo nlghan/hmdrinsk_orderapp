@@ -136,7 +136,7 @@ const ProductItem = ({ item, navigation }: { item: any; navigation: any }) => {
 
 
 const OrderScreen = () => {
-  const { data, fetchProducts } = useCategoryStore();
+  const { data, fetchProducts, checkShipment } = useCategoryStore();
   const { categories = [], products = [] } = data;
   const { t } = useTranslation();
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
@@ -196,6 +196,7 @@ const OrderScreen = () => {
   const onRefresh = async () => {
     setRefreshing(true);
     await fetchProducts();
+    await checkShipment();
     setVisibleProducts(6);
     setRefreshing(false);
   };
@@ -228,8 +229,8 @@ const OrderScreen = () => {
             <View style={homeStyles.categoryOrderHeader}>
               <Text style={homeStyles.categoryTitle}>{t("category")}</Text>
               <TouchableOpacity onPress={() => navigation.navigate("Search")}>
-  <Icon name="search" size={25} color={COLORS.primaryGreenHex} />
-</TouchableOpacity>
+                <Icon name="search" size={25} color={COLORS.primaryGreenHex} />
+              </TouchableOpacity>
 
             </View>
 

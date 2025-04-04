@@ -54,6 +54,20 @@
 		0FD56FA730FB4FB7A17E9360 /* screenshot_2024_03_14_200800.png in Resources */ = {isa = PBXBuildFile; fileRef = 487CE8D86D024B0E9A518C3B /* screenshot_2024_03_14_200800.png */; };
 		B784CA9459994B1588365230 /* settings.png in Resources */ = {isa = PBXBuildFile; fileRef = D7210F4A3EF244288DAE9EA0 /* settings.png */; };
 		337CD7B71C2C4C9396573A90 /* slide.png in Resources */ = {isa = PBXBuildFile; fileRef = 5CA492323FF040BF944AC42F /* slide.png */; };
+		4254ECE560A2488FBC043406 /* barcode.png in Resources */ = {isa = PBXBuildFile; fileRef = 77A52830628645A885758380 /* barcode.png */; };
+		687527FA2C694B1181F8EA89 /* bg.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 444D35B57FF1439CA11834A9 /* bg.jpg */; };
+		7AC33FB9F14D4E13841AF8EE /* logomini.png in Resources */ = {isa = PBXBuildFile; fileRef = 0B54C3A13E6244DC983F1F3F /* logomini.png */; };
+		B4DC550610324604A801BDCA /* nen.png in Resources */ = {isa = PBXBuildFile; fileRef = 751E8C2FEC0641A1AF9B4C1D /* nen.png */; };
+		7368163E71B9414D85CB1DA3 /* nenthe.png in Resources */ = {isa = PBXBuildFile; fileRef = FA3375B217DC4317A1658E16 /* nenthe.png */; };
+		E648F88986384AEE92F4834D /* vc-b.png in Resources */ = {isa = PBXBuildFile; fileRef = 100D17633F4840C38E140E13 /* vc-b.png */; };
+		D35C351DF019401D83CA925F /* voucher_2.jpeg in Resources */ = {isa = PBXBuildFile; fileRef = 6E480B76A7AA4D229A3B5C13 /* voucher_2.jpeg */; };
+		405D869422D6421FB6B1824B /* logoGG.png in Resources */ = {isa = PBXBuildFile; fileRef = 24C5B57B2D244927B99427F4 /* logoGG.png */; };
+		588A7E41E4B54A339AF8CB0B /* Comfortaa-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 3040A2604EF04907B3FFBD62 /* Comfortaa-Bold.ttf */; };
+		AE4CF7EAB6BF40FA860C854D /* Pacifico-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 120CA9F8FACB467984D08E1B /* Pacifico-Regular.ttf */; };
+		12A98A40F538402B9D43045E /* Dongle-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = F5E4939800DB4B798B83165D /* Dongle-Bold.ttf */; };
+		9FBFDD10A09041BDB58D13A9 /* Dongle-Light.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 3ED2E4B8ECFC4664A20A94CC /* Dongle-Light.ttf */; };
+		21C9BCC003F54F488F90AD92 /* Dongle-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = A441F5CC666E472AAF6DF592 /* Dongle-Regular.ttf */; };
+		58772F8E0BBA4212828A87CD /* OFL.txt in Resources */ = {isa = PBXBuildFile; fileRef = BC492961B23F498E90DD68C8 /* OFL.txt */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -121,6 +135,20 @@
 		487CE8D86D024B0E9A518C3B /* screenshot_2024_03_14_200800.png */ = {isa = PBXFileReference; name = "screenshot_2024_03_14_200800.png"; path = "../src/assets/app_images/screenshot_2024_03_14_200800.png"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
 		D7210F4A3EF244288DAE9EA0 /* settings.png */ = {isa = PBXFileReference; name = "settings.png"; path = "../src/assets/app_images/settings.png"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
 		5CA492323FF040BF944AC42F /* slide.png */ = {isa = PBXFileReference; name = "slide.png"; path = "../src/assets/app_images/slide.png"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		77A52830628645A885758380 /* barcode.png */ = {isa = PBXFileReference; name = "barcode.png"; path = "../src/assets/app_images/barcode.png"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		444D35B57FF1439CA11834A9 /* bg.jpg */ = {isa = PBXFileReference; name = "bg.jpg"; path = "../src/assets/app_images/bg.jpg"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		0B54C3A13E6244DC983F1F3F /* logomini.png */ = {isa = PBXFileReference; name = "logomini.png"; path = "../src/assets/app_images/logomini.png"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		751E8C2FEC0641A1AF9B4C1D /* nen.png */ = {isa = PBXFileReference; name = "nen.png"; path = "../src/assets/app_images/nen.png"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		FA3375B217DC4317A1658E16 /* nenthe.png */ = {isa = PBXFileReference; name = "nenthe.png"; path = "../src/assets/app_images/nenthe.png"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		100D17633F4840C38E140E13 /* vc-b.png */ = {isa = PBXFileReference; name = "vc-b.png"; path = "../src/assets/app_images/vc-b.png"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		6E480B76A7AA4D229A3B5C13 /* voucher_2.jpeg */ = {isa = PBXFileReference; name = "voucher_2.jpeg"; path = "../src/assets/app_images/voucher_2.jpeg"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		24C5B57B2D244927B99427F4 /* logoGG.png */ = {isa = PBXFileReference; name = "logoGG.png"; path = "../src/assets/img/logoGG.png"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		3040A2604EF04907B3FFBD62 /* Comfortaa-Bold.ttf */ = {isa = PBXFileReference; name = "Comfortaa-Bold.ttf"; path = "../src/assets/fonts/Comfortaa-Bold.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		120CA9F8FACB467984D08E1B /* Pacifico-Regular.ttf */ = {isa = PBXFileReference; name = "Pacifico-Regular.ttf"; path = "../src/assets/fonts/Pacifico-Regular.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		F5E4939800DB4B798B83165D /* Dongle-Bold.ttf */ = {isa = PBXFileReference; name = "Dongle-Bold.ttf"; path = "../src/assets/fonts/Dongle-Bold.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		3ED2E4B8ECFC4664A20A94CC /* Dongle-Light.ttf */ = {isa = PBXFileReference; name = "Dongle-Light.ttf"; path = "../src/assets/fonts/Dongle-Light.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		A441F5CC666E472AAF6DF592 /* Dongle-Regular.ttf */ = {isa = PBXFileReference; name = "Dongle-Regular.ttf"; path = "../src/assets/fonts/Dongle-Regular.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		BC492961B23F498E90DD68C8 /* OFL.txt */ = {isa = PBXFileReference; name = "OFL.txt"; path = "../src/assets/fonts/OFL.txt"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -249,6 +277,20 @@
 				487CE8D86D024B0E9A518C3B /* screenshot_2024_03_14_200800.png */,
 				D7210F4A3EF244288DAE9EA0 /* settings.png */,
 				5CA492323FF040BF944AC42F /* slide.png */,
+				77A52830628645A885758380 /* barcode.png */,
+				444D35B57FF1439CA11834A9 /* bg.jpg */,
+				0B54C3A13E6244DC983F1F3F /* logomini.png */,
+				751E8C2FEC0641A1AF9B4C1D /* nen.png */,
+				FA3375B217DC4317A1658E16 /* nenthe.png */,
+				100D17633F4840C38E140E13 /* vc-b.png */,
+				6E480B76A7AA4D229A3B5C13 /* voucher_2.jpeg */,
+				24C5B57B2D244927B99427F4 /* logoGG.png */,
+				3040A2604EF04907B3FFBD62 /* Comfortaa-Bold.ttf */,
+				120CA9F8FACB467984D08E1B /* Pacifico-Regular.ttf */,
+				F5E4939800DB4B798B83165D /* Dongle-Bold.ttf */,
+				3ED2E4B8ECFC4664A20A94CC /* Dongle-Light.ttf */,
+				A441F5CC666E472AAF6DF592 /* Dongle-Regular.ttf */,
+				BC492961B23F498E90DD68C8 /* OFL.txt */,
 			);
 			name = Resources;
 			sourceTree = "<group>";
@@ -366,6 +408,20 @@
 				0FD56FA730FB4FB7A17E9360 /* screenshot_2024_03_14_200800.png in Resources */,
 				B784CA9459994B1588365230 /* settings.png in Resources */,
 				337CD7B71C2C4C9396573A90 /* slide.png in Resources */,
+				4254ECE560A2488FBC043406 /* barcode.png in Resources */,
+				687527FA2C694B1181F8EA89 /* bg.jpg in Resources */,
+				7AC33FB9F14D4E13841AF8EE /* logomini.png in Resources */,
+				B4DC550610324604A801BDCA /* nen.png in Resources */,
+				7368163E71B9414D85CB1DA3 /* nenthe.png in Resources */,
+				E648F88986384AEE92F4834D /* vc-b.png in Resources */,
+				D35C351DF019401D83CA925F /* voucher_2.jpeg in Resources */,
+				405D869422D6421FB6B1824B /* logoGG.png in Resources */,
+				588A7E41E4B54A339AF8CB0B /* Comfortaa-Bold.ttf in Resources */,
+				AE4CF7EAB6BF40FA860C854D /* Pacifico-Regular.ttf in Resources */,
+				12A98A40F538402B9D43045E /* Dongle-Bold.ttf in Resources */,
+				9FBFDD10A09041BDB58D13A9 /* Dongle-Light.ttf in Resources */,
+				21C9BCC003F54F488F90AD92 /* Dongle-Regular.ttf in Resources */,
+				58772F8E0BBA4212828A87CD /* OFL.txt in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
