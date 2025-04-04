@@ -30,17 +30,17 @@ const useWebSocket = (userId: number) => {
                     console.log('⚠️ Không tìm thấy token, hủy kết nối WebSocket.');
                     return;
                 }
-        
+
                 console.log('🔑 Token được sử dụng:', token);
-                
+
                 const encodedToken = encodeURIComponent(token);  // Encode token để tránh lỗi URL
                 const ws = new WebSocket(`ws://192.168.9.195:1010/ws-raw?token=${encodedToken}&userId=${userId}`);
-                
+
                 socketRef.current = ws;
-        
+
                 ws.onopen = () => {
                     console.log('✅ WebSocket connected!');
-                    ws.send(JSON.stringify({ userId, token })); 
+                    ws.send(JSON.stringify({ userId, token }));
                     startHeartbeat(); // Bắt đầu gửi ping giữ kết nối
                 };
 
@@ -64,15 +64,16 @@ const useWebSocket = (userId: number) => {
                         console.log('🚀 ~ WebSocket Message:', message);
 
                         if (message.type === 'NEW_NOTIFICATION') {
-                            setNotifications((prev) => [
-                                ...prev,
-                                {
+                            setNotifications((prev) => {
+                                const isDuplicate = prev.some(noti => Number(noti.time) === Number(message.time));
+                                return isDuplicate ? prev : [...prev, {
                                     userId: message.userId,
                                     shipmentId: message.shipmentId,
                                     message: message.message,
                                     time: message.time,
                                 },
-                            ]);
+                                ];
+                            });
                         }
                     } catch (error) {
                         console.log('❌ Lỗi khi parse JSON:', error);

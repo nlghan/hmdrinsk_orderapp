@@ -4,6 +4,7 @@ import LinearGradient from 'react-native-linear-gradient';
 import { ProgressBar } from 'react-native-paper';
 import { useTranslation } from 'react-i18next'; // Import hook useTranslation
 import { useCategoryStore } from '../store/store'; // Import Zustand store
+import { FONTFAMILY } from '../theme/theme';
 
 // Định nghĩa kiểu dữ liệu cho userInfo
 interface UserInfo {
@@ -34,7 +35,7 @@ const MemberCard: React.FC<MemberCardProps> = ({ userInfo }) => {
   const progress = userCoin ? userCoin / targetCoin : 0; // ✅ Tính phần trăm tiến trình
 
   return (
-    <LinearGradient colors={['#ffb330', '#fffcce']} style={styles.card}>
+    <LinearGradient colors={['#fff', '#d0dbf3']} style={styles.card}>
       <ImageBackground source={require('../assets/app_images/nen.png')} style={styles.backgroundImage} resizeMode="cover">
         <View style={styles.cardHeader}>
           {/* Avatar */}
@@ -59,10 +60,6 @@ const MemberCard: React.FC<MemberCardProps> = ({ userInfo }) => {
             {(userCoin ?? 0).toLocaleString()} {t('cart.coinname')} / {targetCoin.toLocaleString()} {t('cart.coinname')}
           </Text>
         </View>
-
-
-
-
       </ImageBackground>
     </LinearGradient>
   );
@@ -91,17 +88,20 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   cardTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#fff',
+    fontSize: 28,
+    color: '#177460',
+    fontFamily: FONTFAMILY.dongle_bold,
+    
   },
   cardEmail: {
-    fontSize: 14,
-    color: '#eee',
+    fontSize: 24,
+    color: '#177460',
+    fontFamily: FONTFAMILY.dongle_regular,
   },
   cardSubTitle: {
-    fontSize: 14,
-    color: '#000',
+    fontSize: 24,
+    color: '#177460',
+    fontFamily: FONTFAMILY.dongle_regular,
   },
   progressContainer: {
     marginTop: 10,
@@ -117,7 +117,7 @@ const styles = StyleSheet.create({
     color: '#000',  // ✅ Đổi màu chữ để dễ đọc
     marginTop: 4,
     textAlign: 'right',
-    fontWeight: 'bold',
+    fontFamily: FONTFAMILY.poppins_bold
   },
 });
 

@@ -141,14 +141,14 @@ const WaitingOrder = () => {
                                                         <Text style={styles.boldText}>{t('history.quantity')}</Text> {product.quantity}
                                                     </Text>
                                                     <Text style={styles.price}>
-                                                        <Text style={styles.boldText}>{t('history.price')}</Text> {product.totalPrice} VND
+                                                        <Text style={styles.boldText}>{t('history.price')}</Text> {product.totalPrice} đ
                                                     </Text>
                                                 </View>
                                             </View>
                                         )}
                                     />
                                     <Text style={styles.totalPrice}>
-                                        <Text style={styles.boldText}>{t('history.total_price')}</Text> {Math.max(item.totalPrice + item.deliveryFee - item.discountPrice, 0)} VND
+                                        <Text style={styles.boldText}>{t('history.total_price')}</Text> {Math.max(item.totalPrice + item.deliveryFee - item.discountPrice, 0)} đ
                                     </Text>
                                     <Text>
                                         <Text style={styles.boldText}>{t('history.order_date')}</Text> {item.dateOders}

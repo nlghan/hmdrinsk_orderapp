@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, TouchableOpacity, Image, StyleSheet, Animated } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import { FONTFAMILY } from '../theme/theme';
 
 interface ProductCardProps {
     image: string;
@@ -85,7 +86,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ image, name, price, size, onL
             <Image source={{ uri: image }} style={styles.image} />
             <Text style={styles.name}>{name}</Text>
             <View style={styles.priceContainer}>
-                <Text style={styles.price}>{formatPrice(price)} VND ({size})</Text>
+                <Text style={styles.price}>{formatPrice(price)}đ ({size})</Text>
             </View>
 
             {isSelected && <View style={styles.overlay} />}
@@ -142,8 +143,8 @@ const styles = StyleSheet.create({
         resizeMode: 'cover',
     },
     name: {
-        fontSize: 18,
-        fontWeight: 'bold',
+        fontSize: 26,
+        fontFamily:FONTFAMILY.dongle_bold,
         marginTop: 8,
         textAlign: 'center',
     },
@@ -152,9 +153,9 @@ const styles = StyleSheet.create({
         marginBottom: 10,
     },
     price: {
-        fontSize: 16,
+        fontSize: 24,
         color: 'green',
-        fontWeight: 'bold',
+        fontFamily:FONTFAMILY.dongle_bold,
     },
     overlay: {
         ...StyleSheet.absoluteFillObject,

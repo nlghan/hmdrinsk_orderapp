@@ -12,6 +12,7 @@ import { useCategoryStore } from '../store/store';  // Import store
 import { Buffer } from 'buffer';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import { useTranslation } from 'react-i18next'; // Import hook useTranslation
+import { useCartStore } from '../store/useCartStore';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Login'>;
 const getUserIdFromToken = (token: string) => {
@@ -28,6 +29,7 @@ const getUserIdFromToken = (token: string) => {
 };
 
 const Login: React.FC<Props> = ({ navigation }) => {
+  const { ensureActiveCart } = useCartStore();
   const { fetchFavoriteItems } = useCategoryStore();
   const { t } = useTranslation();
   const [username, setUsername] = useState('');
@@ -65,6 +67,7 @@ const Login: React.FC<Props> = ({ navigation }) => {
 
         setSuccessMessage('Đăng nhập thành công!');
         setLoading(false); // 🔥 Đặt loading về false ngay trước khi điều hướng
+        await ensureActiveCart();
 
         if (role.includes('CUSTOMER')) {
           setLoading(false);

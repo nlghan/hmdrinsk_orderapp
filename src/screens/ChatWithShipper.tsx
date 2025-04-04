@@ -8,6 +8,7 @@ import Icon from "react-native-vector-icons/MaterialIcons";
 import { useCategoryStore } from "../store/store";
 import { RootStackParamList } from "../navigation/RootStackParamList";
 import { useTranslation } from 'react-i18next';
+import { FONTFAMILY } from '../theme/theme';
 
 interface Message {
     senderId: number;
@@ -193,33 +194,6 @@ const ChatWithShipper = () => {
         }
     };
     useEffect(() => {
-        const fetchMessages = async () => {
-            try {
-                const response = await axiosInstance.get(`/chat/messages/shipment/${shipmentId}`);
-                if (response.data.length === 0) {
-                    // Nếu không có tin nhắn, gửi tin nhắn hệ thống tự động
-                    const systemMessage = {
-                        senderId: userId,
-                        receiverId: shipperId,
-                        shipmentId,
-                        message: "Đơn hàng của bạn đã được tiếp nhận, chúng tôi sẽ giao đơn cho bạn sớm nhất có thể!",
-                        messageType: "text",
-                        attachments: [],
-                    };
-
-                    console.log('📩 systemMessage:', systemMessage);
-
-                    const sendResponse = await axiosInstance.post('/chat/send', systemMessage,);
-
-                    setMessages([sendResponse.data]);
-                } else {
-                    setMessages(response.data);
-                }
-            } catch (error) {
-                console.log('❌ Lỗi khi tải tin nhắn:', error);
-            }
-        };
-
         const fetchShipperId = async () => {
             try {
                 const token = await AsyncStorage.getItem('access_token');
@@ -231,17 +205,47 @@ const ChatWithShipper = () => {
                 setnameShipper(response.data.nameShipper);
                 setcustomerName(response.data.customerName);
                 setStatus(response.data.status);
+    
+                return response.data.shipperId; // Trả về shipperId để sử dụng tiếp theo
             } catch (error) {
                 console.log("❌ Lỗi lấy shipperId:", error);
+                return null;
             }
         };
-
+    
+        const fetchMessages = async (shipperId : number) => {
+            if (!shipperId) return;
+            try {
+                const response = await axiosInstance.get(`/chat/messages/shipment/${shipmentId}`);
+                if (response.data.length === 0) {
+                    // Nếu không có tin nhắn, gửi tin nhắn hệ thống tự động
+                    const systemMessage = {
+                        senderId: shipperId,
+                        receiverId: userId,
+                        shipmentId,
+                        message: "Đơn hàng của bạn đã được tiếp nhận, chúng tôi sẽ giao đơn cho bạn sớm nhất có thể!",
+                        messageType: "text",
+                        attachments: [],
+                    };
+    
+                    console.log('📩 systemMessage:', systemMessage);
+    
+                    const sendResponse = await axiosInstance.post('/chat/send', systemMessage);
+                    setMessages([sendResponse.data]);
+                } else {
+                    setMessages(response.data);
+                }
+            } catch (error) {
+                console.log('❌ Lỗi khi tải tin nhắn:', error);
+            }
+        };
+    
         const connectWebSocket = async () => {
             if (socketRef.current) return;
             const token = await AsyncStorage.getItem('access_token');
             if (!token) return;
             const ws = new WebSocket(`ws://192.168.9.195:1010/ws-raw?token=${encodeURIComponent(token)}&userId=${userId}`);
-
+    
             socketRef.current = ws;
             ws.onmessage = (event) => {
                 try {
@@ -262,12 +266,17 @@ const ChatWithShipper = () => {
                 }
             };
         };
-
-        fetchMessages();
-        fetchShipperId();
-        connectWebSocket();
+    
+        const init = async () => {
+            const shipperId = await fetchShipperId();
+            await fetchMessages(shipperId);
+            connectWebSocket();
+        };
+    
+        init();
         return () => socketRef.current?.close();
     }, [shipmentId]);
+    
 
     const sendMessage = async () => {
         if (!newMessage.trim() || !shipperId) return;
@@ -375,7 +384,7 @@ const styles = StyleSheet.create({
         alignContent: 'center',
         justifyContent: 'center',
         padding: 15,
-        backgroundColor: "#FF9800",
+        backgroundColor: "#f8a192",
         elevation: 5,
     },
     backIcon: {
@@ -384,9 +393,10 @@ const styles = StyleSheet.create({
         left: 10,
     },
     headerText: {
-        fontSize: 20,
-        fontWeight: 'bold',
-        color: 'white',
+        fontSize: 24,
+        fontFamily: FONTFAMILY.lobster_regular,
+        textAlign: 'center',
+        color: '#333',
     },
     messageContainer: {
         padding: 10,
@@ -396,15 +406,16 @@ const styles = StyleSheet.create({
     },
     sent: {
         alignSelf: 'flex-end',
-        backgroundColor: '#FF9800',
+        backgroundColor: '#f8a192',
         marginRight: 10,
         padding: 12,
+        color:'white'
     },
     received: {
         alignSelf: 'flex-start',
         backgroundColor: '#FFFFFF',
         borderWidth: 1,
-        borderColor: "#FF9800",
+        borderColor: "#f8a192",
         marginLeft: 10,
         padding: 12,
     },
@@ -434,7 +445,7 @@ const styles = StyleSheet.create({
     input: {
         flex: 1,
         borderWidth: 1,
-        borderColor: '#FF9800',
+        borderColor: '#ff6347',
         borderRadius: 25,
         padding: 12,
         fontSize: 16,
@@ -442,7 +453,7 @@ const styles = StyleSheet.create({
         backgroundColor: 'white',
     },
     sendButton: {
-        backgroundColor: '#FF9800',
+        backgroundColor: '#ff6347',
         padding: 12,
         borderRadius: 25,
         marginLeft: 10,

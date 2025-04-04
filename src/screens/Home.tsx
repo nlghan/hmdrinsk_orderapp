@@ -1,8 +1,8 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { 
-  View, Text, TouchableOpacity, Image, FlatList, 
-  SafeAreaView, ActivityIndicator, TouchableWithoutFeedback, RefreshControl, 
-  ListRenderItem, Keyboard, Alert 
+import {
+  View, Text, TouchableOpacity, Image, FlatList,
+  SafeAreaView, ActivityIndicator, TouchableWithoutFeedback, RefreshControl,
+  ListRenderItem, Keyboard, Alert
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useCategoryStore } from '../store/store';
@@ -19,15 +19,16 @@ import RewardCard from '../components/RewardCard';
 import ProductCard from '../components/ProductCard';
 import Slider from '../components/Slider';
 import { Product } from './ProductDetail';
-import { Category } from '../store/store'; 
+import { Category } from '../store/store';
 import { useCartStore } from '../store/useCartStore';
-import useWebSocket from '../utils/Socket'; 
+import useWebSocket from '../utils/Socket';
 import NotificationPopup from '../components/NotificationPopup';
+import axiosInstance from '../utils/axiosInstance';
 
 
 const Home = () => {
   const { data, insertFavoriteItem } = useCategoryStore();
-  const { categories, userInfo, products, userCoin } = data;
+  const { categories, userInfo, userCoin } = data;
   const { t } = useTranslation();
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
 
@@ -36,19 +37,37 @@ const Home = () => {
   const [selectedProduct, setSelectedProduct] = useState<number | null>(null);
   const token = AsyncStorage.getItem('access_token');
   const { language, userId } = useCategoryStore();
+  const { fetchCartItem } = useCartStore();
+  const [products, setProducts] = useState<Product[]>([]);
 
-  // 🟢 Xử lý dữ liệu sản phẩm để tránh lỗi undefined
-  const fixedProducts: Product[] = Array.isArray(products)
-    ? products.map((product) => ({
-      ...product,
-      isFavourited: product.isFavourited ?? false,
-    }))
-    : []; // Nếu products không phải mảng, gán giá trị rỗng
+  const fetchProducts = async () => {
+    setLoading(true);
+    try {
+      const token = await AsyncStorage.getItem("access_token");
+
+      const response = await axiosInstance.get(`/product/recommend?language=${language}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      console.log("📥 Phản hồi từ API:", response.data); // In ra toàn bộ dữ liệu nhận được
+
+      setProducts(response.data.productResponses || []);
+    } catch (error) {
+      console.log('❌ Lỗi khi lấy sản phẩm:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+
 
   // ✅ Khi chuyển trang, hủy chọn sản phẩm
   useFocusEffect(
     useCallback(() => {
-      return () => setSelectedProduct(null); 
+      return () => setSelectedProduct(null);
     }, [])
   );
 
@@ -70,18 +89,29 @@ const Home = () => {
         setLoading(false);
       }
     };
-  
+
     fetchData();
   }, []);
-  
+
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await Promise.all([
-      useCategoryStore.getState().setLanguage(useCategoryStore.getState().language),
-    ]);
-    setTimeout(() => setRefreshing(false), 500);
+
+    try {
+      // Cập nhật ngôn ngữ nếu cần (nếu setLanguage là sync thì không cần await)
+      useCategoryStore.getState().setLanguage(useCategoryStore.getState().language);
+
+      // Chờ lấy dữ liệu sản phẩm
+      await fetchProducts();
+      await fetchCartItem();
+    } catch (error) {
+      console.error("❌ Lỗi khi làm mới dữ liệu:", error);
+    } finally {
+      setRefreshing(false);
+    }
   };
+
+
 
   const renderProductItem = useCallback(({ item }: { item: Product }) => (
     <ProductCard
@@ -91,7 +121,7 @@ const Home = () => {
       size={item.listProductVariants?.[0]?.size || 'N/A'}
       onLongPress={() => setSelectedProduct(prev => (prev === item.proId ? null : item.proId))}
       onPress={() => {
-        setSelectedProduct(null); // ✅ Hủy chọn khi chuyển trang
+        setSelectedProduct(null);
         navigation.navigate('ProductDetail', { product: item });
       }}
       isSelected={selectedProduct === item.proId}
@@ -104,7 +134,12 @@ const Home = () => {
     <>
       <MemberCard userInfo={userInfo} />
       <View style={homeStyles.rewardsContainer}>
-      <RewardCard icon="confirmation-number" title={t('cart.voucher')} points={useCartStore.getState().voucherTotal} />
+          <RewardCard
+            icon="confirmation-number"
+            title={t('cart.voucher')}
+            points={useCartStore.getState().voucherTotal}
+            onPress={() => navigation.navigate('ListVoucher')}
+          />
         <RewardCard icon="savings" title={t('cart.coinname')} points={userCoin ?? 0} />
       </View>
       <Text style={homeStyles.categoryTitle}>{t('category')}</Text>
@@ -118,27 +153,40 @@ const Home = () => {
       />
       <Slider />
       <View style={homeStyles.productHeader}>
-        <Text style={homeStyles.productTitle}>{t('common.proList')}</Text>
-        <TouchableOpacity  onPress={() => {
-        navigation.navigate('Order');
-      }}>
-        <Text style={homeStyles.productTitle2}>{t('viewMore')}</Text>
+        <Text style={homeStyles.productTitle}>{t('products.maybe')}</Text>
+        <TouchableOpacity onPress={() => {
+          navigation.navigate('Order', {
+            state: { cateId: 0 } // Truyền cateId qua state
+          }
+          )
+        }}>
+          <Text style={homeStyles.productTitle2}>{t('viewMore')}</Text>
         </TouchableOpacity>
-        
+
       </View>
     </>
   ), [userInfo, userCoin, categories, t]);
 
   const renderCategoryItem: ListRenderItem<Category> = useCallback(({ item }) => (
-    <ServiceItem image={item.cateImg} text={item.cateName} />
+    <ServiceItem
+      image={item.cateImg}
+      text={item.cateName}
+      onPress={() => {
+        navigation.navigate('Order', {
+          state: { cateId: item.cateId } // Truyền cateId qua state
+        });
+      }}
+    />
   ), []);
+
+
 
   return (
     <View style={{ flex: 1 }}>
       <NotificationPopup userId={userId ?? 0} />
       <View>
-      <LinearGradient
-          colors={['#f3ebe0', '#f7eee9de']}
+        <LinearGradient
+          colors={['#fff', '#fdfcf0']}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
         >
@@ -152,7 +200,7 @@ const Home = () => {
         Keyboard.dismiss(); // Ẩn bàn phím nếu đang mở
       }}>
         <LinearGradient
-          colors={['#f3ebe0', '#f7eee9de']}
+          colors={['#fff', '#fdfcf0']}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
         >
@@ -163,7 +211,7 @@ const Home = () => {
             </View>
           ) : (
             <FlatList
-            data={fixedProducts.slice(0, 8)} // ✅ Chỉ lấy 8 sản phẩm đầu
+              data={products} // ✅ Chỉ lấy 8 sản phẩm đầu
               numColumns={2}
               keyExtractor={(item) => item.proId.toString()}
               renderItem={renderProductItem}
@@ -181,7 +229,7 @@ const Home = () => {
               contentContainerStyle={{
                 paddingHorizontal: 14,
                 paddingTop: 10,
-                paddingBottom: 80,
+                paddingBottom: 110,
                 justifyContent: 'space-between',
               }}
               columnWrapperStyle={{ justifyContent: 'space-between' }}
@@ -196,11 +244,12 @@ const Home = () => {
 };
 
 // 🔹 Component hiển thị danh mục
-const ServiceItem: React.FC<{ image: string; text: string }> = ({ image, text }) => (
-  <TouchableOpacity style={homeStyles.serviceItem}>
+const ServiceItem: React.FC<{ image: string; text: string; onPress: () => void }> = ({ image, text, onPress }) => (
+  <TouchableOpacity style={homeStyles.serviceItem} onPress={onPress}>
     <Image source={{ uri: image }} style={homeStyles.serviceImage} />
     <Text style={homeStyles.serviceText}>{text}</Text>
   </TouchableOpacity>
 );
+
 
 export default Home;

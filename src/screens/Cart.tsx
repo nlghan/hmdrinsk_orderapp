@@ -19,6 +19,7 @@ import { RootStackParamList } from '../navigation/RootStackParamList';
 import styles from '../styles/cartStyles';
 import { Swipeable, GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Picker } from '@react-native-picker/picker';
+import { useTranslation } from 'react-i18next';
 
 interface CartItem {
     cartItemId: number;
@@ -56,6 +57,12 @@ const Cart = () => {
 
     const [inputValues, setInputValues] = useState<{ [key: number]: string }>({});
     const [note, setNote] = useState('');  // State for note input
+    const { t } = useTranslation();
+    const { cartTotal } = useCartStore();
+
+    const formatPrice = (price: number) => {
+        return (price ).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    };
 
     useEffect(() => {
         fetchCartItem();
@@ -166,7 +173,7 @@ const Cart = () => {
                             </Text>
                             {item.map((sizeItem) => (
                                 <View key={sizeItem.size} style={styles.sizeContainer}>
-                                    <Text style={styles.sizeText}>Size: {sizeItem.size}</Text>
+                                    <Text style={styles.sizeText}>{t('size')}: {sizeItem.size}</Text>
 
                                     {/* Picker to allow the user to select a new size */}
                                     <Picker
@@ -209,7 +216,7 @@ const Cart = () => {
                                     </View>
                                 </View>
                             ))}
-                            <Text style={styles.discountPrice}>{totalPrice} VND</Text>
+                            <Text style={styles.discountPrice}>{formatPrice(totalPrice)}đ</Text>
                         </View>
                     </View>
                 </View>
@@ -220,31 +227,42 @@ const Cart = () => {
 
     const handleCreateOrder = async () => {
         try {
-            const order = await createOrder(note);  // Gọi API tạo đơn hàng
+            const orderId = await createOrder(note);  // Nhận orderId từ API
+            
+            if (!orderId) {
+                throw new Error("❌ orderId không hợp lệ.");
+            }
+    
+            const orderIdNumber = Number(orderId); // Ép kiểu orderId thành number
+            if (isNaN(orderIdNumber)) {
+                throw new Error("❌ orderId không phải là số hợp lệ.");
+            }
     
             await fetchCartItem();  // Cập nhật giỏ hàng sau khi đặt hàng
-            console.log("✅ Đặt hàng thành công:", order);
+            console.log("✅ Đặt hàng thành công với orderId:", orderIdNumber);
     
-            // Chuyển sang màn hình Payment và truyền thông tin order
-            navigation.navigate('Payment');
+            // Chuyển sang màn hình Payment và truyền orderId dạng số
+            navigation.navigate('Payment', { orderId: orderIdNumber });  
+    
         } catch (error) {
             console.error("❌ Lỗi khi tạo đơn hàng:", error);
         }
     };
+
     
 
     return (
         <View style={styles.container}>
             {(!cart || cart.length === 0) ? (
-                <EmptyListAnimation title={'Danh sách trống'} />
+                <EmptyListAnimation title={t('cart.empty')} />
             ) : (
                 <>
                     <View style={styles.flatlistContainer}>
                         <View style={styles.headerContainer}>
                             <TouchableOpacity onPress={() => navigation.goBack()}>
-                                <Icon name="arrow-back" size={24} color="#000" />
+                                <Icon name="arrow-back" size={24} color={COLORS.primaryGreenHex} />
                             </TouchableOpacity>
-                            <Text style={styles.headerTitle}>Giỏ hàng</Text>
+                            <Text style={styles.headerTitle}>{t('cart.title')}</Text>
                             <TouchableOpacity onPress={async () => await useCartStore.getState().deleteAllCartItems()}>
                                 <Icon name="delete" size={24} color="#000" />
                             </TouchableOpacity>
@@ -265,12 +283,12 @@ const Cart = () => {
                             >
                                 <View style={styles.voucherLabel}>
                                     <Icon name="local-offer" size={20} color={COLORS.primaryGreenHex} />
-                                    <Text style={styles.voucherText}>Voucher</Text>
+                                    <Text style={styles.voucherText}>{t('cart.voucher')}</Text>
                                 </View>
 
                                 <View style={styles.voucherRight}>
                                     <Text style={styles.voucherChooseText}>
-                                        {selectedVoucherKey ? selectedVoucherKey : "Chọn hoặc nhập mã"}
+                                        {selectedVoucherKey ? selectedVoucherKey : t('products.select')}
                                     </Text>
                                     {selectedVoucherKey && (
                                         <TouchableOpacity
@@ -293,8 +311,8 @@ const Cart = () => {
 
                         <View style={styles.coinContainer}>
                             <View style={styles.coinLeft}>
-                                <Icon name="stars" size={24} color="#FFAA00" />
-                                <Text style={styles.coinText}>Xu ({shopeeXuAmount} Xu)</Text>
+                                <Icon name="stars" size={22} color="#FFAA00" />
+                                <Text style={styles.coinText}>{t('cart.coin')} ({shopeeXuAmount} {t('cart.coinname')})</Text>
                             </View>
 
                             <TouchableOpacity onPress={handleToggleShopeeXu}>
@@ -310,8 +328,7 @@ const Cart = () => {
                         <View style={styles.noteContainer}>
                             <TextInput
                                 style={styles.noteInput}
-                                placeholder="Nhập ghi chú..."
-                                placeholderTextColor="#A9A9A9"
+                                placeholder={t('takeNote')}
                                 value={note}
                                 onChangeText={setNote}
                             />
@@ -319,11 +336,11 @@ const Cart = () => {
 
                         <View style={styles.paymentContainer}>
                             <Text style={styles.totalText}>
-                                Tổng: <Text style={styles.totalAmount}>{finalTotal} VND</Text>
+                                {t('order.orderDetail.sum')}: <Text style={styles.totalAmount}>{formatPrice(finalTotal)}đ </Text>
                             </Text>
 
                             <TouchableOpacity style={styles.checkoutButton} onPress={handleCreateOrder}>
-                                <Text style={styles.checkoutText}>Mua hàng</Text>
+                                <Text style={styles.checkoutText}>{t('buy')}</Text>
                             </TouchableOpacity>
                         </View>
                     </View>

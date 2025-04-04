@@ -30,7 +30,10 @@ import Payment from '../screens/Payment';
 import OrderComplete from '../screens/OrderComplete';
 import Notification from '../screens/Notification';
 import NotificationScreen from '../screens/Notification';
+import OrderFailed from '../screens/OrderFailed';
 import ChatWithShipper from '../screens/ChatWithShipper';
+import Search from '../screens/Search';
+import Contact from '../screens/Contact';
 
 
 // ✅ Định nghĩa kiểu cho danh sách các màn hình
@@ -43,7 +46,7 @@ export type RootStackParamList = {
   ProductDetail: { product: Product };
   News: undefined;
   NewDetails: undefined;
-  Order: undefined;
+  Order: { state: { cateId: number } };
   LanguageChange: undefined;
   AllReviews: { productId: number };
   AddReview: { productId: number };
@@ -52,15 +55,18 @@ export type RootStackParamList = {
   HistoryOrders: undefined;
   DeliveringOrders: undefined;
   PendingOrders: undefined;
+  OrderFailed:undefined;
   CancelledOrders: undefined;
   WaitingOrders: undefined;
   RefundOrders: undefined;
   MyOrderDetails: { shipmentId: number };
-  ChatWithShipper: { shipmentId: number};
   Orther: undefined;
-  Payment: undefined;
+  Payment: { orderId: number };
   OrderComplete:undefined;
   Notification: undefined;
+  ChatWithShipper: { shipmentId: number};
+  Search: undefined;
+  Contact: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -92,11 +98,13 @@ const StackNavigator = () => {
         animation: 'slide_from_right'  // Thử đổi thành 'slide_from_right' hoặc 'fade'
       }} />
       <Stack.Screen name="News" component={News} options={{ headerShown: false, animation: 'slide_from_right' }} />
+
       <Stack.Screen name="Order" component={OrderScreen} options={{ headerShown: false, animation: 'slide_from_right' }} />
       <Stack.Screen name="NewDetails" component={NewDetails} options={{ headerShown: false, animation: 'slide_from_right' }} />
       <Stack.Screen name="LanguageChange" component={LanguageChange} options={{ title: t('common.selectLanguage'), headerShown: false, animation: 'slide_from_right' as const }} />
       <Stack.Screen name="AllReviews" component={AllReviewsScreen} options={{ title: t('common.allReviews'), headerShown: false, animation: 'slide_from_right' as const }} />
       <Stack.Screen name="AddReview" component={AddReviewScreen} options={{ title: t('common.addReview'), headerShown: false, animation: 'slide_from_right' as const }} />
+
       <Stack.Screen name="ListVoucher" component={ListVoucher} options={{ title: t('common.addReview'), headerShown: false, animation: 'slide_from_right' as const }} />
       <Stack.Screen name="DeliveringOrders" component={DeliveringOrders} options={{ headerShown: false, animation: 'slide_from_right' }} />
       <Stack.Screen name="PendingOrders" component={PendingOrders} options={{ headerShown: false, animation: 'slide_from_right' }}/>
@@ -109,7 +117,12 @@ const StackNavigator = () => {
       <Stack.Screen name="ChatWithShipper" component={ChatWithShipper} options={{ headerShown: false, animation: 'slide_from_right' }} />
       <Stack.Screen name="Payment" component={Payment} options={{ headerShown: false, animation: 'slide_from_right' }} />
       <Stack.Screen name="OrderComplete" component={OrderComplete} options={{ headerShown: false, animation: 'slide_from_right' }} />
-      <Stack.Screen name="Notification" component={NotificationScreen} options={{ headerShown: false, animation: 'slide_from_right' }}/>      
+      <Stack.Screen name="OrderFailed" component={OrderFailed} options={{ headerShown: false, animation: 'slide_from_right' }} />
+      <Stack.Screen name="Notification" component={NotificationScreen} options={{ headerShown: false, animation: 'slide_from_right' }}/>
+      <Stack.Screen name="Search" component={Search} options={{ headerShown: false, animation: 'slide_from_right' }} />
+      <Stack.Screen name="Contact" component={Contact} options={{ headerShown: false, animation: 'slide_from_right' }} />
+    
+      
     </Stack.Navigator>
   );
 };

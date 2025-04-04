@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, Image, TouchableOpacity, ScrollView, TextInput } from 'react-native';
+import { View, Text, Image, TouchableOpacity, ScrollView, TextInput, ActivityIndicator } from 'react-native';
 import { useRoute, useNavigation, RouteProp } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { RootStackParamList } from '../navigation/RootStackParamList';
@@ -10,13 +10,16 @@ import { useCategoryStore } from '../store/store';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { useCartStore } from '../store/useCartStore';
 import Notification from '../components/Notification';
+import { COLORS, FONTFAMILY } from '../theme/theme';
+import FastImage from 'react-native-fast-image';
+
 
 
 export interface Product {
     description: string;
     proId: number;
     proName: string;
-    isFavourited: boolean;
+    isFavourited?: boolean;
     productImageResponseList: { linkImage: string }[];
     listProductVariants: { price: number; size: string; stock: number }[];
 }
@@ -36,9 +39,31 @@ const ProductDetail = () => {
     const [quantity, setQuantity] = useState(1);
     const increaseQuantity = () => setQuantity(prev => prev + 1);
     const decreaseQuantity = () => setQuantity(prev => (prev > 1 ? prev - 1 : 1));
-    const formatPrice = (price: number, qty: number) => (price * qty).toLocaleString() + " VND";
+    const [isLoadingImages, setIsLoadingImages] = useState(true);
+
+    useEffect(() => {
+        const loadImages = async () => {
+            const imagePromises = product.productImageResponseList.map(img =>
+                Image.prefetch(img.linkImage)
+            );
+
+            try {
+                await Promise.all(imagePromises);
+            } catch (error) {
+                console.warn("⚠️ Lỗi khi preload ảnh:", error);
+            } finally {
+                setIsLoadingImages(false); // Ẩn loading sau khi ảnh đã tải
+            }
+        };
+
+        loadImages();
+    }, [product.productImageResponseList]);
 
 
+
+    const formatPrice = (price: number, qty: number) => {
+        return (price * qty).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    };
     const { fetchProductReviews, data, insertFavoriteItem, userId } = useCategoryStore();
 
     const [expanded, setExpanded] = useState(false);
@@ -63,8 +88,11 @@ const ProductDetail = () => {
     const productFromStore = data.products?.find((p) => p.proId === product.proId);
     const avgRating = productFromStore?.avgRating || 0;
     const totalReviews = productFromStore?.totalReviews || 0;
+    const [selectedStock, setSelectedStock] = useState(
+        price0 !== 0 ? product.listProductVariants[0].stock : price1 !== 0 ? product.listProductVariants[1].stock : product.listProductVariants[2].stock
+    );
 
-    // const formatPrice = (price: number) => price.toLocaleString() + " VND";
+    // const formatPrice = (price: number) => price.toLocaleString() + "đ";
 
     const handleSizeSelection = (size: string) => {
         const variant = product.listProductVariants.find(v => v.size === size);
@@ -77,6 +105,7 @@ const ProductDetail = () => {
             return;
         }
         setSelectedSize(size);
+        setSelectedStock(variant.stock);
         setSelectedPrice(variant.price);
     };
 
@@ -106,7 +135,6 @@ const ProductDetail = () => {
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
     const handleAddToCart = () => {
-
         if (!selectedSize || !selectedPrice) {
             showNotification("⚠️ Vui lòng chọn kích thước sản phẩm trước khi thêm vào giỏ hàng!");
             return;
@@ -116,29 +144,61 @@ const ProductDetail = () => {
             return;
         }
 
-        addToCart(product.proId, selectedSize, quantity, language).then (() => {
-            showNotification("✅ Sản phẩm đã được thêm vào giỏ hàng!");
-        }
-        ).catch((error) => {
-            const message = error.message
-            if (message.includes("❌ Vượt quá số lượng tồn kho")) {
-                showNotification("⚠️ Số lượng sản phẩm vượt quá số lượng tồn kho!");
-            } else {
-                showNotification("❌ Lỗi khi thêm sản phẩm vào giỏ hàng. Vui lòng thử lại!");
-            }
-        });
-    };
+        const payload = {
+            proId: product.proId,
+            selectedSize,
+            quantity,
+            language
+        };
 
+        console.log("📦 Payload gửi đi:", payload); // Log payload trước khi gửi
+
+        addToCart(payload.proId, payload.selectedSize, payload.quantity, payload.language)
+            .then(() => {
+                showNotification("✅ Sản phẩm đã được thêm vào giỏ hàng!");
+            })
+            .catch((error) => {
+                console.error("❌ Lỗi khi thêm vào giỏ hàng:", error); // Log lỗi chi tiết
+                const message = error.message;
+                if (message.includes("❌ Vượt quá số lượng tồn kho")) {
+                    showNotification("⚠️ Số lượng sản phẩm vượt quá số lượng tồn kho!");
+                } else {
+                    showNotification("❌ Lỗi khi thêm sản phẩm vào giỏ hàng. Vui lòng thử lại!");
+                }
+            });
+    };
 
     useEffect(() => {
         const interval = setInterval(() => {
             setCurrentImageIndex((prevIndex) =>
                 (prevIndex + 1) % product.productImageResponseList.length
             );
-        }, 2000);
+        }, 4000);
 
         return () => clearInterval(interval); // Dọn dẹp interval khi unmount
     }, [product.productImageResponseList]);
+    // useEffect(() => {
+    //     const preloadMainImage = async () => {
+    //         try {
+    //             await Image.prefetch(product.productImageResponseList[0]?.linkImage);
+    //         } catch (e) {
+    //             console.warn("Không tải được ảnh chính");
+    //         }
+    //         setIsLoadingImages(false);
+    //     };
+
+    //     preloadMainImage();
+    // }, []);
+
+
+    if (isLoadingImages) {
+        return (
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'white' }}>
+                <ActivityIndicator size="large" color={COLORS.primaryGreenHex} />
+
+            </View>
+        );
+    }
 
     return (
         <View style={{ flex: 1 }}>
@@ -163,10 +223,10 @@ const ProductDetail = () => {
                 showsVerticalScrollIndicator={false}
                 keyboardShouldPersistTaps="handled"
             >
-                
+
                 <View style={productDetail.topButtons}>
                     <TouchableOpacity onPress={() => navigation.goBack()} style={productDetail.backButton}>
-                        <Icon name="arrow-back" size={24} color="#000" />
+                        <Icon name="arrow-back" size={24} color={COLORS.primaryGreenHex} />
                     </TouchableOpacity>
 
 
@@ -231,23 +291,40 @@ const ProductDetail = () => {
                     </Text>
 
                     <View style={productDetail.sizeContainer}>
-                        <Text style={productDetail.sizeLabel}>{t('size')}</Text>
+                        <Text style={productDetail.sizeLabel}>
+                            {t('size')}:
+                            {selectedStock !== null && (
+                                <Text style={{ fontSize: 24, fontFamily: FONTFAMILY.dongle_regular, color: '#333' }}>
+                                        ({ selectedStock} sản phẩm)
+                                </Text>
+                            )}
+                        </Text>
                         <View style={productDetail.sizeOptions}>
-                            {[...product.listProductVariants].reverse().map((variant) => {
-                                return (<TouchableOpacity
-                                    key={variant.size}
-                                    style={[
-                                        productDetail.sizeButton,
-                                        selectedSize === variant.size && productDetail.selectedSize
-                                    ]}
-                                    onPress={() => {handleSizeSelection(variant.size)
-                                    }}
-                                >
-                                    <Text>{variant.size}</Text>
-                                </TouchableOpacity>)
+                            {['S', 'M', 'L'].map((size) => {
+                                const variant = product.listProductVariants.find((v) => v.size === size);
+                                const isDisabled = !variant || (variant.stock !== undefined && variant.stock <= 0); // Kiểm tra stock chính xác
+
+                                return (
+                                    <TouchableOpacity
+                                        key={size}
+                                        style={[
+                                            productDetail.sizeButton,
+                                            selectedSize === size && productDetail.selectedSize,
+                                            isDisabled && { backgroundColor: '#ddd', borderColor: '#ccc' }
+                                        ]}
+                                        onPress={() => {
+                                            if (!isDisabled) handleSizeSelection(size);
+                                        }}
+                                        disabled={isDisabled} // Đảm bảo nút bị disable khi stock = 0
+                                    >
+                                        <Text style={{ color: isDisabled ? '#999' : '#000' , fontFamily: FONTFAMILY.dongle_regular, fontSize: 24}}>{size}</Text>
+                                    </TouchableOpacity>
+                                );
                             })}
                         </View>
                     </View>
+
+
                 </View>
 
             </ScrollView>
@@ -286,7 +363,7 @@ const ProductDetail = () => {
                     style={productDetail.cartButton}
                     onPress={handleAddToCart}
                 >
-                    <Text style={productDetail.cartText}>{formatPrice(selectedPrice, quantity)}</Text>
+                    <Text style={productDetail.cartText}>{formatPrice(selectedPrice, quantity)}đ</Text>
                 </TouchableOpacity>
 
 

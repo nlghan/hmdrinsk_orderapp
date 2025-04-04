@@ -1,5 +1,10 @@
 import { StyleSheet } from 'react-native';
-import { COLORS } from '../theme/theme';
+import {
+  BORDERRADIUS,
+  COLORS,
+  FONTFAMILY,
+  SPACING,
+} from '../theme/theme';
 const styles = StyleSheet.create({
     container: {
       flex: 1,
@@ -36,8 +41,8 @@ const styles = StyleSheet.create({
     },
     greeting: {
       fontSize: 16,
-      fontWeight: 'bold',
       color: '#333',
+      fontFamily: FONTFAMILY.lobster_regular
     },
     headerIcons: {
       flexDirection: 'row',
@@ -68,11 +73,11 @@ const styles = StyleSheet.create({
     },
     categoryTitle: {
       fontSize: 20,
-      fontWeight: 'bold',
       color: 'black',
       marginTop: 10,
       marginLeft: 8,
       letterSpacing: 1,
+      fontFamily:FONTFAMILY.lobster_regular
     },
     services: {
       flexDirection: 'row',
@@ -85,22 +90,23 @@ const styles = StyleSheet.create({
       justifyContent: 'space-between',
       marginVertical: 8,
       alignItems: 'center',
-      marginBottom:30
+      marginBottom:10
     },
     productTitle: {
       fontSize: 20,
-      fontWeight: 'bold',
       color: 'black',
       marginTop: 10,
       marginLeft: 8,
       letterSpacing: 1,
+      fontFamily: FONTFAMILY.lobster_regular
     },
     productTitle2: {
       fontSize: 13,
-      color: 'black',
+      color: COLORS.primaryGreenHex,
       marginTop: 10,
       marginRight: 8,
       letterSpacing: 1,
+      fontFamily:FONTFAMILY.lobster_regular
     },
     serviceItem: {
       alignItems: 'center',
@@ -109,7 +115,7 @@ const styles = StyleSheet.create({
     serviceImage: {
       width: 65,
       height: 65,
-      borderRadius: 30,
+      borderRadius: 33,
     },
     notificationDot: {
       width: 8,
@@ -121,9 +127,10 @@ const styles = StyleSheet.create({
       right: 0,
     },
     serviceText: {
-      fontSize: 14,
+      fontSize: 20,
       marginTop: 4,
       textAlign: 'center',
+      fontFamily:FONTFAMILY.dongle_regular
     },
     notificationCount: {
       position: "absolute",
@@ -142,7 +149,29 @@ const styles = StyleSheet.create({
       fontSize: 10,
       fontWeight: "bold",
   },
-  
+  searchBar: {
+  flexDirection: "row",
+  alignItems: "center",
+  backgroundColor: "#F1F1F1",
+  borderRadius: 8,
+  paddingHorizontal: 10,
+  paddingVertical: 5,
+  marginBottom: 10,
+},
+searchInput: {
+  flex: 1,
+  marginLeft: 10,
+  fontSize: 16,
+},
+searchItem: {
+  padding: 10,
+  borderBottomWidth: 1,
+  borderBottomColor: "#ddd",
+},
+searchItemText: {
+  fontSize: 16,
+},
+
     
     
     

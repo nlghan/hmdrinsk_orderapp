@@ -18,6 +18,9 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from "../navigation/RootStackParamList";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTranslation } from 'react-i18next';
+import { Image } from "react-native";
+import { FONTFAMILY } from "../theme/theme";
+
 
 
 interface Notification {
@@ -39,6 +42,7 @@ const NotificationScreen: React.FC = () => {
   const [unreadCount, setUnreadCount] = useState<number>(0);
   const [showNotifications, setShowNotifications] = useState<boolean>(true);
   const modalRef = useRef(null);
+  const { t } = useTranslation()
 
   const fetchNotifications = async () => {
     if (!userId) return;
@@ -129,17 +133,15 @@ const NotificationScreen: React.FC = () => {
         <TouchableOpacity style={styles.backIcon} onPress={() => navigation.navigate('Main')}>
           <IconM name="arrow-back" size={20} color="#FF9800" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Thông báo</Text>
-      </View>
-
-      {/* Nút đánh dấu tất cả đã đọc */}
-      <TouchableOpacity
-        style={[styles.markAllButton, unreadCount === 0 && styles.disabledButton]}
+        <Text style={styles.headerTitle}>{t('common.noti')}</Text>
+        <TouchableOpacity
+        style={[styles.markAllButton, unreadCount === 0 && styles.markAllButton]}
         onPress={handleMarkAllAsRead}
         disabled={unreadCount === 0}
       >
-        <Text style={styles.markAllText}>Đánh dấu tất cả là đã đọc</Text>
+        <IconM name="done-all" size={20} color="black" />
       </TouchableOpacity>
+      </View>
 
       {/* Danh sách thông báo */}
       <FlatList
@@ -150,11 +152,22 @@ const NotificationScreen: React.FC = () => {
             style={[styles.notificationItem, item.isRead && styles.read]}
             onPress={() => handleNotificationClick(item.id, item.shipmentId)}
           >
-            <Text style={styles.message}>{item.message}</Text>
-            <Text style={styles.time}>{item.time}</Text>
+            <View style={styles.notificationContent}>
+              <Image
+                source={require("../assets/app_images/logomini.png")}
+                style={styles.avatar}
+              />
+
+              <View style={styles.textContainer}>
+                <Text style={styles.message}>{item.message}</Text>
+                <Text style={styles.time}>{item.time}</Text>
+              </View>
+            </View>
           </TouchableOpacity>
         )}
-        ListEmptyComponent={<Text style={styles.emptyText}>Không có thông báo</Text>}
+        showsVerticalScrollIndicator={false} // Ẩn thanh cuộn dọc
+        showsHorizontalScrollIndicator={false} // Ẩn thanh cuộn ngang (nếu có)
+        ListEmptyComponent={<Text style={styles.emptyText}>{t('common.noNoti')}</Text>}
       />
     </View>
   );
@@ -163,68 +176,98 @@ const NotificationScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff", // Màu nền cam nhạt
-    paddingHorizontal: 20,
-    paddingTop: 15,
+    backgroundColor: "#FAFAFA", // Màu nền sáng hiện đại
+    paddingHorizontal: 12,
+    paddingTop: 20,
   },
+  notificationContent: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  avatar: {
+    width: 40,
+    height: 50,
+    marginRight: 10,
+  },
+  textContainer: {
+    flex: 1,
+  },
+
   header: {
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 20,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: "#E0E0E0",
   },
   backIcon: {
     position: "absolute",
-    top: 10,
     left: 5,
+    padding: 8,
+    borderRadius: 10,
+    backgroundColor: "#FFF",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+   
   },
   headerTitle: {
     fontSize: 24,
-    fontWeight: "bold",
+    fontFamily:FONTFAMILY.lobster_regular,
+    color: "#333",
   },
   markAllButton: {
-    padding: 12,
-    backgroundColor: "#FFAE42", // Cam đậm hơn
+    position: "absolute",
+    right: 5,
+    padding: 8,
     borderRadius: 10,
-    alignItems: "center",
-    marginBottom: 15,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+   
   },
   markAllText: {
     color: "white",
     fontWeight: "bold",
+    fontSize: 16,
   },
   disabledButton: {
-    backgroundColor: "#FFD1A9", // Màu cam mờ khi disable
+    backgroundColor: "white",
   },
   notificationItem: {
     padding: 15,
-    backgroundColor: "#e0d1c3", // Nền trắng
-    borderRadius: 10,
+    backgroundColor: "#fdfcf0",
+    borderRadius: 12,
     marginBottom: 10,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 5,
-    elevation: 3, // Hiệu ứng nổi trên Android
+    shadowRadius: 4,
+    elevation: 3,
+    borderLeftWidth: 5,
+    borderLeftColor: "#FF9800",
   },
   read: {
-    backgroundColor: "#fff6ed", // Màu cam nhạt hơn cho thông báo đã đọc
+    backgroundColor: "#fff",
+    borderLeftColor: "#BDBDBD",
   },
   message: {
-    fontSize: 16,
-    fontWeight: "500",
-    color: "#333",
+    fontSize: 24,
+    fontFamily:FONTFAMILY.dongle_regular,
+    lineHeight:22,
+    color: "#424242",
   },
   time: {
-    fontSize: 12,
-    color: "gray",
-    marginTop: 5,
+    fontSize: 20,
+    fontFamily:FONTFAMILY.dongle_light,
+    color: "#757575",
+    
   },
   emptyText: {
     textAlign: "center",
-    fontSize: 16,
-    color: "gray",
-    marginTop: 50,
+    fontSize: 26,
+    color: "#9E9E9E",
+    fontFamily:FONTFAMILY.dongle_regular,
   },
 });
 

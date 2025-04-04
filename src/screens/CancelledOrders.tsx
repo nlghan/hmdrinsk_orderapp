@@ -11,6 +11,7 @@ import LinearGradient from 'react-native-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from "@react-navigation/stack";
 import { RootStackParamList } from "../navigation/RootStackParamList";
+import { FONTFAMILY } from '../theme/theme';
 
 const CancelledOrder = () => {
     type Product = {
@@ -75,6 +76,10 @@ const CancelledOrder = () => {
         Alert.alert('Mua lại', `Bạn có chắc chắn muốn mua lại đơn hàng ${orderId} không?`);
     };
 
+    const formatPrice = (price: number) => {
+        return (price).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    };
+
     if (loading) return <ActivityIndicator size="large" color="#0000ff" />;
     if (error) return <Text style={{ color: 'red' }}>{error}</Text>;
 
@@ -111,27 +116,21 @@ const CancelledOrder = () => {
                                                     <View style={styles.productContainer}>
                                                         <Image source={{ uri: product.imageUrl }} style={styles.image} />
                                                         <View style={styles.info}>
-                                                            <Text style={styles.title}>
-                                                                <Text style={styles.boldText}>{t('history.name')}</Text> {product.proName}
-                                                            </Text>
-                                                            <Text style={styles.size}>
-                                                                <Text style={styles.boldText}>{t('history.quantity')}</Text> {product.quantity}
-                                                            </Text>
-                                                            <Text style={styles.price}>
-                                                                <Text style={styles.boldText}>{t('history.price')}</Text> {product.totalPrice} VND
-                                                            </Text>
+                                                            <Text style={styles.title}>{t('history.name')} {product.proName}</Text>
+                                                            <Text style={styles.size}>{t('history.quantity')} {product.quantity}</Text>
+                                                            <Text style={styles.price}>{t('history.price')} {formatPrice(product.totalPrice)}đ</Text>
                                                         </View>
                                                     </View>
                                                 )}
                                             />
                                             <Text style={styles.totalPrice}>
-                                                <Text style={styles.boldText}>{t('history.total_price')}</Text> {Math.max(item.totalPrice + item.deliveryFee - item.discountPrice, 0)} VND
+                                                <Text  style={styles.boldText1}>{t('history.total_price')}</Text> {formatPrice(Math.max(item.totalPrice + item.deliveryFee - item.discountPrice, 0))} đ
                                             </Text>
-                                            <Text>
-                                                <Text style={styles.boldText}>{t('history.order_date')}</Text> {item.dateOders}
+                                            <Text style={styles.boldText2}>
+                                                <Text  style={styles.boldText1}>{t('history.order_date')}</Text> {item.dateOders}
                                             </Text>
-                                            <Text>
-                                                <Text style={styles.boldText}>{t('history.delivery_cancel')}</Text>{item.dateCanceled}
+                                            <Text style={styles.boldText2}>
+                                                <Text  style={styles.boldText1}>{t('history.delivery_cancel')}</Text>{item.dateCanceled}
                                             </Text>
                                             <View style={styles.buttonContainer}>
                                                 <TouchableOpacity onPress={() => handleRestoreOrder(item.orderId)} style={styles.button}>
@@ -179,9 +178,8 @@ const styles = StyleSheet.create({
         left: 10,
     },
     header: {
-        fontSize: 22,
-        fontWeight: 'bold',
-        color: '#333',
+        fontSize: 24,
+        fontFamily: FONTFAMILY.lobster_regular,
         textAlign: 'center',
     },
     body: {
@@ -200,12 +198,13 @@ const styles = StyleSheet.create({
         elevation: 4,
     },
     orderId: {
-        fontSize: 16,
-        fontWeight: 'bold',
+        fontSize: 30,
+        fontFamily: FONTFAMILY.dongle_bold,
         marginBottom: 8,
     },
     boldText: {
-        fontWeight: 'bold',
+        fontSize: 30,
+        fontFamily: FONTFAMILY.dongle_bold,
     },
     productContainer: {
         flexDirection: 'row',
@@ -213,8 +212,8 @@ const styles = StyleSheet.create({
         marginBottom: 10,
     },
     image: {
-        width: 70,
-        height: 70,
+        width: 80,
+        height: 80,
         borderRadius: 10,
         marginRight: 12,
     },
@@ -223,39 +222,52 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
     },
     title: {
-        fontSize: 16,
-        fontWeight: 'bold',
+        fontSize: 28,
+        fontFamily: FONTFAMILY.dongle_regular,
         color: '#333',
         marginBottom: 4,
     },
     size: {
-        fontSize: 14,
+        fontSize: 24,
+        fontFamily: FONTFAMILY.dongle_regular,
         color: 'gray',
     },
     price: {
-        fontSize: 15,
-        fontWeight: 'bold',
+        fontSize: 26,
+        fontFamily: FONTFAMILY.dongle_regular,
         color: '#27ae60',
         marginTop: 4,
     },
     totalPrice: {
-        fontSize: 16,
-        fontWeight: 'bold',
+        fontFamily: FONTFAMILY.dongle_bold,
+        fontSize:28,
         color: '#e74c3c',
-        marginTop: 6,
     },
     buttonContainer: {
         flexDirection: 'row',
         marginTop: 10,
+        justifyContent: 'flex-end', // Đưa nút về lề phải
+        alignItems: 'center', // Căn giữa theo chiều dọc
     },
+    
     button: {
         backgroundColor: '#ff6347',
-        padding: 10,
+        padding: 8,
         borderRadius: 5,
-        marginRight: 10,
+        width:100
     },
     buttonText: {
         color: 'white',
-        fontWeight: 'bold',
+        fontSize:22,
+        fontFamily: FONTFAMILY.dongle_bold,
+        textAlign:'center'
     },
+    boldText1:{
+        fontFamily: FONTFAMILY.dongle_regular,
+        fontSize:24
+    },
+    boldText2:{
+        fontFamily: FONTFAMILY.dongle_light,
+        fontSize:24
+    }
 });

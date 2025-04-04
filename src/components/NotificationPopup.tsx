@@ -23,27 +23,23 @@ const NotificationPopup: React.FC<NotificationPopupProps> = ({ userId }) => {
     const lastNotificationTime = useRef<number | null>(null);
 
     useEffect(() => {
-        if (socketNotifications.length > 0) {
-            const newNotification = socketNotifications[socketNotifications.length - 1];
-            const newNotificationTime = Number(newNotification.time);
-            // Kiểm tra nếu thông báo mới không trùng với thông báo trước đó
-            if (
-                newNotification &&
-                typeof newNotification === "object" &&
-                "message" in newNotification &&
-                (lastNotificationTime.current === null || lastNotificationTime.current !== newNotificationTime)
-            ) {
-                lastNotificationTime.current = newNotificationTime; // Cập nhật timestamp mới nhất
-    
-                setNotifications((prev) => {
-                    const isDuplicate = prev.some(noti => Number(noti.time) === newNotificationTime);
-                    return isDuplicate ? prev : [...prev, newNotification];
-                });
-    
-                if (!isModalOpen.current) {
-                    setModalVisible(true);
-                    isModalOpen.current = true;
-                }
+        if (socketNotifications.length === 0) return;
+
+        const newNotification = socketNotifications[socketNotifications.length - 1];
+        const newNotificationTime = Number(newNotification.time);
+
+        // 🔹 Chỉ thêm thông báo mới nếu chưa hiển thị
+        if (
+            lastNotificationTime.current !== newNotificationTime && 
+            !notifications.some(noti => Number(noti.time) === newNotificationTime)
+        ) {
+            lastNotificationTime.current = newNotificationTime;
+            setNotifications((prev) => [...prev, newNotification]);
+
+            // 🔹 Đảm bảo modal chỉ mở một lần
+            if (!isModalOpen.current) {
+                setModalVisible(true);
+                isModalOpen.current = true;
             }
         }
     }, [socketNotifications]);

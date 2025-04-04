@@ -46,9 +46,10 @@ const styles = StyleSheet.create({
         flexDirection: 'column',
     },
     productName: {
-        fontSize: 16,
+        fontSize: 26,
         color: COLORS.primaryDarkHex,
-        fontFamily: FONTFAMILY.poppins_medium,
+        fontFamily: FONTFAMILY.dongle_bold,
+        lineHeight:20 
     },
     sizeContainer: {
         flexDirection: 'row',
@@ -57,14 +58,16 @@ const styles = StyleSheet.create({
         marginTop: 5,
     },
     sizeText: {
-        fontSize: 14,
+        fontSize: 24,
+        fontFamily:FONTFAMILY.dongle_regular,
+        lineHeight:20,
         color: COLORS.secondaryDarkHex,
     },
     discountPrice: {
-        fontSize: 18,
-        fontWeight: 'bold',
+        fontSize: 28,
+        fontFamily:FONTFAMILY.dongle_bold,
         color: 'red',
-        marginTop: 10,
+       
         alignItems: 'flex-end',
         textAlign: 'left'
     },
@@ -76,11 +79,12 @@ const styles = StyleSheet.create({
         borderRadius: 10,
         paddingHorizontal: 5,
         paddingVertical: 5,
-        gap: 5
+        gap: 5,
+       
     },
     quantityButton: {
         backgroundColor: '#f0d9b5',
-        padding: 8,
+        padding: 4,
         borderRadius: 20,
     },
     quantityText: {
@@ -111,13 +115,16 @@ const styles = StyleSheet.create({
     },
 
     voucherText: {
-        fontSize: 16,
-        fontWeight: '600',
+        fontSize: 26,
+        fontFamily:FONTFAMILY.dongle_bold,
+        lineHeight:28,
         marginLeft: 10,
     },
 
     voucherChooseText: {
-        fontSize: 14,
+        fontSize: 22,
+        fontFamily:FONTFAMILY.dongle_regular,
+        lineHeight:16,
         color: COLORS.secondaryDarkHex,
     },
 
@@ -126,15 +133,17 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         alignItems: 'center',
         backgroundColor: '#fff',
-        padding: SPACING.space_12,
+        paddingHorizontal: SPACING.space_12,
         borderRadius: BORDERRADIUS.radius_20,
         marginBottom: 5,
     },
 
     coinText: {
-        fontSize: 16,
-        fontWeight: '600',
-        marginLeft: 5
+        fontSize: 26,
+        fontFamily:FONTFAMILY.dongle_bold,
+        lineHeight:26,
+        marginLeft: 10,
+        textAlign:'center'
     },
 
     coinToggle: {
@@ -146,7 +155,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         backgroundColor: '#fff',
-        padding: SPACING.space_12,
+        padding: SPACING.space_8,
         borderRadius: BORDERRADIUS.radius_20,
     },
 
@@ -161,8 +170,7 @@ const styles = StyleSheet.create({
 
     coinLeft: {
         flexDirection: 'row',
-        alignItems: 'center',
-
+       
     },
 
     selectAllText: {
@@ -170,28 +178,28 @@ const styles = StyleSheet.create({
     },
 
     totalText: {
-        fontSize: 16,
-        fontWeight: '600',
+        fontSize: 28,
+        fontFamily:FONTFAMILY.dongle_regular,
         textAlign: 'center'
     },
 
     totalAmount: {
-        fontSize: 18,
-        fontWeight: 'bold',
+        fontSize: 32,
+        ontFamily:FONTFAMILY.dongle_bold,
         color: 'red',
     },
 
     checkoutButton: {
         backgroundColor: '#D87D2A',
-        paddingVertical: 12,
+        paddingVertical: 8,
         paddingHorizontal: 30,
         borderRadius: BORDERRADIUS.radius_15,
     },
 
     checkoutText: {
-        fontSize: 18,
+        fontSize: 24,
         color: '#fff',
-        fontWeight: 'bold',
+        fontFamily:FONTFAMILY.dongle_bold,
     },
     voucherLabel: {
         display: 'flex',
@@ -231,7 +239,7 @@ const styles = StyleSheet.create({
     },
     headerTitle: {
         fontSize: 25,
-        fontWeight: 'bold',
+        fontFamily:FONTFAMILY.lobster_regular,
         textAlign: 'center', // Căn giữa văn bản trong Text
         flex: 1, // Giúp chữ "Giỏ hàng" mở rộng để căn giữa
     },  
@@ -289,13 +297,13 @@ const styles = StyleSheet.create({
         paddingHorizontal: SPACING.spacing_16,
     },
     noteInput: {
-        height: 40,
+        height: 50,
         borderColor: COLORS.gray,
         borderWidth: 1,
         borderRadius: BORDERRADIUS.radius_10,
         paddingHorizontal: SPACING.spacing_10,
-        fontSize: 14,
-        fontFamily: FONTFAMILY.regular,
+        fontSize: 20,
+        fontFamily: FONTFAMILY.dongle_light,
         color: COLORS.textColor,
     },
     

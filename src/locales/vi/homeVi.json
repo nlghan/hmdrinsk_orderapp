@@ -34,13 +34,6 @@
         "title": "Yêu thích",
         "list": "Danh sách yêu thích"
     },
-    "chat": {
-        "title": "Liên hệ",
-        "withUser": "Liên hệ với khách hàng",
-        "withShipper": "Liên hệ với nhân viên",
-        "input": "Nhập tin nhắn...",
-        "disable": "Chỉ liên hệ khi đơn hàng đang trong quá trình giao"
-      },
     "features": "Tiện ích",
     "terms": "Điều khoản",
     "orderDelivering": "Đơn hàng đang giao",
@@ -171,7 +164,8 @@
         "useStatus": "Trạng thái",
         "used": "Đã sử dụng",
         "inactive": "Chưa sử dụng",
-        "noVoucher": "Không có voucher nào"
+        "noVoucher": "Không có voucher nào",
+        "expired": "Hết hạn"
     },
     "updateBtn": "Cập nhật",
     "backBtn": "Trở lại",
@@ -239,6 +233,8 @@
     "orderDetail": "Chi tiết đơn hàng",
     "shippingStatus": "Trạng thái giao hàng",
     "note": "Ghi chú",
+    "takeNote": "Nhập ghi chú...",
+    "getVoucher": "Nhập mã khuyễn mãi",
     "infoPayment": "Thông Tin Thanh Toán",
     "statusPayment": "Trạng thái thanh toán",
     "product": "Sản phẩm",
@@ -263,7 +259,7 @@
         "success": "Yêu cầu hủy đơn đã được gửi đi"
     },
     "menuCustomer": {
-        "want": "🔍 Bạn muốn uống gì?",
+        "want": "Bạn muốn uống gì?",
         "all": "❤️ Tất cả",
         "filter": "Chọn bộ lọc",
         "opt0": "Giá thấp đến cao",
@@ -429,7 +425,7 @@
     },
     "productContent": {
         "page": "Trang",
-        "search": "Tìm kiếm sản phẩm...",
+        "search": "Tìm kiếm sản phẩm",
         "noPro": "Không có sản phẩm tương ứng.",
         "name": "Tên sản phẩm",
         "image": "Hình ảnh",
@@ -453,7 +449,9 @@
             "wait": "Đang chờ",
             "ship": "Đang giao",
             "complete": "Đã giao",
-            "cancel": "Đã hủy"
+            "cancel": "Đã hủy",
+            "confirm": "Xác nhận",
+            "refund": "Hoàn tiền"
         },
         "price": "Tổng tiền",
         "deliveryDate": "Ngày giao hàng",
@@ -484,7 +482,7 @@
         "cate": "Danh mục",
         "image": "Ảnh bài viết",
         "startDate": "Ngày bắt đầu",
-        "endDate": "Ngày kết thúc",
+        "endDate": "Ngày hết hạn",
         "notFound": "Không có kết quả tìm kiếm.",
         "titleVoucher": "Danh sách voucher",
         "searchVoucher": "Tìm kiếm voucher...",
@@ -548,5 +546,19 @@
         "hello": "Xin chào",
         "needShip": "Đơn hàng được phân công",
         "chart": "Biểu đồ đơn hàng trong tháng"
+    },
+    "android": {
+        "payment": {
+            "title": "Giao hàng tận nơi",
+            "product": "Sản phẩm đã chọn"
+        },
+        "suggest":"Gợi ý tìm kiếm"
+    },
+    "chat": {
+        "title": "Liên hệ",
+        "withUser": "Liên hệ với khách hàng",
+        "withShipper": "Liên hệ với nhân viên",
+        "input": "Nhập tin nhắn...",
+        "disable": "Chỉ liên hệ khi đơn hàng đang trong quá trình giao"
     }
 }

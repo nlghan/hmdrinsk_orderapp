@@ -1,4 +1,5 @@
 import { StyleSheet } from 'react-native';
+import { FONTFAMILY } from '../theme/theme';
 
 const reviewStyles = StyleSheet.create({
     container: {
@@ -12,14 +13,14 @@ const reviewStyles = StyleSheet.create({
         padding: 16,
         borderBottomWidth: 1,
         borderBottomColor: '#ddd',
-        gap: 60
+        gap: 40
     },
     backButton: {
         padding: 8,
     },
     headerTitle: {
-        fontSize: 18,
-        fontWeight: 'bold',
+        fontSize: 24,
+        fontFamily:FONTFAMILY.lobster_regular
         
     },
     reviewItem: {
@@ -35,17 +36,19 @@ const reviewStyles = StyleSheet.create({
     },
     
     userName: {
-        fontWeight: 'bold',
-        fontSize: 16,
+        fontSize: 24,
+        fontFamily: FONTFAMILY.dongle_bold,
         marginBottom: 4,
     },
     reviewText: {
-        fontSize: 14,
-        color: '#444',
+        fontSize: 24,
+        fontFamily: FONTFAMILY.dongle_regular,
+        color: '#333',
         marginVertical: 4,
     },
     reviewDate: {
-        fontSize: 12,
+        fontSize: 20,
+        fontFamily: FONTFAMILY.dongle_light,
         color: '#888',
     },
     loadMoreButton: {
@@ -77,8 +80,8 @@ const reviewStyles = StyleSheet.create({
         fontWeight: 'bold',
     },
     label: {
-        fontSize: 16,
-        fontWeight: 'bold',
+        fontSize: 24,
+        fontFamily: FONTFAMILY.dongle_bold,
         marginTop: 10,
         paddingHorizontal: 8,
         paddingHorizontal: 8,
@@ -104,6 +107,7 @@ const reviewStyles = StyleSheet.create({
     submitButtonText: {
         color: '#FFF',
         fontSize: 16,
+        fontFamily: FONTFAMILY.dongle_regular,
         fontWeight: 'bold',
 
     },

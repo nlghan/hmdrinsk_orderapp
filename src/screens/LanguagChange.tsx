@@ -6,6 +6,7 @@ import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 import { useTranslation } from 'react-i18next';
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../navigation/RootStackParamList";
+import { FONTFAMILY } from "../theme/theme";
 
 const LanguageChange = () => {
   const { language, setLanguage } = useCategoryStore();
@@ -77,12 +78,12 @@ const styles = StyleSheet.create({
     padding: 10,
   },
   title: {
-    fontSize: 20,
-    fontWeight: "bold",
+    fontSize: 24,
+    fontFamily:FONTFAMILY.lobster_regular,
     marginBottom: 20,
   },
   button: {
-    padding: 12,
+    padding: 10,
     borderRadius: 5,
     backgroundColor: "#ddd",
     marginBottom: 10,
@@ -93,8 +94,8 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFA07A",
   },
   text: {
-    fontSize: 16,
-    fontWeight: "bold",
+    fontSize: 24,
+    fontFamily:FONTFAMILY.dongle_bold,
     color: "#333",
   },
   // 🔄 Overlay Loading

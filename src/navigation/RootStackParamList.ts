@@ -14,7 +14,7 @@ export type RootStackParamList = {
     AllReviews: { productId: number };  // 👈 Thêm dòng này
     AddReview: { productId: number };
     Info: undefined;
-    Order:undefined;
+    Order: { state: { cateId: number } };
     Cart:undefined;
     ListVoucher: undefined
     HistoryOrders: undefined;
@@ -24,10 +24,13 @@ export type RootStackParamList = {
     WaitingOrders: undefined;
     RefundOrders: undefined;
     MyOrderDetails: { shipmentId: number };
-    ChatWithShipper: { shipmentId: number };
     Orther: undefined;
-    Payment: undefined;
+    Payment: { orderId: number };
     OrderComplete:undefined;
+    OrderFailed:undefined;
     Notification: { userId: number } | undefined;
+    ChatWithShipper: { shipmentId: number };
+    Contact: undefined;
+    Search: undefined;
   };
   
