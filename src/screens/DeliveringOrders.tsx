@@ -12,7 +12,6 @@ import { StackNavigationProp } from "@react-navigation/stack";
 import { RootStackParamList } from "../navigation/RootStackParamList";
 import { useTranslation } from 'react-i18next';
 import { FONTFAMILY } from '../theme/theme';
-import { FONTFAMILY } from '../theme/theme';
 
 const DeliveringOrders = () => {
     // Định nghĩa kiểu dữ liệu
@@ -120,9 +119,6 @@ const DeliveringOrders = () => {
     const formatPrice = (price: number) => {
         return (price).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
     };
-    const formatPrice = (price: number) => {
-        return (price).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-    };
 
 
     if (loading) return <ActivityIndicator size="large" color="#0000ff" />;
@@ -218,29 +214,19 @@ const styles = StyleSheet.create({
     header: {
         fontSize: 24,
         fontFamily: FONTFAMILY.lobster_regular,
-        fontSize: 24,
-        fontFamily: FONTFAMILY.lobster_regular,
         textAlign: 'center',
     },
     title: {
         fontSize: 28,
         fontFamily: FONTFAMILY.dongle_regular,
-        fontSize: 28,
-        fontFamily: FONTFAMILY.dongle_regular,
         color: '#333',
-
-
     },
     size: {
-        fontSize: 24,
-        fontFamily: FONTFAMILY.dongle_regular,
         fontSize: 24,
         fontFamily: FONTFAMILY.dongle_regular,
         color: 'gray',
     },
     price: {
-        fontSize: 26,
-        fontFamily: FONTFAMILY.dongle_regular,
         fontSize: 26,
         fontFamily: FONTFAMILY.dongle_regular,
         color: '#27ae60',
@@ -260,13 +246,9 @@ const styles = StyleSheet.create({
     boldText: {
         fontSize: 30,
         fontFamily: FONTFAMILY.dongle_bold,
-        fontSize: 30,
-        fontFamily: FONTFAMILY.dongle_bold,
     },
     orderId: {
         marginBottom: 8,
-        fontSize: 30,
-        fontFamily: FONTFAMILY.dongle_bold,
         fontSize: 30,
         fontFamily: FONTFAMILY.dongle_bold,
     },
@@ -276,8 +258,6 @@ const styles = StyleSheet.create({
         marginBottom: 10,
     },
     image: {
-        width: 80,
-        height: 80,
         width: 80,
         height: 80,
         borderRadius: 10,
@@ -306,21 +286,6 @@ const styles = StyleSheet.create({
         fontSize: 28,
         color: '#e74c3c',
     },
-    boldText1: {
-        fontFamily: FONTFAMILY.dongle_regular,
-        fontSize: 24
-    },
-    boldText2: {
-        fontFamily: FONTFAMILY.dongle_light,
-        fontSize: 24
-    },
-    buttonContainer: {
-        flexDirection: 'row',
-        marginTop: 10,
-        justifyContent: 'flex-end', // Đưa nút về lề phải
-        alignItems: 'center', // Căn giữa theo chiều dọc,
-        gap:5
-    },
     button: {
         backgroundColor: '#ff6347',
         padding: 8,
@@ -331,23 +296,12 @@ const styles = StyleSheet.create({
         color: 'white',
         fontSize: 22,
         fontFamily: FONTFAMILY.dongle_bold,
-        textAlign: 'center'
+        textAlign: 'center',
         justifyContent: 'flex-end', // Đưa nút về lề phải
         alignItems: 'center', // Căn giữa theo chiều dọc,
         gap:5
     },
-    button: {
-        backgroundColor: '#ff6347',
-        padding: 8,
-        borderRadius: 5,
-        width: 100
-    },
-    buttonText: {
-        color: 'white',
-        fontSize: 22,
-        fontFamily: FONTFAMILY.dongle_bold,
-        textAlign: 'center'
-    },
+
 });
 
 export default DeliveringOrders;
