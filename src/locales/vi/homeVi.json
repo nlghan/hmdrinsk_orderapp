@@ -348,7 +348,8 @@
         "maybe": "Có thể bạn sẽ thích",
         "noRelated": "Không có sản phẩm liên quan.",
         "noReview": "Không có đánh giá nào.",
-        "placeReview": "Hãy cho chúng tôi biết cảm nhận của bạn về sản phẩm"
+        "placeReview": "Hãy cho chúng tôi biết cảm nhận của bạn về sản phẩm",
+        "outStock": "Sản phẩm hiện tại đã hết!"
     },
     "dashboard": "Trang quản trị",
     "user": "Tài khoản",

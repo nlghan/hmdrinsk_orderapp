@@ -108,7 +108,7 @@ const Search = () => {
     
             setFilteredProducts(updatedProducts);
         } catch (error) {
-            console.error("❌ Lỗi khi lấy sản phẩm gợi ý:", error);
+            console.log("❌ Lỗi khi lấy sản phẩm gợi ý:", error);
         } finally {
             setLoading(false);
         }

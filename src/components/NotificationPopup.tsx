@@ -46,13 +46,13 @@ const NotificationPopup: React.FC<NotificationPopupProps> = ({ userId }) => {
 
     const closeModal = () => {
         setModalVisible(false);
-        isModalOpen.current = false; // 🔹 Cập nhật trạng thái khi đóng
+        isModalOpen.current = false; 
     };
 
     return (
         <View>
             <Modal
-                animationType="slide"
+                animationType="fade"
                 transparent={true}
                 visible={modalVisible}
                 onRequestClose={closeModal}

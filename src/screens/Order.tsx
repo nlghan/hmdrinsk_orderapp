@@ -11,6 +11,7 @@ import {
   FlatList,
   ActivityIndicator,
 } from "react-native";
+import {FONTFAMILY, FONTSIZE} from '../theme/theme';
 import { useCategoryStore } from "../store/store";
 import homeStyles from "../styles/order";
 import LinearGradient from "react-native-linear-gradient";
@@ -45,7 +46,7 @@ const ServiceItem: React.FC<{ image: string; text?: string; onPress: () => void;
 // 🔹 Component hiển thị từng sản phẩm
 const ProductItem = ({ item, navigation }: { item: any; navigation: any }) => {
   const imageOpacity = useRef(new Animated.Value(0)).current;
-
+  const { t } = useTranslation();
   const onImageLoad = () => {
     Animated.timing(imageOpacity, {
       toValue: 1,
@@ -100,8 +101,8 @@ const ProductItem = ({ item, navigation }: { item: any; navigation: any }) => {
         <Text style={homeStyles.productName}>{item.proName}</Text>
 
         {isOutOfStock ? (
-          <Text style={[homeStyles.productPrice, { color: "red", fontWeight: "bold" }]}>
-            Sản phẩm hiện tại đã hết!
+          <Text style={[homeStyles.productPrice, { color: "red", fontSize: 24, fontFamily: FONTFAMILY.dongle_bold}]}>
+            {t('products.outStock')}
           </Text>
         ) : (
           <Text style={homeStyles.productPrice}>

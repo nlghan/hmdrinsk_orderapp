@@ -346,7 +346,8 @@
     "maybe": "Maybe you will like them",
     "noRelated": "There are no related products.",
     "noReview": "There are no reviews",
-    "placeReview": "Let us know what you think about the product"
+    "placeReview": "Let us know what you think about the product",
+    "outStock": "This product is currently out of stock!"
   },
   "dashboard": "Dashboard",
   "user": "Accounts",
