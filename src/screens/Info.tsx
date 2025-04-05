@@ -537,7 +537,7 @@ const Info: React.FC = () => {
           <Icon name="arrow-back" size={20} color="#FF9800" />
         </TouchableOpacity>
         {/* Modal Voucher */}
-        <Modal visible={isModalVisibleV} animationType="slide" transparent={true}>
+        <Modal visible={isModalVisibleV} animationType="fade" transparent={true}>
           <View style={styles.modalContainer}>
             <View style={styles.modalContent}>
               <Text style={styles.modalTitle}>{t('information.voucherList')}</Text>
@@ -631,7 +631,7 @@ const Info: React.FC = () => {
         </View>
       </View>
       {/* Modal chỉnh sửa */}
-      <Modal visible={isModalVisible} animationType="slide" transparent={true}>
+      <Modal visible={isModalVisible} animationType="fade" transparent={true}>
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>{t('userContent.update')}</Text>

@@ -2,7 +2,6 @@ import { Product } from "../screens/ProductDetail";
 import { ProductReview } from "../screens/AllReviews"
 
 export type RootStackParamList = {
-
     Home: undefined;
     Login: undefined;
     Register: undefined;
@@ -31,7 +30,7 @@ export type RootStackParamList = {
     OrderFailed:undefined;
     Notification: { userId: number } | undefined;
     ChatWithShipper: { shipmentId: number };
-    Search: undefined;
     Contact: undefined;
+    Search: undefined;
   };
   

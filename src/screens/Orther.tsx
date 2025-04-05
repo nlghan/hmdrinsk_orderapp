@@ -9,6 +9,7 @@ import { RootStackParamList } from "../navigation/RootStackParamList";
 import Notification from '../components/Notification';
 import OrderCount from '../components/OrderCount';
 import NotificationPopup from '../components/NotificationPopup';
+import { useNotification } from '../components/NotificationContext';
 import { FONTFAMILY } from "../theme/theme";
 
 const Other = () => {
@@ -23,6 +24,7 @@ const Other = () => {
     pending: 0,
     refunded: 0,
   });
+  const { showNotificationModal } = useNotification();
   const [notification, setNotification] = useState({ message: '', visible: false });
   const handleLogout = () => {
     logout(); // Xóa dữ liệu đăng nhập
@@ -127,7 +129,7 @@ const Other = () => {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>{t('features.support')}</Text>
           <View style={styles.list}>
-            <TouchableOpacity style={styles.listItem}>
+            <TouchableOpacity style={styles.listItem} onPress={() => showNotificationModal('Test thông báo Modal')}>
               <MaterialIcons name="star" style={styles.icon} size={24} />
               <Text style={styles.textOther}>{t('about.stat4')}</Text>
               <MaterialIcons name="arrow-forward-ios" style={styles.iconrow} size={18} />
@@ -181,7 +183,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     flexWrap: "wrap",
-    gap: 6,
+    gap: 5,
     backgroundColor: "#fff",
     borderRadius: 8,
   },
@@ -243,12 +245,12 @@ const styles = StyleSheet.create({
   },
   box: {
     backgroundColor: "#fff",
-    padding: 12,
+    padding: 10,
     borderRadius: 8,
     flex: 1,
     alignItems: "center",
     flexDirection: "column", // Chuyển sang dạng column
-    height: 80, // Tăng chiều cao để đủ chỗ cho icon và text
+    height: 68, // Tăng chiều cao để đủ chỗ cho icon và text
   },
   statusText: {
     marginTop: 5,

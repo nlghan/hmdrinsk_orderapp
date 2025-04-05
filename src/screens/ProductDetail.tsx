@@ -19,7 +19,7 @@ export interface Product {
     description: string;
     proId: number;
     proName: string;
-    isFavourited: boolean;
+    isFavourited?: boolean;
     productImageResponseList: { linkImage: string }[];
     listProductVariants: { price: number; size: string; stock: number }[];
 }

@@ -55,7 +55,7 @@ const Home = () => {
 
       setProducts(response.data.productResponses || []);
     } catch (error) {
-      console.error('❌ Lỗi khi lấy sản phẩm:', error);
+      console.log('❌ Lỗi khi lấy sản phẩm:', error);
     } finally {
       setLoading(false);
     }
