@@ -194,7 +194,27 @@ const ChatWithShipper = () => {
         }
     };
     useEffect(() => {
-        const fetchMessages = async () => {
+        const fetchShipperId = async () => {
+            try {
+                const token = await AsyncStorage.getItem('access_token');
+                if (!token) return;
+                const response = await axiosInstance.get(`/shipment/view/${shipmentId}`, {
+                    headers: { Authorization: `Bearer ${token}` },
+                });
+                setShipperId(response.data.shipperId);
+                setnameShipper(response.data.nameShipper);
+                setcustomerName(response.data.customerName);
+                setStatus(response.data.status);
+    
+                return response.data.shipperId; // Trả về shipperId để sử dụng tiếp theo
+            } catch (error) {
+                console.log("❌ Lỗi lấy shipperId:", error);
+                return null;
+            }
+        };
+    
+        const fetchMessages = async (shipperId : number) => {
+            if (!shipperId) return;
             try {
                 const response = await axiosInstance.get(`/chat/messages/shipment/${shipmentId}`);
                 if (response.data.length === 0) {
@@ -207,11 +227,10 @@ const ChatWithShipper = () => {
                         messageType: "text",
                         attachments: [],
                     };
-
+    
                     console.log('📩 systemMessage:', systemMessage);
-
-                    const sendResponse = await axiosInstance.post('/chat/send', systemMessage,);
-
+    
+                    const sendResponse = await axiosInstance.post('/chat/send', systemMessage);
                     setMessages([sendResponse.data]);
                 } else {
                     setMessages(response.data);
@@ -220,29 +239,13 @@ const ChatWithShipper = () => {
                 console.log('❌ Lỗi khi tải tin nhắn:', error);
             }
         };
-
-        const fetchShipperId = async () => {
-            try {
-                const token = await AsyncStorage.getItem('access_token');
-                if (!token) return;
-                const response = await axiosInstance.get(`/shipment/view/${shipmentId}`, {
-                    headers: { Authorization: `Bearer ${token}` },
-                });
-                setShipperId(response.data.shipperId);
-                setnameShipper(response.data.nameShipper);
-                setcustomerName(response.data.customerName);
-                setStatus(response.data.status);
-            } catch (error) {
-                console.log("❌ Lỗi lấy shipperId:", error);
-            }
-        };
-
+    
         const connectWebSocket = async () => {
             if (socketRef.current) return;
             const token = await AsyncStorage.getItem('access_token');
             if (!token) return;
-            const ws = new WebSocket(`ws://192.168.1.9:1010/ws-raw?token=${encodeURIComponent(token)}&userId=${userId}`);
-
+            const ws = new WebSocket(`ws://192.168.9.195:1010/ws-raw?token=${encodeURIComponent(token)}&userId=${userId}`);
+    
             socketRef.current = ws;
             ws.onmessage = (event) => {
                 try {
@@ -263,12 +266,17 @@ const ChatWithShipper = () => {
                 }
             };
         };
-
-        fetchMessages();
-        fetchShipperId();
-        connectWebSocket();
+    
+        const init = async () => {
+            const shipperId = await fetchShipperId();
+            await fetchMessages(shipperId);
+            connectWebSocket();
+        };
+    
+        init();
         return () => socketRef.current?.close();
     }, [shipmentId]);
+    
 
     const sendMessage = async () => {
         if (!newMessage.trim() || !shipperId) return;

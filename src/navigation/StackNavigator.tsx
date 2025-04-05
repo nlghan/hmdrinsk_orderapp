@@ -33,6 +33,7 @@ import NotificationScreen from '../screens/Notification';
 import OrderFailed from '../screens/OrderFailed';
 import ChatWithShipper from '../screens/ChatWithShipper';
 import Search from '../screens/Search';
+import Contact from '../screens/Contact';
 
 
 // ✅ Định nghĩa kiểu cho danh sách các màn hình
@@ -65,6 +66,7 @@ export type RootStackParamList = {
   Notification: undefined;
   ChatWithShipper: { shipmentId: number};
   Search: undefined;
+  Contact:undefined
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -74,9 +76,9 @@ const StackNavigator = () => {
 
   return (
     <Stack.Navigator initialRouteName="Login">
-      <Stack.Screen name="Login" component={Login} options={{ headerShown: false }} />
-      <Stack.Screen name="Register" component={Register} options={{ headerShown: false }} />
-      <Stack.Screen name="ForgotPassword" component={ForgotPassword} options={{ headerShown: false }} />
+      <Stack.Screen name="Login" component={Login} options={{ headerShown: false, animation:'slide_from_right' }} />
+      <Stack.Screen name="Register" component={Register} options={{ headerShown: false, animation:'slide_from_right' }} />
+      <Stack.Screen name="ForgotPassword" component={ForgotPassword} options={{ headerShown: false, animation:'slide_from_right' }} />
       <Stack.Screen
         name="Main"
         component={TabNavigator}
@@ -118,6 +120,7 @@ const StackNavigator = () => {
       <Stack.Screen name="OrderFailed" component={OrderFailed} options={{ headerShown: false, animation: 'slide_from_right' }} />
       <Stack.Screen name="Notification" component={NotificationScreen} options={{ headerShown: false, animation: 'slide_from_right' }}/>
       <Stack.Screen name="Search" component={Search} options={{ headerShown: false, animation: 'slide_from_right' }} />
+      <Stack.Screen name="Contact" component={Contact} options={{ headerShown: false, animation: 'slide_from_right' }} />
       
     </Stack.Navigator>
   );

@@ -30,7 +30,7 @@ const getUserIdFromToken = (token: string) => {
 
 const Login: React.FC<Props> = ({ navigation }) => {
   const { ensureActiveCart } = useCartStore();
-  const { fetchFavoriteItems, checkShipment } = useCategoryStore();
+  const { fetchFavoriteItems } = useCategoryStore();
   const { t } = useTranslation();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -43,50 +43,50 @@ const Login: React.FC<Props> = ({ navigation }) => {
     setLoading(true);
     setSuccessMessage('');
     setErrorMessage('');
-  
+
     if (!username || !password) {
       setErrorMessage('Vui lòng nhập đầy đủ tài khoản và mật khẩu');
       setLoading(false);
       return;
     }
-  
+
     try {
       const response = await axiosInstance.post('/v1/auth/authenticate', {
         userName: username,
         password: password,
       });
-  
+
       if (response.status === 200 && response.data.access_token) {
         await AsyncStorage.setItem('access_token', response.data.access_token);
         if (response.data.refresh_token) {
           await AsyncStorage.setItem('refresh_token', response.data.refresh_token);
         }
-  
         const role = getRoleFromToken(response.data.access_token);
         const userId = getUserIdFromToken(response.data.access_token);
         setUserId(userId);
-  
+
         setSuccessMessage('Đăng nhập thành công!');
+        setLoading(false); // 🔥 Đặt loading về false ngay trước khi điều hướng
         await ensureActiveCart();
-  
-        // ✅ Gọi checkShipment sau khi đăng nhập thành công
-        const shipmentData = await checkShipment();
-        console.log("🚛 Shipment Data:", shipmentData);
-  
+
         if (role.includes('CUSTOMER')) {
-          navigation.replace('Main');
+          setLoading(false);
+          
+          navigation.replace('Main'); // 🔄 replace() để tránh quay lại màn hình login
         } else if (role.includes('SHIPPER')) {
           // navigation.replace('ShipperHome');
         }
       } else {
         setErrorMessage(response.data.message || 'Sai tài khoản hoặc mật khẩu');
+        setLoading(false); // 🔥 Đảm bảo loading tắt khi lỗi
       }
-    } catch (error) {
+    } catch (error) {     
       setErrorMessage((error as any).response?.data?.message || 'Không thể kết nối đến máy chủ');
-    } finally {
-      setLoading(false);
+      setLoading(false); 
+    }finally{
+      setLoading(false)
     }
-  };
+};
 
 
 
@@ -216,7 +216,7 @@ const Login: React.FC<Props> = ({ navigation }) => {
         <LanguageSwitcher />
       </View>
       {/* Hiệu ứng tiêu đề */}
-      <Animated.Text style={[loginStyles.animatedTitle, { color: textColor, textShadowColor: shadowColor }]}>
+      <Animated.Text style={[loginStyles.animatedTitle, { color: textColor, textShadowColor: shadowColor, textAlign: 'center' }]}>
         HMDRINKS
       </Animated.Text>
       <Text style={loginStyles.title}>{t('login')}</Text>

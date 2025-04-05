@@ -32,5 +32,6 @@ export type RootStackParamList = {
     Notification: { userId: number } | undefined;
     ChatWithShipper: { shipmentId: number };
     Search: undefined;
+    Contact: undefined;
   };
   

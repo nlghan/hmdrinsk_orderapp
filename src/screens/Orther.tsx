@@ -132,7 +132,7 @@ const Other = () => {
               <Text style={styles.textOther}>{t('about.stat4')}</Text>
               <MaterialIcons name="arrow-forward-ios" style={styles.iconrow} size={18} />
             </TouchableOpacity>
-            <TouchableOpacity style={styles.listItem}>
+            <TouchableOpacity style={styles.listItem} onPress={() => navigation.navigate('Contact')}>
               <MaterialIcons name="comment" style={styles.icon} size={24} />
               <Text style={styles.textOther}>{t('contact1')}</Text>
               <MaterialIcons name="arrow-forward-ios" style={styles.iconrow} size={18} />
