@@ -12,6 +12,7 @@ import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from "@react-navigation/stack";
 import { RootStackParamList } from "../navigation/RootStackParamList";
 import { FONTFAMILY } from '../theme/theme';
+import { useCartStore } from '../store/useCartStore';
 
 const RefundOrder = () => {
     type ProductItem = {
@@ -111,8 +112,14 @@ const RefundOrder = () => {
             setLoading(false);
         }
     };
-    const handleRestoreOrder = (orderId: string) => {
-        Alert.alert('Mua lại', `Bạn có chắc chắn muốn mua lại đơn hàng ${orderId} không?`);
+    const { handleRestoreOrder } = useCartStore();
+    const handleRestoreOrderCancelled = (orderId: number, userId: number) => {
+        try {
+            handleRestoreOrder(orderId, userId);
+
+        } catch (err){
+            console.error("Lỗi restore:", err);
+        }
     };
 
     if (loading) return <ActivityIndicator size="large" color="#0000ff" />;
@@ -195,7 +202,7 @@ const RefundOrder = () => {
                                                 <Text style={styles.boldText1}>{t('history.refunded_status')}:</Text> {item.payment.refunded}
                                             </Text >
                                             <View style={styles.buttonContainer}>
-                                                <TouchableOpacity onPress={() => handleRestoreOrder(item.orderId)} style={styles.button}>
+                                                <TouchableOpacity onPress={() => handleRestoreOrderCancelled(Number(item.orderId), Number(userId))} style={styles.button}>
                                                     <Text style={styles.buttonText}>{t('history.reorder')}</Text>
                                                 </TouchableOpacity>
                                             </View>

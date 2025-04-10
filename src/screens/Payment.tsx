@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert, ActivityIndicator } from 'react-native';
+import React, { useCallback, useEffect, useState } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert, ActivityIndicator, BackHandler } from 'react-native';
 import { useCartStore } from '../store/useCartStore';
-import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
+import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import axiosInstance from "../utils/axiosInstance";
 import { useCategoryStore } from '../store/store';
@@ -9,7 +9,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../navigation/RootStackParamList';
 import { useTranslation } from 'react-i18next';
-import { FONTFAMILY } from '../theme/theme';
+import { COLORS, FONTFAMILY } from '../theme/theme';
 
 type PaymentScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Payment'>;
 type PaymentScreenRouteProp = RouteProp<RootStackParamList, 'Payment'>;
@@ -29,6 +29,7 @@ const Payment = () => {
     const [paymentMethod, setPaymentMethod] = useState('cash'); // Mặc định là tiền mặt
     const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
     const { language } = useCategoryStore();
+    const { idOrderPause, setIdOrderPause, currentCartId, setIdCartPause, ensureActiveCart, fetchCartItem } = useCartStore();
     const formatPrice = (price: number) => {
         return (price).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
     };
@@ -140,7 +141,68 @@ const Payment = () => {
             } else {
                 navigation.navigate('OrderFailed');
                 throw new Error('Lỗi khi tạo thanh toán');
-               
+
+            }
+        } catch (error) {
+            console.error('Lỗi đặt hàng:', error);
+            Alert.alert('Lỗi', 'Có lỗi xảy ra, vui lòng thử lại sau.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleOrderPause = async () => {
+        console.log('handleOrderPause called'); // Kiểm tra xem có vào hàm không
+        setLoading(true);
+        try {
+            const token = await AsyncStorage.getItem('access_token');
+            if (!token) {
+                Alert.alert('Lỗi', 'Không tìm thấy token đăng nhập, vui lòng đăng nhập lại.');
+                return;
+            }
+
+            if (!order || !order.orderId) {
+                Alert.alert('Lỗi', 'Không tìm thấy thông tin đơn hàng.');
+                return;
+            }
+
+            console.log('Bắt đầu xử lý đơn hàng tạm dừng với ID:', order.orderId);
+
+            const headers = {
+                Authorization: `Bearer ${token}`,
+                'Content-Type': 'application/json',
+            };
+
+            // Gửi yêu cầu xác nhận đơn hàng tạm dừng
+            console.log('Gửi yêu cầu xác nhận đơn hàng tạm dừng...');
+            const confirmResponse = await axiosInstance.post(
+                '/orders/confirm_order_pause',
+                { userId: order.userId, orderId: order.orderId },
+                { headers }
+            );
+
+            console.log('Phản hồi xác nhận đơn hàng tạm dừng:', confirmResponse.data);
+            if (confirmResponse.status !== 200) {
+                throw new Error('Lỗi khi xác nhận đơn hàng tạm dừng');
+            }
+
+            // Tiến hành xử lý thanh toán như bình thường
+            console.log(`Tạo thanh toán với phương thức: ${paymentMethod}`);
+            const paymentUrl = `/payment/create/${paymentMethod}`;
+            const paymentResponse = await axiosInstance.post(
+                paymentUrl,
+                { orderId: order.orderId, userId: order.userId },
+                { headers }
+            );
+
+            console.log('Phản hồi tạo thanh toán:', paymentResponse.data);
+            if (paymentResponse.status === 200) {
+                setIdCartPause(null);
+                setIdOrderPause(null);
+                navigation.navigate('OrderComplete');
+            } else {
+                navigation.navigate('OrderFailed');
+                throw new Error('Lỗi khi tạo thanh toán');
             }
         } catch (error) {
             console.error('Lỗi đặt hàng:', error);
@@ -151,11 +213,85 @@ const Payment = () => {
     };
 
 
+    // Gọi API pause_order khi rời khỏi trang hoặc back
+    const handlePauseOrder = async () => {
+        try {
+            const token = await AsyncStorage.getItem('access_token');
+            if (!token || !order?.orderId || !order?.userId) return;
 
+            await axiosInstance.post(
+                '/orders/pause_order',
+                { orderId: order.orderId, userId: order.userId },
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        'Content-Type': 'application/json',
+                    },
+                }
+            );
+            // setIdCartPause(currentCartId);
+            setIdOrderPause(order.orderId);
+            await ensureActiveCart();
+            await fetchCartItem();
+            console.log('Pause order thành công');
+            navigation.goBack();
+        } catch (error) {
+            console.error('Lỗi khi gọi pause_order:', error);
+        }
+    };
+
+    const handleCancel = async () => {
+        setLoading(true);
+        try {
+            const token = await AsyncStorage.getItem('access_token');
+            if (!token || !order?.orderId || !order?.userId) return;
+    
+            // Sử dụng PUT thay vì POST
+            await axiosInstance.put(
+                '/orders/cancel-order',
+                { orderId: order.orderId, userId: order.userId },
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        'Content-Type': 'application/json',
+                    },
+                }
+            );
+    
+            // Nếu là đơn đang pause thì reset idOrderPause
+            if (order.orderId === idOrderPause) {
+                setIdOrderPause(null);
+                console.log('Huỷ tạm đơn đã pause, đặt lại idOrderPause thành null');
+            }
+    
+            setOrder(null);
+            await ensureActiveCart();
+            await fetchCartItem();
+            console.log('Hủy order thành công');
+            setLoading(false);
+            navigation.goBack();
+        } catch (error) {
+            console.error('Lỗi khi hủy đơn:', error);
+            setLoading(false);
+        }
+    };
+    
+    
 
     return (
         <View style={styles.container}>
             <ScrollView style={styles.contentContainer}>
+                <View style={styles.headerContainer}>
+                    <TouchableOpacity onPress={() => {
+                            handlePauseOrder();
+                       
+                    }}>
+                        <Icon name="arrow-back" size={24} color={COLORS.primaryGreenHex} />
+                    </TouchableOpacity>
+
+                    <Text style={styles.sectionTitleP}>Thông tin đặt hàng</Text>
+                </View>
+
                 {/* Thông tin giao hàng */}
                 <Text style={styles.sectionTitle}>{t('android.payment.title')}</Text>
                 <View style={styles.infoBox}>
@@ -253,13 +389,33 @@ const Payment = () => {
                 </View>
 
                 {/* Nút đặt hàng */}
-                <TouchableOpacity
-                    style={[styles.orderButton, loading && { opacity: 0.5 }]}
-                    onPress={handleOrder}
-                    disabled={loading}
-                >
-                    <Text style={styles.orderText}>{loading ? t('loading') : t('pay')}</Text>
-                </TouchableOpacity>
+                <View style={styles.buyContainer}>
+                    <TouchableOpacity
+                        style={[styles.orderButton, loading && { opacity: 0.5 }]}
+                        onPress={() => {
+                            if (idOrderPause === order?.orderId) {
+                                handleOrderPause();
+                            } else {
+                                handleOrder();
+                            }
+                        }}
+                        disabled={loading}
+                    >
+                        <Text style={styles.orderText}>{loading ? t('loading') : t('pay')}</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                        style={[styles.orderButton1, loading && { opacity: 0.5 }]}
+                        onPress={() => {
+                            handleCancel();
+                           
+                        }}
+                        disabled={loading}
+                    >
+                        <Text style={styles.orderText}>{loading ? t('loading') : t('order.orderDetail.cancel')}</Text>
+                    </TouchableOpacity>
+
+
+                </View>
 
             </View>
         </View>
@@ -286,6 +442,15 @@ const styles = StyleSheet.create({
         color: '#333',
         marginTop: 10
     },
+    sectionTitleP: {
+        fontSize: 24,
+        fontFamily: FONTFAMILY.lobster_regular,
+        color: '#333',
+        textAlign: 'center',
+        flex: 1, // quan trọng để chiếm không gian còn lại
+
+    },
+
     infoBox: {
         padding: 15,
         backgroundColor: '#fff',
@@ -367,13 +532,13 @@ const styles = StyleSheet.create({
     summaryText: {
         fontSize: 26,
         fontFamily: FONTFAMILY.dongle_bold,
-        lineHeight:20,
+        lineHeight: 20,
         color: '#555',
     },
     summaryAmount: {
         fontSize: 26,
         fontFamily: FONTFAMILY.dongle_bold,
-        lineHeight:20,
+        lineHeight: 20,
     },
     promoText: {
         color: '#1E88E5',
@@ -394,25 +559,37 @@ const styles = StyleSheet.create({
     totalText: {
         fontSize: 32,
         fontFamily: FONTFAMILY.dongle_bold,
-        lineHeight:24,
+        lineHeight: 24,
     },
     totalAmount: {
         fontSize: 32,
         fontFamily: FONTFAMILY.dongle_bold,
-        lineHeight:24,
+        lineHeight: 24,
         color: '#E53935',
     },
 
     /* Nút đặt hàng */
     orderButton: {
         backgroundColor: '#FF9800',
-        paddingVertical: 10,
+        paddingVertical: 8,
         alignItems: 'center',
         justifyContent: 'center',
         borderRadius: 10,
         marginHorizontal: 20,
         marginTop: 10,
         zIndex: 1000,
+        width:150
+    },
+    orderButton1: {
+        backgroundColor: '#d8d8d8',
+        paddingVertical: 8,
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderRadius: 10,
+        marginHorizontal: 20,
+        marginTop: 10,
+        zIndex: 1000,
+        width:150
     },
     orderText: {
         fontSize: 30,
@@ -447,4 +624,16 @@ const styles = StyleSheet.create({
         fontFamily: FONTFAMILY.dongle_regular,
         marginLeft: 5,
     },
+    headerContainer: {
+        display: 'flex',
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingTop: 20
+    },
+    buyContainer: {
+        display: 'flex',
+        flexDirection: 'row',
+        justifyContent: 'center',
+        
+    }
 });

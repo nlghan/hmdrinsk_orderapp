@@ -7,6 +7,8 @@ import {
     TouchableOpacity,
     StyleSheet,
     TextInput,
+    KeyboardAvoidingView,
+    Platform
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useCartStore } from '../store/useCartStore';  // Import your store here
@@ -21,6 +23,8 @@ import { Swipeable } from 'react-native-gesture-handler';
 import { Picker } from '@react-native-picker/picker';
 import { useTranslation } from 'react-i18next';
 import Notification from '../components/Notification';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import axiosInstance from '../utils/axiosInstance';
 
 interface CartItem {
     cartItemId: number;
@@ -47,9 +51,9 @@ const groupCartItems = (cart: CartItem[]) => {
 };
 
 const Cart = () => {
-    const { cart, fetchCartItem, setCoin, createOrder } = useCartStore();  // Add createOrder from store
+    const { cart, fetchCartItem, setCoin, createOrder, idCartPause, idOrderPause, currentCartId } = useCartStore();  // Add createOrder from store
     const [useShopeeXu, setUseShopeeXu] = useState(false);
-    const { data } = useCategoryStore();
+    const { data, userId } = useCategoryStore();
     const { userCoin } = data;
     const shopeeXuAmount = userCoin ?? 0;
     const halfShopeeXuAmount = shopeeXuAmount * 0.5;
@@ -68,8 +72,10 @@ const Cart = () => {
         setNotification({ message, visible: true });
         // Ẩn thông báo sau 3 giây
         setTimeout(() => setNotification({ ...notification, visible: false }), 4000);
-      };
+    };
 
+
+    console.log("Id cart pause:" + idCartPause);
 
     const formatPrice = (price: number) => {
         return (price).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
@@ -114,22 +120,10 @@ const Cart = () => {
         setInputValues((prev) => ({ ...prev, [cartItemId]: '' }));
     };
 
-    const handleToggleShopeeXu = () => {
-        setUseShopeeXu(prevState => {
-            const newUseShopeeXu = !prevState; // Đảo trạng thái
-            // Cập nhật số xu đã sử dụng vào store khi toggle
-            if (newUseShopeeXu) {
-                setCoin(shopeeXuAmount); // Dùng hết số xu nếu bật
-            } else {
-                setCoin(0); // Không dùng xu khi tắt
-            }
-            return newUseShopeeXu;
-        });
-    };
 
     const handleInputShopeeXu = (value: string) => {
         const numericValue = parseInt(value, 10);
-        
+
         // Nếu người dùng nhập vào một giá trị hợp lệ hoặc chuỗi rỗng
         if (value === '') {
             setInputCoin('');  // Đặt lại giá trị xu về chuỗi rỗng khi xóa hết
@@ -140,17 +134,56 @@ const Cart = () => {
             showNotification(`Số xu bạn nhập vượt quá 50% số xu tích lũy`);
         }
     };
-    
-    
 
-    const handleSubmitCoin = () => {
+
+
+    const handleSubmitCoin = async () => {
         const numericCoin = parseInt(inputCoin, 10);
-        if (!isNaN(numericCoin) && numericCoin >= 0 && numericCoin <= shopeeXuAmount) {
-            setCoin(numericCoin);  // Cập nhật giá trị xu vào store khi người dùng hoàn tất
-            setUseShopeeXu(true);
-        } else {
-            setCoin(0);  // Nếu nhập không hợp lệ, đặt về 0
+        if (isNaN(numericCoin) || numericCoin < 0 || numericCoin > shopeeXuAmount) {
+            setCoin(0);
             setUseShopeeXu(false);
+            return;
+        }
+
+        try {
+            const token = await AsyncStorage.getItem('access_token');
+            const headers = {
+                Authorization: `Bearer ${token}`,
+                'Content-Type': 'application/json',
+            };
+
+            if (currentCartId === idCartPause) {
+                const orderId = idOrderPause;
+
+                console.log('📦 Gửi yêu cầu add xu vào đơn hàng tạm dừng...');
+                console.log('🧾 orderId:', orderId);
+                console.log('🪙 pointCoinUse:', numericCoin);
+
+                const response = await axiosInstance.post(
+                    '/orders/order_pause/add_coin',
+                    {
+                        userId,               // Đảm bảo biến userId đã khai báo đúng ở ngoài
+                        orderId,
+                        pointCoinUse: numericCoin,
+                    },
+                    { headers }
+                );
+
+                console.log('✅ Phản hồi từ API:', response.data);
+
+                if (response.status !== 200) {
+                    throw new Error('Lỗi khi áp dụng xu cho đơn hàng tạm dừng');
+                }
+
+                setUseShopeeXu(true);
+                showNotification('Đã áp dụng xu cho đơn hàng!');
+            } else {
+                setCoin(numericCoin);
+                setUseShopeeXu(true);
+            }
+        } catch (error) {
+            console.error("❌ Error applying coin:", error);
+            showNotification('Có lỗi khi áp dụng xu!');
         }
     };
 
@@ -163,8 +196,8 @@ const Cart = () => {
     );
 
     const finalTotal = useShopeeXu
-    ? Math.max(0, totalCartPrice - (selectedVoucherDiscountAmount || 0) - parseInt(inputCoin || '0'))
-    : Math.max(0, totalCartPrice - (selectedVoucherDiscountAmount || 0));
+        ? Math.max(0, totalCartPrice - (selectedVoucherDiscountAmount || 0) - parseInt(inputCoin || '0'))
+        : Math.max(0, totalCartPrice - (selectedVoucherDiscountAmount || 0));
 
 
     const renderItem = ({ item }: { item: CartItem[] }) => {
@@ -265,6 +298,14 @@ const Cart = () => {
 
     const handleCreateOrder = async () => {
         try {
+            // Nếu đã có đơn hàng đang bị pause thì dùng luôn
+            if (idOrderPause && idCartPause) {
+                console.log("🔁 Điều hướng tới đơn hàng đã tồn tại với orderId:", idOrderPause);
+                navigation.navigate('Payment', { orderId: idOrderPause });
+                return;
+            }
+
+            // Ngược lại, tạo đơn hàng mới
             const orderId = await createOrder(note);  // Nhận orderId từ API
 
             if (!orderId) {
@@ -277,7 +318,7 @@ const Cart = () => {
             }
 
             await fetchCartItem();  // Cập nhật giỏ hàng sau khi đặt hàng
-            console.log("✅ Đặt hàng thành công với orderId:", orderIdNumber);
+            console.log("✅ Tạo đơn hàng thành công với orderId:", orderIdNumber);
 
             // Chuyển sang màn hình Payment và truyền orderId dạng số
             navigation.navigate('Payment', { orderId: orderIdNumber });
@@ -288,115 +329,144 @@ const Cart = () => {
     };
 
 
-
     return (
-        <View style={styles.container}>
-            <Notification message={notification.message} visible={notification.visible} onHide={() => setNotification({ ...notification, visible: false })} />
-            {(!cart || cart.length === 0) ? (
-                <EmptyListAnimation title={t('cart.empty')} />
-            ) : (
-                <>
-                    <View style={styles.flatlistContainer}>
-                        <View style={styles.headerContainer}>
-                            <TouchableOpacity onPress={() => navigation.goBack()}>
-                                <Icon name="arrow-back" size={24} color={COLORS.primaryGreenHex} />
-                            </TouchableOpacity>
-                            <Text style={styles.headerTitle}>{t('cart.title')}</Text>
-                            <TouchableOpacity onPress={async () => await useCartStore.getState().deleteAllCartItems()}>
-                                <Icon name="delete" size={24} color="#000" />
-                            </TouchableOpacity>
+        <KeyboardAvoidingView
+            style={{ flex: 1 }}
+            behavior={Platform.OS === "ios" ? "padding" : "height"} // Cho iOS và Android
+            keyboardVerticalOffset={Platform.OS === 'ios' ? 80 : 0} // Cần chỉnh nếu bạn có header
+        >
+            <View style={styles.container}>
+                <Notification message={notification.message} visible={notification.visible} onHide={() => setNotification({ ...notification, visible: false })} />
+                {(!cart || cart.length === 0) ? (
+                    <EmptyListAnimation title={t('cart.empty')} />
+                ) : (
+                    <>
+                        <View style={styles.flatlistContainer}>
+                            <View style={styles.headerContainer}>
+                                <TouchableOpacity onPress={() => navigation.goBack()}>
+                                    <Icon name="arrow-back" size={24} color={COLORS.primaryGreenHex} />
+                                </TouchableOpacity>
+                                <Text style={styles.headerTitle}>{t('cart.title')}</Text>
+                                <TouchableOpacity onPress={async () => await useCartStore.getState().deleteAllCartItems()}>
+                                    <Icon name="delete" size={24} color="#000" />
+                                </TouchableOpacity>
+                            </View>
+                            <FlatList
+                                data={groupedCart}
+                                renderItem={renderItem}
+                                keyExtractor={(item) => item[0].proId.toString()}
+                                contentContainerStyle={{ paddingBottom: 20 }}
+                                showsVerticalScrollIndicator={false}
+                            />
                         </View>
-                        <FlatList
-                            data={groupedCart}
-                            renderItem={renderItem}
-                            keyExtractor={(item) => item[0].proId.toString()}
-                            contentContainerStyle={{ paddingBottom: 20 }}
-                            showsVerticalScrollIndicator={false}
-                        />
-                    </View>
-                    <View style={styles.footer}>
-                        <View style={styles.voucherContainer}>
-                            <TouchableOpacity
-                                style={styles.voucherButton}
-                                onPress={() => navigation.navigate("ListVoucher")}
-                            >
-                                <View style={styles.voucherLabel}>
-                                    <Icon name="local-offer" size={20} color={COLORS.primaryGreenHex} />
-                                    <Text style={styles.voucherText}>{t('cart.voucher')}</Text>
-                                </View>
+                        <View style={styles.footer}>
+                            <View style={styles.voucherContainer}>
+                                <TouchableOpacity
+                                    style={styles.voucherButton}
+                                    onPress={() => navigation.navigate("ListVoucher")}
+                                >
+                                    <View style={styles.voucherLabel}>
+                                        <Icon name="local-offer" size={20} color={COLORS.primaryGreenHex} />
+                                        <Text style={styles.voucherText}>{t('cart.voucher')}</Text>
+                                    </View>
 
-                                <View style={styles.voucherRight}>
-                                    <Text style={styles.voucherChooseText}>
-                                        {selectedVoucherKey ? selectedVoucherKey : t('products.select')}
-                                    </Text>
-                                    {selectedVoucherKey && (
-                                        <TouchableOpacity
-                                            onPress={() => {
-                                                useCartStore.setState({
-                                                    selectedVoucher: {
-                                                        selectedVoucherId: null,
-                                                        selectedVoucherKey: null,
-                                                        selectedVoucherDiscountAmount: 0,
-                                                    },
-                                                });
-                                            }}
-                                        >
-                                            <Icon name="close" size={18} color="gray" style={styles.closeIcon} />
-                                        </TouchableOpacity>
-                                    )}
-                                </View>
-                            </TouchableOpacity>
-                        </View>
+                                    <View style={styles.voucherRight}>
+                                        <Text style={styles.voucherChooseText}>
+                                            {selectedVoucherKey ? selectedVoucherKey : t('products.select')}
+                                        </Text>
+                                        {selectedVoucherKey && (
+                                            <TouchableOpacity
+                                                onPress={async () => {
+                                                    if (idCartPause === currentCartId) {
+                                                        // Nếu là đơn đang tạm dừng, gọi API xoá voucher
+                                                        try {
+                                                            const token = await AsyncStorage.getItem("access_token");
 
-                        <View style={styles.coinContainer}>
-                            <View style={styles.coinLeft}>
-                                <Icon name="stars" size={22} color="#FFAA00" />
-                                <Text style={styles.coinText}>{t('cart.coin')} ({shopeeXuAmount} {t('cart.coinname')})</Text>
+                                                            const response = await axiosInstance.post(
+                                                                `/orders/order_pause/add_voucher`,
+                                                                {
+                                                                    userId: userId,
+                                                                    orderId: idOrderPause,
+                                                                    voucherId: -1,
+                                                                },
+                                                                {
+                                                                    headers: {
+                                                                        Authorization: `Bearer ${token}`,
+                                                                    },
+                                                                }
+                                                            );
+                                                            useCartStore.setState({
+                                                                selectedVoucher: {
+                                                                    selectedVoucherId: null,
+                                                                    selectedVoucherKey: null,
+                                                                    selectedVoucherDiscountAmount: 0,
+                                                                },
+                                                            });
+                                                            console.log("🗑️ Xoá voucher thành công:", response.data);
+                                                        } catch (error) {
+                                                            console.error("❌ Lỗi khi xoá voucher khỏi đơn tạm:", error);
+                                                        }
+                                                    } else {
+                                                        // Nếu không phải đơn tạm, xử lý như bình thường
+                                                        useCartStore.setState({
+                                                            selectedVoucher: {
+                                                                selectedVoucherId: null,
+                                                                selectedVoucherKey: null,
+                                                                selectedVoucherDiscountAmount: 0,
+                                                            },
+                                                        });
+                                                    }
+                                                }}
+                                            >
+                                                <Icon name="close" size={18} color="gray" style={styles.closeIcon} />
+                                            </TouchableOpacity>
+                                        )}
+                                    </View>
+                                </TouchableOpacity>
                             </View>
 
-                            {/* <TouchableOpacity onPress={handleToggleShopeeXu}>
-                                <Icon
-                                    name={useShopeeXu ? "toggle-on" : "toggle-off"}
-                                    size={30}
-                                    color={useShopeeXu ? COLORS.primaryDarkHex : "#ccc"}
+                            <View style={styles.coinContainer}>
+                                <View style={styles.coinLeft}>
+                                    <Icon name="stars" size={22} color="#FFAA00" />
+                                    <Text style={styles.coinText}>{t('cart.coin')} ({shopeeXuAmount} {t('cart.coinname')})</Text>
+                                </View>
+
+                                <TextInput
+                                    style={styles.coinInput}
+                                    keyboardType="numeric"
+                                    placeholder={halfShopeeXuAmount ? halfShopeeXuAmount.toString() : 'Nhập số xu'} // Chuyển số thành chuỗi hoặc sử dụng giá trị mặc định
+                                    value={inputCoin}
+                                    onChangeText={handleInputShopeeXu}
+                                    onSubmitEditing={handleSubmitCoin}
+                                    returnKeyType="done"
                                 />
-                            </TouchableOpacity> */}
 
-                            <TextInput
-                                style={styles.coinInput}
-                                keyboardType="numeric"
-                                placeholder={halfShopeeXuAmount ? halfShopeeXuAmount.toString() : 'Nhập số xu'} // Chuyển số thành chuỗi hoặc sử dụng giá trị mặc định
-                                value={inputCoin}
-                                onChangeText={handleInputShopeeXu}
-                                onSubmitEditing={handleSubmitCoin}
-                                returnKeyType="done"
-                            />
+                            </View>
 
+                            {/* Note input */}
+                            <View style={styles.noteContainer}>
+                                <TextInput
+                                    style={styles.noteInput}
+                                    placeholder={t('takeNote')}
+                                    value={note}
+                                    onChangeText={setNote}
+                                />
+                            </View>
+
+                            <View style={styles.paymentContainer}>
+                                <Text style={styles.totalText}>
+                                    {t('order.orderDetail.sum')}: <Text style={styles.totalAmount}>{formatPrice(finalTotal)}đ </Text>
+                                </Text>
+
+                                <TouchableOpacity style={styles.checkoutButton} onPress={handleCreateOrder}>
+                                    <Text style={styles.checkoutText}>{t('buy')}</Text>
+                                </TouchableOpacity>
+                            </View>
                         </View>
-
-                        {/* Note input */}
-                        <View style={styles.noteContainer}>
-                            <TextInput
-                                style={styles.noteInput}
-                                placeholder={t('takeNote')}
-                                value={note}
-                                onChangeText={setNote}
-                            />
-                        </View>
-
-                        <View style={styles.paymentContainer}>
-                            <Text style={styles.totalText}>
-                                {t('order.orderDetail.sum')}: <Text style={styles.totalAmount}>{formatPrice(finalTotal)}đ </Text>
-                            </Text>
-
-                            <TouchableOpacity style={styles.checkoutButton} onPress={handleCreateOrder}>
-                                <Text style={styles.checkoutText}>{t('buy')}</Text>
-                            </TouchableOpacity>
-                        </View>
-                    </View>
-                </>
-            )}
-        </View>
+                    </>
+                )}
+            </View>
+        </KeyboardAvoidingView>
     );
 };
 

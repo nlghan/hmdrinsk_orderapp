@@ -17,6 +17,10 @@ import Icon from "react-native-vector-icons/MaterialIcons";
 import { COLORS } from "../theme/theme";
 import { Image } from "react-native";
 import { useTranslation } from 'react-i18next';
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import axiosInstance from "../utils/axiosInstance";
+import Notification from '../components/Notification';
+import { useCategoryStore } from "../store/store";
 
 
 const ListVoucher = () => {
@@ -25,12 +29,22 @@ const ListVoucher = () => {
     fetchVoucher,
     selectedVoucher,
     setSelectedVoucher,
+    currentCartId,
+    idCartPause,
+    idOrderPause
   } = useCartStore();
 
+  const { userId } = useCategoryStore();
   const [voucherName, setVoucherName] = useState("");
   const [filteredVouchers, setFilteredVouchers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAutocomplete, setShowAutocomplete] = useState(false);
+  const [notification, setNotification] = useState({ message: '', visible: false });
+  const showNotification = (message: string) => {
+    setNotification({ message, visible: true });
+    // Ẩn thông báo sau 3 giây
+    setTimeout(() => setNotification({ ...notification, visible: false }), 4000);
+  };
 
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
   const { t } = useTranslation()
@@ -49,17 +63,61 @@ const ListVoucher = () => {
     loadVouchers();
   }, [fetchVoucher]);
 
-  const handleSelectVoucher = (id: number, name: string, discountAmount: number, status: string) => {
+
+  const handleSelectVoucher = async (
+    id: number,
+    name: string,
+    discountAmount: number,
+    status: string
+  ) => {
     if (status === "USED" || status === "EXPIRED") return;
 
-    setSelectedVoucher({
-      selectedVoucherId: id,
-      selectedVoucherKey: name,
-      selectedVoucherDiscountAmount: discountAmount,
-    });
+    try {
+      if (currentCartId === idCartPause) {
+        const token = await AsyncStorage.getItem("access_token");
 
-    setShowAutocomplete(false);
+        const headers = {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        };
+
+        const payload = {
+          userId,
+          orderId: idOrderPause,
+          voucherId: id,
+        };
+
+        console.log("🔁 Gửi yêu cầu apply voucher cho đơn tạm dừng...", payload);
+
+        const response = await axiosInstance.post(
+          "/orders/order_pause/add_voucher",
+          payload,
+          { headers }
+        );
+
+        console.log("✅ Apply voucher response:", response.data);
+
+        if (response.status !== 200) {
+          throw new Error("Lỗi khi áp dụng voucher cho đơn hàng tạm dừng");
+        }
+
+        // showNotification("🎉 Đã áp dụng mã giảm giá cho đơn hàng tạm dừng!");
+      }
+
+      // Cập nhật trạng thái local cho cả hai trường hợp
+      setSelectedVoucher({
+        selectedVoucherId: id,
+        selectedVoucherKey: name,
+        selectedVoucherDiscountAmount: discountAmount,
+      });
+
+      setShowAutocomplete(false);
+    } catch (error) {
+      console.error("❌ Lỗi khi áp dụng voucher:", error);
+      showNotification("Có lỗi khi áp dụng mã giảm giá!");
+    }
   };
+
 
 
   const handleDeselectVoucher = () => {
@@ -93,6 +151,7 @@ const ListVoucher = () => {
 
   return (
     <View style={styles.container}>
+      <Notification message={notification.message} visible={notification.visible} onHide={() => setNotification({ ...notification, visible: false })} />
       <View style={styles.headerContainer}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Icon name="arrow-back" size={24} color={COLORS.primaryGreenHex} />
@@ -135,7 +194,7 @@ const ListVoucher = () => {
       ) : (
         <ScrollView style={styles.voucherList} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }} >
           {sortedVouchers.map((voucher) => {
-            const isUsed = voucher.status === "USED" || voucher.status === "EXPIRED" ;
+            const isUsed = voucher.status === "USED" || voucher.status === "EXPIRED";
             const isSelected = selectedVoucher.selectedVoucherId === voucher.voucherId;
 
             return (

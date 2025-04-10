@@ -177,7 +177,8 @@ const styles = StyleSheet.create({
   title:{
     textAlign:'center',
     fontFamily:FONTFAMILY.lobster_regular,
-    fontSize:24
+    fontSize:24,
+    paddingTop:25
   },
   row: {
     flexDirection: "row",

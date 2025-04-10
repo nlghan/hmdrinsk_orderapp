@@ -114,8 +114,7 @@ const AllReviews = () => {
                 <Header
                     style={{
                         paddingHorizontal: 14,
-                        paddingTop: 10,
-                        paddingBottom: 10,
+                        paddingVertical:10,
                         marginBottom: 10,
                         backgroundColor: 'white',
                         shadowColor: '#000',

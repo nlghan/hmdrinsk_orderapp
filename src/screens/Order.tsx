@@ -208,7 +208,7 @@ const OrderScreen = () => {
         <Header
           style={{
             paddingHorizontal: 14,
-            paddingTop: 10,
+            paddingVertical:10,
             paddingBottom: 10,
             backgroundColor: 'white',
             shadowColor: '#000',
@@ -236,34 +236,44 @@ const OrderScreen = () => {
             </View>
 
             <ScrollView
-              ref={scrollViewRef}
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={homeStyles.servicesOrder}
-              onScroll={Animated.event(
-                [{ nativeEvent: { contentOffset: { x: scrollX } } }],
-                { useNativeDriver: false }
-              )}
-              scrollEventThrottle={16}
-            >
-              <View style={{ flexDirection: "row", flexWrap: "nowrap" }}>
-                {groupedCategories.map((group, index) => (
-                  <View key={index} style={homeStyles.serviceOrderItem}>
-                    {group.map((item) => (
-                      <ServiceItem
-                        key={item.cateId}
-                        image={item.cateImg}
-                        text={item.cateName}
-                        isSelected={selectedCategory === item.cateId}
-                        onPress={() =>
-                          setSelectedCategory(selectedCategory === item.cateId ? null : item.cateId)
-                        }
-                      />
-                    ))}
-                  </View>
-                ))}
-              </View>
-            </ScrollView>
+  ref={scrollViewRef}
+  horizontal
+  showsHorizontalScrollIndicator={false}
+  contentContainerStyle={homeStyles.servicesOrder}
+  onScroll={Animated.event(
+    [{ nativeEvent: { contentOffset: { x: scrollX } } }],
+    { useNativeDriver: false }
+  )}
+  scrollEventThrottle={16}
+>
+  <View style={{ flexDirection: "row" }}>
+    {groupedCategories.map((group, index) => (
+      <View
+        key={index}
+        style={{
+          flexDirection: "column",
+          justifyContent: "space-between",
+          marginHorizontal: 5,
+        }}
+      >
+        {group.map((item) => (
+          <ServiceItem
+            key={item.cateId}
+            image={item.cateImg}
+            text={item.cateName}
+            isSelected={selectedCategory === item.cateId}
+            onPress={() =>
+              setSelectedCategory(
+                selectedCategory === item.cateId ? null : item.cateId
+              )
+            }
+          />
+        ))}
+      </View>
+    ))}
+  </View>
+</ScrollView>
+
 
             <View style={homeStyles.scrollBarContainer}>
               <Animated.View

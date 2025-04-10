@@ -219,10 +219,7 @@ const Register: React.FC<Props> = ({ navigation }) => {
             </TouchableOpacity>
 
             <TouchableOpacity style={registerStyles.googleButton} onPress={handleLoginGG}>
-                <Image
-                    source={require('../assets/img/logoGG.png')} // Cập nhật đường dẫn đến icon của bạn
-                    style={registerStyles.googleIcon}
-                />
+               
                 <Text style={registerStyles.googleText}>{t('gg')}</Text>
             </TouchableOpacity>
 

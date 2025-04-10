@@ -221,7 +221,7 @@ const ProductDetail = () => {
             <Header
                 style={{
                     paddingHorizontal: 14,
-                    paddingTop: 10,
+                    paddingVertical:10,
                     paddingBottom: 10,
                     marginBottom: 3,
                     backgroundColor: 'white',

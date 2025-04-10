@@ -12,7 +12,7 @@ export default StyleSheet.create({
     imageContainer: {
         position: 'absolute',
         top: height * 0.1, 
-        left: width * 0.51 - (height * 0.25), // Căn giữa hình
+        left: width * 0.55 - (height * 0.25), // Căn giữa hình
         zIndex: 100, // Đảm bảo ảnh nằm trên nội dung
         alignItems: 'center',
         width: '100%',

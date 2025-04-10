@@ -246,10 +246,6 @@ const Login: React.FC<Props> = ({ navigation }) => {
       </TouchableOpacity>
 
       <TouchableOpacity style={loginStyles.googleButton} onPress={handleLoginGG}>
-        <Image
-          source={require('../assets/img/logoGG.png')} // Cập nhật đường dẫn đến icon của bạn
-          style={loginStyles.googleIcon}
-        />
         <Text style={loginStyles.googleText}>{t('gg')}</Text>
       </TouchableOpacity>
 
