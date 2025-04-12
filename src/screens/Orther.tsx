@@ -58,6 +58,7 @@ const Other = () => {
           <View style={styles.row}>
             <TouchableOpacity style={styles.box} onPress={() => navigation.navigate('DeliveringOrders')}>
               <MaterialIcons name="local-shipping" style={styles.iconBlue} size={30} />
+              {orderCounts?.confirmed >= 1 && (
               <View style={styles.badge}>
               {orderCounts ? (
                 orderCounts.confirmed > 0 ? (
@@ -66,7 +67,8 @@ const Other = () => {
               ) : (
                 <ActivityIndicator size="small" color="#fff" />
               )}
-              </View>             
+              </View>   
+              )}          
               <Text style={styles.textSubOther}>{t('orderContent.status.ship')}</Text>
             </TouchableOpacity>
 
@@ -81,7 +83,7 @@ const Other = () => {
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.box} onPress={() => navigation.navigate('CancelledOrders')}>
-              <MaterialIcons name="cancel" style={styles.iconRed} size={30} />
+              <MaterialIcons name="cancel" style={styles.iconRed} size={30} />              
               <View style={styles.badge}>
                 {orderCounts ? (
                   orderCounts.cancelled > 0 ? (
