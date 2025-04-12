@@ -4,6 +4,7 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axiosInstance from '../utils/axiosInstance';
 import { useCategoryStore } from './store';
+import { Alert } from 'react-native';
 
 interface CartItem {
   cartItemId: number;
@@ -75,6 +76,11 @@ interface CartStore {
   updateCartTotal: () => void;
   createOrder: (note: string) => Promise<string>;  // New function to update the coin state
   setOrderId: (orderId: number) => void;
+  idCartPause: number | null; // 🆕 thêm
+  setIdCartPause: (id: number | null) => void; // 🆕 thêm
+  idOrderPause: number | null; // 🆕 thêm
+  setIdOrderPause: (id: number | null) => void; // 🆕 thêm
+  handleRestoreOrder: (orderId: number, userId:number)  => void;
 }
 
 export const useCartStore = create<CartStore>()(
@@ -93,6 +99,19 @@ export const useCartStore = create<CartStore>()(
       order: null,
       orderId: 0,
       coin: 0,  // Initialize the coin state to 0
+      idCartPause: null,
+      idOrderPause: null,
+
+      setIdCartPause: (id: number | null) => {
+        console.log("⏸️ Đặt idCartPause:", id);
+        set({ idCartPause: id });
+      },
+
+      setIdOrderPause: (id: number | null) => {
+        console.log("⏸️ Đặt idOrderPause:", id);
+        set({ idOrderPause: id });
+      },
+
 
       // Function to set the coin amount
       setCoin: (coinAmount: number) => {
@@ -112,7 +131,6 @@ export const useCartStore = create<CartStore>()(
         set({ cartTotal: totalQuantity });
       },
 
-
       ensureActiveCart: async () => {
         try {
           const { userId } = useCategoryStore.getState();
@@ -123,19 +141,53 @@ export const useCartStore = create<CartStore>()(
 
           console.log(`🔍 Checking cart existence for user ${userId}`);
 
-          const cartListResponse = await axiosInstance.get<CartListResponse>(
+          const { data: { listCart } } = await axiosInstance.get<CartListResponse>(
             `/cart/list-cart/${userId}`,
             { headers: { Authorization: `Bearer ${accessToken}` } }
           );
 
-          const { listCart } = cartListResponse.data;
-
-          // Ưu tiên theo thứ tự COMPLETED_PAUSE > RESTORE > NEW/PAUSE
+          // Ưu tiên cart COMPLETED_PAUSE
           const completedPauseCart = listCart.find(cart => cart.statusCart === "COMPLETED_PAUSE");
-          const restoreCart = listCart.find(cart => cart.statusCart === "RESTORE");
-          const newOrPauseCart = listCart.find(cart => ["NEW"].includes(cart.statusCart));
+          if (completedPauseCart) {
+            const pausedCartId = completedPauseCart.cartId;
+            console.log("🛑 Found paused cart, setting idCartPause:", pausedCartId);
+            get().setIdCartPause(pausedCartId);
 
-          const activeCart = completedPauseCart || restoreCart || newOrPauseCart;
+            // 🔁 Gọi API để lấy thông tin order tương ứng với cart bị pause
+            try {
+              const { data: orderPauseData } = await axiosInstance.get<{ orderId: number }>(
+                `/orders/detail_order_pause`,
+                {
+                  params: {
+                    cartId: pausedCartId,
+                    language: "EN"
+                  },
+                  headers: {
+                    Authorization: `Bearer ${accessToken}`
+                  }
+                }
+              );
+
+              const idOrderPause = orderPauseData.orderId;
+              console.log("📦 Found paused order, setting idOrderPause:", idOrderPause);
+              get().setIdOrderPause(idOrderPause);
+            } catch (orderErr) {
+              console.warn("⚠️ Could not fetch paused order:", orderErr);
+            }
+          }
+
+          // Kiểm tra idCartPause và gán currentCartId nếu có idCartPause
+          const idCartPause = get().idCartPause;
+          if (idCartPause !== null) {
+            console.log("🔄 Using paused cart ID:", idCartPause);
+            set({ currentCartId: idCartPause });
+            return idCartPause;
+          }
+
+          // Tìm cart RESTORE hoặc NEW
+          const restoreCart = listCart.find(cart => cart.statusCart === "RESTORE");
+          const newCart = listCart.find(cart => cart.statusCart === "NEW");
+          const activeCart = restoreCart || newCart;
 
           if (activeCart) {
             console.log("✅ Found active cart:", activeCart.cartId);
@@ -143,22 +195,22 @@ export const useCartStore = create<CartStore>()(
             return activeCart.cartId;
           }
 
+          // Không có cart hợp lệ, tạo mới
           console.log("➕ Creating new cart...");
-          const createCartResponse = await axiosInstance.post<{ cartId: number }>(
+          const { data: { cartId } } = await axiosInstance.post<{ cartId: number }>(
             '/cart/create',
             { userId },
             { headers: { Authorization: `Bearer ${accessToken}` } }
           );
 
-          console.log("✅ New cart created:", createCartResponse.data.cartId);
-          set({ currentCartId: createCartResponse.data.cartId });
-          return createCartResponse.data.cartId;
+          console.log("✅ New cart created:", cartId);
+          set({ currentCartId: cartId });
+          return cartId;
         } catch (error) {
           console.error("❌ Error ensuring active cart:", error);
           throw error;
         }
       },
-
 
       fetchCartItem: async () => {
         try {
@@ -202,6 +254,54 @@ export const useCartStore = create<CartStore>()(
           throw error;
         }
       },
+
+      handleRestoreOrder: (orderId: number, userId: number): void => {
+        Alert.alert(
+            'Mua lại',
+            `Bạn có chắc chắn muốn mua lại đơn hàng ${orderId} không?`,
+            [
+                {
+                    text: 'Huỷ',
+                    style: 'cancel',
+                },
+                {
+                    text: 'Đồng ý',
+                    onPress: async () => {
+                        try {
+                            const token = await AsyncStorage.getItem('access_token');
+                            if (!token) {
+                                console.error('Không tìm thấy token');
+                                return;
+                            }
+    
+                            const response = await axiosInstance.post(
+                                '/orders/restore',
+                                {
+                                    orderId: orderId,
+                                    userId: userId,
+                                },
+                                {
+                                    headers: {
+                                        Authorization: `Bearer ${token}`,
+                                        'Content-Type': 'application/json',
+                                    },
+                                }
+                            );
+                            
+                            set({ currentCartId: response.data.cartId });
+                            get().fetchCartItem();
+                            console.log('✅ Mua lại thành công:', response.data);
+                            Alert.alert('Thành công', 'Đơn hàng đã được mua lại!');
+                        } catch (error) {
+                            console.error('❌ Lỗi khi mua lại đơn hàng:', error);
+                            Alert.alert('Lỗi', 'Không thể mua lại đơn hàng. Vui lòng thử lại sau.');
+                        }
+                    },
+                },
+            ]
+        );
+    },
+    
 
       changeSize: async (cartItemId: number, size: string) => {
         try {
@@ -311,54 +411,57 @@ export const useCartStore = create<CartStore>()(
         try {
           const accessToken = await AsyncStorage.getItem('access_token');
           const { userId } = useCategoryStore.getState();
-
+          const { cart, updateCartTotal, ensureActiveCart, fetchCartItem } = get();
+      
           if (!accessToken) throw new Error("Access token missing");
           if (!userId) throw new Error("User ID missing");
-
+      
           console.log("🔴 Deleting item with cartItemId:", cartItemId);
-
+      
           const deletePayload = { userId: Number(userId), cartItemId };
-
-          // Send DELETE request to the server
-          const deleteResponse = await axiosInstance.delete(
-            `/cart-item/delete/${cartItemId}`,
-            {
-              headers: { Authorization: `Bearer ${accessToken}` },
-              data: deletePayload,
-            }
-          );
-
-          console.log("🗑 Item deleted successfully:", deleteResponse.data.message);
-
-          // Update the cart in the store after deletion
-          const updatedCart = useCartStore.getState().cart.filter(item => item.cartItemId !== cartItemId);
+      
+          await axiosInstance.delete(`/cart-item/delete/${cartItemId}`, {
+            headers: { Authorization: `Bearer ${accessToken}` },
+            data: deletePayload,
+          });
+      
+          console.log("🗑 Item deleted successfully");
+      
+          const updatedCart = cart.filter(item => item.cartItemId !== cartItemId);
           set({ cart: updatedCart });
-          get().updateCartTotal();
-
+      
+          updateCartTotal();
+      
+          // Nếu giỏ hàng trống, gọi đồng thời ensureActiveCart và fetchCartItem
+          if (updatedCart.length === 0) {
+            await get().ensureActiveCart();
+            await get().fetchCartItem();
+          }
+      
         } catch (error) {
           console.error("❌ Error deleting cart item:", error);
         }
       },
-
+      
+      
       deleteAllCartItems: async () => {
         try {
           const { currentCartId } = get();
-          const { userId } = useCategoryStore.getState();  // Get userId from the store
-
+          const { userId } = useCategoryStore.getState();
+      
           if (!userId) throw new Error("User not logged in");
           if (!currentCartId) throw new Error("No active cart found");
-
+      
           const accessToken = await AsyncStorage.getItem('access_token');
           if (!accessToken) throw new Error("Access token missing");
-
+      
           console.log(`🗑️ Deleting all items from cart ${currentCartId} for user ${userId}...`);
-
+      
           const payload = {
             userId: Number(userId),
             cartId: currentCartId,
           };
-
-          // Send DELETE request to the server
+      
           const response = await axiosInstance.delete(
             `/cart/delete-allItem/${currentCartId}`,
             {
@@ -366,18 +469,19 @@ export const useCartStore = create<CartStore>()(
               data: payload,
             }
           );
-
+      
           console.log("✅ All items deleted successfully:", response.data.message);
-
-          // Update the cart in the store after deletion
+      
           set({ cart: [], cartTotal: 0 });
-
+      
+          // 🔄 Tạo lại giỏ nếu đã xóa hết
+          await get().ensureActiveCart();
+      
         } catch (error) {
           console.error("❌ Error deleting all items from the cart:", error);
         }
       },
-
-
+      
 
       // Hàm giảm số lượng sản phẩm trong giỏ hàng (decreaseQuantity)
       decreaseQuantity: async (cartItemId: number) => {

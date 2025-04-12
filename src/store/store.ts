@@ -687,7 +687,8 @@ export const useCategoryStore = create<CategoryStore>()(
             selectedVoucherKey: null,
             selectedVoucherDiscountAmount: 0,
           };
-          
+          useCartStore.getState().idCartPause = null;
+          useCartStore.getState().idOrderPause = null;
           set((state) => {
             const newState = {
               userId: null,

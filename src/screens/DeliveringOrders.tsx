@@ -47,6 +47,7 @@ const DeliveringOrders = () => {
         dateCreated: string;
         dateDelivered: string;
         dateOders: string;
+        pointCoinUse: number;
         shipment: Shipment;
         listItem: ProductItem[];
     };
@@ -86,6 +87,7 @@ const DeliveringOrders = () => {
                     dateOders: item.order.dateOders,
                     phone: item.order.phone,
                     status: item.order.status,
+                    pointCoinUse: item.order.pointCoinUse,
                     listItem: item.order.listItem.map((product: any) => ({
                         cartItemId: product.cartItemId,
                         proId: product.proId,
@@ -158,15 +160,13 @@ const DeliveringOrders = () => {
                                                 <Text style={styles.title}>{t('history.name')} {product.proName}</Text>
                                                 <Text style={styles.size}>{t('history.quantity')} {product.quantity}</Text>
                                                 <Text style={styles.price}>{t('history.price')} {formatPrice(product.totalPrice)}đ</Text>
-                                                <Text style={styles.title}>{t('history.name')} {product.proName}</Text>
-                                                <Text style={styles.size}>{t('history.quantity')} {product.quantity}</Text>
-                                                <Text style={styles.price}>{t('history.price')} {formatPrice(product.totalPrice)}đ</Text>
+                                            
                                             </View>
                                         </View>
                                     )}
                                 />
 
-                                <Text style={styles.totalPrice}><Text style={styles.boldText1}>{t('history.total_price')}</Text> {formatPrice(Math.max(item.totalPrice + item.deliveryFee - item.discountPrice, 0))}đ</Text>
+                                <Text style={styles.totalPrice}><Text style={styles.boldText1}>{t('history.total_price')}</Text> {formatPrice(Math.max(item.totalPrice + item.deliveryFee - item.discountPrice - item.pointCoinUse, 0))}đ</Text>
                                 <Text style={styles.boldText2}><Text style={styles.boldText1}>{t('history.order_date')}</Text> {item.dateOders}</Text>
                                 <Text style={styles.boldText2}><Text style={styles.boldText1}>{t('history.shipper')}</Text> {item.shipment?.nameShipper}</Text>
                                 <Text style={styles.boldText2}><Text style={styles.boldText1}>{t('order.deliveryTime')}</Text> {item.shipment?.dateDeliver}</Text>
@@ -175,15 +175,7 @@ const DeliveringOrders = () => {
                                     <Text style={styles.buttonText}>{t('chat.title')}</Text>
                                 </TouchableOpacity>
                                 </View>
-                                <Text style={styles.totalPrice}><Text style={styles.boldText1}>{t('history.total_price')}</Text> {formatPrice(Math.max(item.totalPrice + item.deliveryFee - item.discountPrice, 0))}đ</Text>
-                                <Text style={styles.boldText2}><Text style={styles.boldText1}>{t('history.order_date')}</Text> {item.dateOders}</Text>
-                                <Text style={styles.boldText2}><Text style={styles.boldText1}>{t('history.shipper')}</Text> {item.shipment?.nameShipper}</Text>
-                                <Text style={styles.boldText2}><Text style={styles.boldText1}>{t('order.deliveryTime')}</Text> {item.shipment?.dateDeliver}</Text>
-                                <View style={styles.buttonContainer}>
-                                <TouchableOpacity onPress={() => navigation.navigate('ChatWithShipper', { shipmentId: Number(item.shipment?.shipmentId) })} style={styles.button}>
-                                    <Text style={styles.buttonText}>{t('chat.title')}</Text>
-                                </TouchableOpacity>
-                                </View>
+                               
                             </View>
                         </TouchableOpacity>
                     )}

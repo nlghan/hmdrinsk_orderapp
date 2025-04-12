@@ -90,8 +90,7 @@ const AddReview = () => {
             <Header
                 style={{
                     paddingHorizontal: 14,
-                    paddingTop: 10,
-                    paddingBottom: 10,
+                    paddingVertical:10,
                     marginBottom: 10,
                     backgroundColor: 'white', // Giữ nền rõ hơn với shadow
                     shadowColor: '#000',

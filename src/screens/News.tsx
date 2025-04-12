@@ -150,7 +150,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f9f9f9' },
   headerContainer: {
     paddingHorizontal: 14,
-    paddingTop: 10,
+    paddingTop: 25,
     paddingBottom: 10,
     backgroundColor: 'white',
     shadowColor: '#000',

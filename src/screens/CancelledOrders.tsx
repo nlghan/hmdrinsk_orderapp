@@ -12,6 +12,7 @@ import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from "@react-navigation/stack";
 import { RootStackParamList } from "../navigation/RootStackParamList";
 import { FONTFAMILY } from '../theme/theme';
+import { useCartStore } from '../store/useCartStore';
 
 const CancelledOrder = () => {
     type Product = {
@@ -39,6 +40,7 @@ const CancelledOrder = () => {
     const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
     const { t } = useTranslation();
     const { language, userId } = useCategoryStore();
+    const { handleRestoreOrder } = useCartStore();
 
     useEffect(() => {
         fetchCancelledOrders();
@@ -72,8 +74,13 @@ const CancelledOrder = () => {
         }
     };
 
-    const handleRestoreOrder = (orderId: string) => {
-        Alert.alert('Mua lại', `Bạn có chắc chắn muốn mua lại đơn hàng ${orderId} không?`);
+    const handleRestoreOrderCancelled = (orderId: number, userId: number) => {
+        try {
+            handleRestoreOrder(orderId, userId);
+
+        } catch (err){
+            console.error("Lỗi restore:", err);
+        }
     };
 
     const formatPrice = (price: number) => {
@@ -124,16 +131,16 @@ const CancelledOrder = () => {
                                                 )}
                                             />
                                             <Text style={styles.totalPrice}>
-                                                <Text  style={styles.boldText1}>{t('history.total_price')}</Text> {formatPrice(Math.max(item.totalPrice + item.deliveryFee - item.discountPrice, 0))} đ
+                                                <Text style={styles.boldText1}>{t('history.total_price')}</Text> {formatPrice(Math.max(item.totalPrice + item.deliveryFee - item.discountPrice, 0))} đ
                                             </Text>
                                             <Text style={styles.boldText2}>
-                                                <Text  style={styles.boldText1}>{t('history.order_date')}</Text> {item.dateOders}
+                                                <Text style={styles.boldText1}>{t('history.order_date')}</Text> {item.dateOders}
                                             </Text>
                                             <Text style={styles.boldText2}>
-                                                <Text  style={styles.boldText1}>{t('history.delivery_cancel')}</Text>{item.dateCanceled}
+                                                <Text style={styles.boldText1}>{t('history.delivery_cancel')}</Text>{item.dateCanceled}
                                             </Text>
                                             <View style={styles.buttonContainer}>
-                                                <TouchableOpacity onPress={() => handleRestoreOrder(item.orderId)} style={styles.button}>
+                                                <TouchableOpacity onPress={() => handleRestoreOrderCancelled(Number(item.orderId), Number(userId))} style={styles.button}>
                                                     <Text style={styles.buttonText}>{t('history.reorder')}</Text>
                                                 </TouchableOpacity>
 
@@ -240,7 +247,7 @@ const styles = StyleSheet.create({
     },
     totalPrice: {
         fontFamily: FONTFAMILY.dongle_bold,
-        fontSize:28,
+        fontSize: 28,
         color: '#e74c3c',
     },
     buttonContainer: {
@@ -249,25 +256,25 @@ const styles = StyleSheet.create({
         justifyContent: 'flex-end', // Đưa nút về lề phải
         alignItems: 'center', // Căn giữa theo chiều dọc
     },
-    
+
     button: {
         backgroundColor: '#ff6347',
         padding: 8,
         borderRadius: 5,
-        width:100
+        width: 100
     },
     buttonText: {
         color: 'white',
-        fontSize:22,
+        fontSize: 22,
         fontFamily: FONTFAMILY.dongle_bold,
-        textAlign:'center'
+        textAlign: 'center'
     },
-    boldText1:{
+    boldText1: {
         fontFamily: FONTFAMILY.dongle_regular,
-        fontSize:24
+        fontSize: 24
     },
-    boldText2:{
+    boldText2: {
         fontFamily: FONTFAMILY.dongle_light,
-        fontSize:24
+        fontSize: 24
     }
 });

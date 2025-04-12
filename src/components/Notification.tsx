@@ -38,7 +38,7 @@ const Notification: React.FC<NotificationProps> = ({ message, visible, onHide })
 const styles = StyleSheet.create({
     container: {
       position: 'absolute',
-      top: '5%',
+      top: '7%',
       left: '10%',
       right: '10%',
       backgroundColor: 'rgb(255, 249, 243)', // Màu cam nhạt

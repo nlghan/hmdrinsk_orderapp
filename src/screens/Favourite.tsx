@@ -109,8 +109,7 @@ const Favourite = () => {
       <Header
         style={{
           paddingHorizontal: 14,
-          paddingTop: 10,
-          paddingBottom: 10,
+          paddingVertical: 10,
           backgroundColor: 'white',
           shadowColor: '#000',
           shadowOffset: { width: 0, height: 2 },

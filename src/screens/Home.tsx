@@ -41,24 +41,57 @@ const Home = () => {
   const { language, userId, checkShipment } = useCategoryStore();
   const { fetchCartItem } = useCartStore();
   const [products, setProducts] = useState<Product[]>([]);
-  const { addToCart } = useCartStore();
+  const { addToCart, ensureActiveCart } = useCartStore();
+  const [filteredProducts, setFilteredProducts] = useState(products);
 
   const fetchProducts = async () => {
-    try {
-      const token = await AsyncStorage.getItem("access_token");
-
-      const response = await axiosInstance.get(`/product/recommend?language=${language}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      console.log("📥 Phản hồi từ API:", response.data); // In ra toàn bộ dữ liệu nhận được
-
-      setProducts(response.data.productResponses || []);
-    } catch (error) {
-      console.log('❌ Lỗi khi lấy sản phẩm:', error);
-    } finally {
-      setLoading(false);
-    }
+        try {
+            const token = await AsyncStorage.getItem("access_token");
+            const userId = useCategoryStore.getState().userId; // Lấy userId từ store
+    
+            if (!userId) {
+                console.warn("⚠️ [fetchRecommendedProducts] User ID is missing!");
+                setLoading(false);
+                return;
+            }
+    
+            // Gọi song song API gợi ý và yêu thích
+            const [apiResponse, favResponse] = await Promise.all([
+                axiosInstance.get(`/product/recommend?language=${language}`, {
+                    headers: { Authorization: `Bearer ${token}` },
+                }),
+                axiosInstance.get(`/fav/list-fav/${userId}`, {
+                    headers: { Authorization: `Bearer ${token}` },
+                })
+            ]);
+    
+            console.log("📥 Phản hồi từ API gợi ý:", apiResponse.data);
+            console.log("📥 API gợi ý trả về:", apiResponse.data.productResponses.length, "sản phẩm");
+            const apiProducts = apiResponse.data.productResponses || [];
+    
+            const favId = favResponse.data?.favId || null;
+    
+            let favoriteItems = [];
+            if (favId) {
+                try {
+                    const favItemsResponse = await axiosInstance.get(`/fav/list-favItem/${favId}?language=${language}`, {
+                        headers: { Authorization: `Bearer ${token}` },
+                    });
+                    favoriteItems = favItemsResponse.data.favouriteItemResponseList || [];
+                } catch (error) {
+                    console.error("❌ [fetchRecommendedProducts] Lỗi khi lấy danh sách yêu thích:", error);
+                }
+            }
+    
+            const updatedProducts = apiProducts.map((product: { proId: any; }) => ({
+                ...product,
+                isFavourited: favoriteItems.some((favItem: { proId: any; }) => favItem.proId === product.proId),
+            }));
+    
+            setFilteredProducts(updatedProducts);
+        } catch (error) {
+            console.log("❌ Lỗi khi lấy sản phẩm gợi ý:", error);
+        } 
   };
 
   useEffect(() => {
@@ -104,8 +137,13 @@ const Home = () => {
       useCategoryStore.getState().setLanguage(useCategoryStore.getState().language);
 
       // Chờ lấy dữ liệu sản phẩm
-      await checkShipment();
-      await fetchProducts();
+      await Promise.all([
+        checkShipment(),
+        fetchProducts(),
+        ensureActiveCart()
+      ]);
+  
+      // Sau khi đã có cartId, mới fetchCartItem
       await fetchCartItem();
     } catch (error) {
       console.error("❌ Lỗi khi làm mới dữ liệu:", error);
@@ -234,7 +272,7 @@ const Home = () => {
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
         >
-          <Header style={{ paddingHorizontal: 14, paddingTop: 10 }} />
+          <Header style={{ paddingHorizontal: 14, paddingVertical:10 }} />
         </LinearGradient>
       </View>
 
@@ -255,7 +293,7 @@ const Home = () => {
             </View>
           ) : (
             <FlatList
-              data={products} // ✅ Chỉ lấy 8 sản phẩm đầu
+              data={filteredProducts} // ✅ Chỉ lấy 8 sản phẩm đầu
               numColumns={2}
               keyExtractor={(item) => item.proId.toString()}
               renderItem={renderProductItem}
@@ -273,7 +311,7 @@ const Home = () => {
               contentContainerStyle={{
                 paddingHorizontal: 14,
                 paddingTop: 10,
-                paddingBottom: 110,
+                paddingBottom: 125,
                 justifyContent: 'space-between',
               }}
               columnWrapperStyle={{ justifyContent: 'space-between' }}

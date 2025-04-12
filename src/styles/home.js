@@ -28,6 +28,7 @@ const styles = StyleSheet.create({
       padding: 4,
       borderBottomLeftRadius: 20,
       borderBottomRightRadius: 20,
+      paddingVertical:10,
     },
     logoContainer: {
       flexDirection: 'row',
@@ -90,7 +91,8 @@ const styles = StyleSheet.create({
       justifyContent: 'space-between',
       marginVertical: 8,
       alignItems: 'center',
-      marginBottom:10
+      marginBottom:10,
+     
     },
     productTitle: {
       fontSize: 20,
