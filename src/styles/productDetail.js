@@ -2,6 +2,7 @@ import { StyleSheet, Dimensions } from 'react-native';
 import { COLORS, FONTFAMILY } from '../theme/theme';
 
 const { height, width } = Dimensions.get('window');
+const imageWidth = Math.min(height * 0.5, width * 0.8);
 
 export default StyleSheet.create({
     container: {
@@ -9,16 +10,17 @@ export default StyleSheet.create({
         backgroundColor: '#FFDCC0', // Màu nền chính
         position: 'relative',
     },
-    imageContainer: {
+    imageContainer:{
         position: 'absolute',
-        top: height * 0.1, 
-        left: width * 0.55 - (height * 0.25), // Căn giữa hình
-        zIndex: 100, // Đảm bảo ảnh nằm trên nội dung
+        top: height * 0.1,
+        left: (width - imageWidth) / 2, // Dynamically center the image
+        zIndex: 100, // Ensure the image is on top of content
         alignItems: 'center',
-        width: '100%',
+        width: imageWidth, // Use the calculated image width
     },
+
     image: {
-        width: height * 0.35,
+        width: imageWidth,
         height: height * 0.35,
         borderRadius: height * 0.05, // Ảnh tròn
         borderWidth: 5,
@@ -42,23 +44,23 @@ export default StyleSheet.create({
     },
     title: {
         fontSize: 40,
-        fontFamily:FONTFAMILY.dongle_bold,
+        fontFamily: FONTFAMILY.dongle_bold,
         color: '#333',
         textAlign: 'center',
-        marginBottom:-10
+        marginBottom: -10
     },
     description: {
         fontSize: 26,
-        fontFamily:FONTFAMILY.dongle_light,
+        fontFamily: FONTFAMILY.dongle_light,
         color: '#666',
         textAlign: 'justify',
         paddingHorizontal: 10,
-        marginTop:-15
+        marginTop: -15
     },
     readMore: {
         fontSize: 18,
         color: COLORS.primaryGreenHex,
-        fontFamily:FONTFAMILY.dongle_regular,
+        fontFamily: FONTFAMILY.dongle_regular,
     },
     detailRow: {
         flexDirection: 'row',
@@ -121,17 +123,17 @@ export default StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         marginVertical: 8,
-        
+
     },
     ratingText: {
         fontSize: 30,
-        fontFamily:FONTFAMILY.dongle_bold,
+        fontFamily: FONTFAMILY.dongle_bold,
         marginLeft: 4,
         color: '#555',
     },
     reviewCount: {
         fontSize: 26,
-        fontFamily:FONTFAMILY.dongle_regular,
+        fontFamily: FONTFAMILY.dongle_regular,
         color: '#888',
         marginLeft: 6,
     },
@@ -142,7 +144,7 @@ export default StyleSheet.create({
     },
     sizeLabel: {
         fontSize: 32,
-        fontFamily:FONTFAMILY.dongle_bold,
+        fontFamily: FONTFAMILY.dongle_bold,
         color: '#333',
         marginBottom: 8,
     },
@@ -152,7 +154,7 @@ export default StyleSheet.create({
         justifyContent: 'space-between',
         width: '100%',
     },
-    
+
     sizeButton: {
         width: '30%', // Chia đều thành 3 cột
         borderWidth: 1.5,
@@ -161,9 +163,9 @@ export default StyleSheet.create({
         borderRadius: 20,
         backgroundColor: '#f7f7f7',
         alignItems: 'center',
-        height:45
+        height: 45
     },
-    
+
     selectedSize: {
         backgroundColor: '#FFDCC0',
         borderColor: COLORS.primaryGreenHex,
@@ -219,7 +221,7 @@ export default StyleSheet.create({
         borderRadius: 10,
         paddingVertical: 5,
         paddingHorizontal: 10,
-        
+
     },
     quantityButton: {
         width: 40,
@@ -244,14 +246,14 @@ export default StyleSheet.create({
         paddingVertical: 3,
         paddingHorizontal: 10,
         borderRadius: 20,
-        width:200,
-        height:45
+        width: 200,
+        height: 45
     },
     cartText: {
-        fontSize:32,
-        fontFamily:FONTFAMILY.dongle_bold,
+        fontSize: 32,
+        fontFamily: FONTFAMILY.dongle_bold,
         color: 'white',
-        textAlign:'center'
+        textAlign: 'center'
     },
     price: {
         fontSize: 22,
@@ -271,7 +273,7 @@ export default StyleSheet.create({
         borderRadius: 10, // Bo tròn khung chứa ảnh
         overflow: 'hidden', // Đảm bảo ảnh không bị tràn ra ngoài
     },
-   
+
     thumbnail: {
         width: 60,
         height: 60,
@@ -281,6 +283,6 @@ export default StyleSheet.create({
     selectedThumbnail: {
         borderColor: '#FF6347', // Đổi màu viền khi được chọn
     },
-    
+
 
 });

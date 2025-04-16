@@ -90,7 +90,19 @@ const News = () => {
 
   return (
     <View style={styles.container}>
-      <Header style={styles.headerContainer} />
+     <Header
+          style={{
+            paddingHorizontal: 14,
+            paddingVertical:10,
+            paddingBottom: 10,
+            backgroundColor: 'white',
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.2,
+            shadowRadius: 4,
+            elevation: 5,
+          }}
+        />
       <View style={styles.flatlistContainer}>
         <Text style={styles.header}>{t('posts1')}</Text>
         <View style={styles.tab}>
@@ -129,7 +141,7 @@ const News = () => {
           )}
           contentContainerStyle={{
             paddingTop: 10,
-            paddingBottom: 190,
+            paddingBottom: 10,
             justifyContent: 'space-between',
           }}
           numColumns={2}

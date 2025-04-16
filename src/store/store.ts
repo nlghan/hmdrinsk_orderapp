@@ -114,6 +114,7 @@ interface CategoryStore {
   checkShipment: () => Promise<any | null>;
   editReview: (review: Omit<ProductReview, 'isDelete' | 'dateDeleted' | 'dateUpdated' | 'dateCreated'>) => Promise<void>;
   deleteReview: (reviewId: number) => Promise<void>; 
+  checkTimeOrder: () => Promise<void>;
   
 }
 
@@ -671,7 +672,46 @@ export const useCategoryStore = create<CategoryStore>()(
           console.error("❌ [deleteFavItem] Error deleting favorite item:", error);
         }
       };
-    
+
+      const checkTimeOrder = async () => {
+        try {
+          const accessToken = await AsyncStorage.getItem("access_token");
+          if (!accessToken) {
+            console.error("❌ [checkTimeOrder] Missing access token!");
+            return;
+          }
+      
+          console.log("🔍 [checkTimeOrder] Checking order expiration status...");
+      
+          // Call the API to check the order expiration
+          const response = await axiosInstance.get(
+            '/orders/check-time',
+            {
+              headers: {
+                Authorization: `Bearer ${accessToken}`,
+                accept: '*/*',
+              },
+            }
+          );
+      
+          // Assuming the API responds with a status indicating if the order is expired or not
+          if (response.status === 200) {
+            console.log("✅ [checkTimeOrder] Order status check successful.");
+            // Handle the response here (e.g., check if the order has expired)
+            const { isExpired } = response.data; // Assuming the response contains isExpired flag
+            if (isExpired) {
+              console.log("⚠️ Order has expired.");
+            } else {
+              console.log("✅ Order is still valid.");
+            }
+          } else {
+            console.error(`❌ [checkTimeOrder] Error: ${response.statusText}`);
+          }
+        } catch (error) {
+          console.error("❌ [checkTimeOrder] Error checking order time:", error);
+        }
+      };
+      
       
       const logout = async () => {
         try {
@@ -728,6 +768,7 @@ export const useCategoryStore = create<CategoryStore>()(
         deleteFavItem,
         editReview,
         deleteReview,
+        checkTimeOrder,
 
         setUserId: async (id) => {
           set({ userId: id });
@@ -738,6 +779,7 @@ export const useCategoryStore = create<CategoryStore>()(
               fetchUserCoin(),
               fetchFavoriteItems(),
               fetchProducts(),
+              checkTimeOrder(),
             ]);
           
             useCartStore.getState().fetchCartItem();
@@ -775,6 +817,7 @@ export const useCategoryStore = create<CategoryStore>()(
               fetchProducts(), // ✅ Lấy lại danh sách sản phẩm theo ngôn ngữ mới
               fetchPosts(),
               fetchFavoriteItems(), // ✅ Cập nhật danh sách yêu thích theo ngôn ngữ mới
+              checkTimeOrder(),
             ]);
 
             useCartStore.getState().fetchCartItem();

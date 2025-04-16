@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert, ActivityIndicator, BackHandler } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert, ActivityIndicator, BackHandler, Linking } from 'react-native';
 import { useCartStore } from '../store/useCartStore';
 import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
@@ -93,7 +93,7 @@ const Payment = () => {
 
 
     const handleOrder = async () => {
-        console.log('handleOrder called'); // Kiểm tra xem có vào hàm không
+        console.log('handleOrder called');
         setLoading(true);
         try {
             const token = await AsyncStorage.getItem('access_token');
@@ -101,31 +101,31 @@ const Payment = () => {
                 Alert.alert('Lỗi', 'Không tìm thấy token đăng nhập, vui lòng đăng nhập lại.');
                 return;
             }
-
+    
             if (!order || !order.orderId) {
                 Alert.alert('Lỗi', 'Không tìm thấy thông tin đơn hàng.');
                 return;
             }
-
+    
             console.log('Bắt đầu xử lý đơn hàng với ID:', order.orderId);
-
+    
             const headers = {
                 Authorization: `Bearer ${token}`,
                 'Content-Type': 'application/json',
             };
-
+    
             console.log('Gửi yêu cầu xác nhận đơn hàng...');
             const confirmResponse = await axiosInstance.post(
                 `/orders/confirm`,
                 { userId: order.userId, orderId: order.orderId },
                 { headers }
             );
-
+    
             console.log('Phản hồi xác nhận đơn hàng:', confirmResponse.data);
             if (confirmResponse.status !== 200) {
                 throw new Error('Lỗi khi xác nhận đơn hàng');
             }
-
+    
             console.log(`Tạo thanh toán với phương thức: ${paymentMethod}`);
             const paymentUrl = `/payment/create/${paymentMethod}`;
             const paymentResponse = await axiosInstance.post(
@@ -133,15 +133,20 @@ const Payment = () => {
                 { orderId: order.orderId, userId: order.userId },
                 { headers }
             );
-
+    
             console.log('Phản hồi tạo thanh toán:', paymentResponse.data);
             if (paymentResponse.status === 200) {
-
+                const data = paymentResponse.data;
+    
+                // Trường hợp ZaloPay hoặc các phương thức cần redirect
+                if (data.linkPayment) {
+                    Linking.openURL(data.linkPayment); // Mở ZaloPay redirect
+                }
+    
                 navigation.navigate('OrderComplete');
             } else {
                 navigation.navigate('OrderFailed');
                 throw new Error('Lỗi khi tạo thanh toán');
-
             }
         } catch (error) {
             console.error('Lỗi đặt hàng:', error);
@@ -150,6 +155,7 @@ const Payment = () => {
             setLoading(false);
         }
     };
+    
 
     const handleOrderPause = async () => {
         console.log('handleOrderPause called'); // Kiểm tra xem có vào hàm không
@@ -334,26 +340,26 @@ const Payment = () => {
                         <Text style={styles.paymentText}>{t('order.orderDetail.method.method1')}</Text>
                     </TouchableOpacity>
                     {/* <TouchableOpacity 
-                        style={[styles.paymentOption, paymentMethod === 'bank' && styles.selectedPayment]}
-                        onPress={() => setPaymentMethod('bank')}>
-                        <Icon name="credit-card" size={24} color={paymentMethod === 'bank' ? "#FF9800" : "#555"} />
+                        style={[styles.paymentOption, paymentMethod === 'payos' && styles.selectedPayment]}
+                        onPress={() => setPaymentMethod('payos')}>
+                        <Icon name="credit-card" size={24} color={paymentMethod === 'payos' ? "#FF9800" : "#555"} />
                         <Text style={styles.paymentText}>Thẻ ngân hàng</Text>
                     </TouchableOpacity>
                     <TouchableOpacity 
                         style={[styles.paymentOption, paymentMethod === 'e-wallet' && styles.selectedPayment]}
-                        onPress={() => setPaymentMethod('e-wallet')}>
-                        <Icon name="account-balance-wallet" size={24} color={paymentMethod === 'e-wallet' ? "#FF9800" : "#555"} />
+                        onPress={() => setPaymentMethod('momo')}>
+                        <Icon name="account-balance-wallet" size={24} color={paymentMethod === 'momo' ? "#FF9800" : "#555"} />
                         <Text style={styles.paymentText}>Momo</Text>
-                    </TouchableOpacity>
+                    </TouchableOpacity> */}
                     <TouchableOpacity 
-                        style={[styles.paymentOption, paymentMethod === 'e-wallet' && styles.selectedPayment]}
-                        onPress={() => setPaymentMethod('e-wallet')}>
-                        <Icon name="account-balance-wallet" size={24} color={paymentMethod === 'e-wallet' ? "#FF9800" : "#555"} />
+                        style={[styles.paymentOption, paymentMethod === 'credit/zaloPay' && styles.selectedPayment]}
+                        onPress={() => setPaymentMethod('credit/zaloPay')}>
+                        <Icon name="account-balance-wallet" size={24} color={paymentMethod === 'credit/zaloPay' ? "#FF9800" : "#555"} />
                         <Text style={styles.paymentText}>ZaloPay</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity 
+                    {/* <TouchableOpacity 
                         style={[styles.paymentOption, paymentMethod === 'e-wallet' && styles.selectedPayment]}
-                        onPress={() => setPaymentMethod('e-wallet')}>
+                        onPress={() => setPaymentMethod('vnpay')}>
                         <Icon name="account-balance-wallet" size={24} color={paymentMethod === 'e-wallet' ? "#FF9800" : "#555"} />
                         <Text style={styles.paymentText}>VNPay</Text>
                     </TouchableOpacity> */}
@@ -578,7 +584,8 @@ const styles = StyleSheet.create({
         marginHorizontal: 20,
         marginTop: 10,
         zIndex: 1000,
-        width:150
+        width:150,
+        height:50,
     },
     orderButton1: {
         backgroundColor: '#d8d8d8',
@@ -589,7 +596,9 @@ const styles = StyleSheet.create({
         marginHorizontal: 20,
         marginTop: 10,
         zIndex: 1000,
-        width:150
+        width:150,
+        height:50,
+        
     },
     orderText: {
         fontSize: 30,
@@ -634,6 +643,6 @@ const styles = StyleSheet.create({
         display: 'flex',
         flexDirection: 'row',
         justifyContent: 'center',
-        
+        height:80
     }
 });

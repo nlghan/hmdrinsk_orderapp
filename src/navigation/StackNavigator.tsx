@@ -36,6 +36,7 @@ import Search from '../screens/Search';
 import Contact from '../screens/Contact';
 
 
+
 // ✅ Định nghĩa kiểu cho danh sách các màn hình
 export type RootStackParamList = {
   Login: undefined;
@@ -76,6 +77,7 @@ const StackNavigator = () => {
 
   return (
     <Stack.Navigator initialRouteName="Login">
+
       <Stack.Screen name="Login" component={Login} options={{ headerShown: false, animation:'slide_from_right' }} />
       <Stack.Screen name="Register" component={Register} options={{ headerShown: false, animation:'slide_from_right' }} />
       <Stack.Screen name="ForgotPassword" component={ForgotPassword} options={{ headerShown: false, animation:'slide_from_right' }} />
