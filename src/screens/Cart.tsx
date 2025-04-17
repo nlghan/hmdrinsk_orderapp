@@ -298,35 +298,29 @@ const Cart = () => {
 
     const handleCreateOrder = async () => {
         try {
-            // Nếu đã có đơn hàng đang bị pause thì dùng luôn
-            if (idOrderPause && idCartPause) {
-                console.log("🔁 Điều hướng tới đơn hàng đã tồn tại với orderId:", idOrderPause);
-                navigation.navigate('Payment', { orderId: idOrderPause });
-                return;
-            }
-
-            // Ngược lại, tạo đơn hàng mới
-            const orderId = await createOrder(note);  // Nhận orderId từ API
-
-            if (!orderId) {
-                throw new Error("❌ orderId không hợp lệ.");
-            }
-
-            const orderIdNumber = Number(orderId); // Ép kiểu orderId thành number
-            if (isNaN(orderIdNumber)) {
-                throw new Error("❌ orderId không phải là số hợp lệ.");
-            }
-
-            await fetchCartItem();  // Cập nhật giỏ hàng sau khi đặt hàng
-            console.log("✅ Tạo đơn hàng thành công với orderId:", orderIdNumber);
-
-            // Chuyển sang màn hình Payment và truyền orderId dạng số
-            navigation.navigate('Payment', { orderId: orderIdNumber });
-
+          // Nếu đã có đơn hàng bị pause thì tiếp tục
+          if (idOrderPause && idCartPause) {
+            console.log("🔁 Resume paused order:", idOrderPause);
+            navigation.navigate('Payment', { orderId: idOrderPause });
+            return;
+          }
+      
+          // Tạo đơn hàng mới
+          const orderId = await createOrder(note);
+          const orderIdNumber = Number(orderId);
+      
+          if (!orderId || isNaN(orderIdNumber)) {
+            throw new Error("❌ orderId không hợp lệ.");
+          }
+      
+          console.log("✅ Created order:", orderIdNumber);
+          navigation.navigate('Payment', { orderId: orderIdNumber });
+      
         } catch (error) {
-            console.error("❌ Lỗi khi tạo đơn hàng:", error);
+          console.error("❌ Error creating order:", error);
         }
-    };
+      };
+      
 
 
     return (
