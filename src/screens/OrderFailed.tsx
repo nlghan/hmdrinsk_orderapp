@@ -17,7 +17,7 @@ const OrderFailed = () => {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      navigation.navigate('Cart' as never); // Điều hướng về giỏ hàng
+      navigation.navigate('Main' as never); // Điều hướng về giỏ hàng
       ensureActiveCart();
     }, 2000);
 

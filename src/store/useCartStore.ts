@@ -598,60 +598,47 @@ export const useCartStore = create<CartStore>()(
         }
       },
 
-      createOrder: async (note: string): Promise<string> => {  // Thêm Promise<string>
+      createOrder: async (note: string): Promise<string> => {
         try {
           const { currentCartId, selectedVoucher, coin } = get();
           const { userId, language } = useCategoryStore.getState();
-
-          if (!userId) throw new Error("User not logged in");
-          if (!currentCartId) throw new Error("No active cart found");
-
+      
+          if (!userId || !currentCartId) throw new Error("❌ Missing user or cart");
+      
           const accessToken = await AsyncStorage.getItem('access_token');
           if (!accessToken) throw new Error("Access token missing");
-
+      
           const voucherId = selectedVoucher.selectedVoucherId || "string";
           const pointCoinUse = coin || 0;
-
-          console.log(`🛒 Creating order...`);
-
+      
           const response = await axiosInstance.post(
             '/orders/create',
             { userId, cartId: currentCartId, voucherId, pointCoinUse, note, language },
             { headers: { Authorization: `Bearer ${accessToken}` } }
           );
-
-          console.log("✅ Order created successfully:", response.data);
-
+      
           const order = response.data.body;
           const orderId = order?.orderId;
-
-          if (!orderId) {
-            throw new Error("Invalid orderId received from API");
-          }
-
-          // Lưu orderId vào Zustand store
+          if (!orderId) throw new Error("Invalid orderId");
+      
           set({
             order,
             orderId,
             cart: [],
             cartTotal: 0,
-            selectedVoucher: {
-              selectedVoucherId: null,
-              selectedVoucherKey: null,
-              selectedVoucherDiscountAmount: 0
-            },
+            selectedVoucher: { selectedVoucherId: null, selectedVoucherKey: null, selectedVoucherDiscountAmount: 0 },
             coin: 0,
             currentCartId: null
           });
-
-          console.log("🛍 Order stored in state:", order);
-
-          return orderId;  // Đảm bảo luôn trả về orderId dưới dạng string
+      
+          return String(orderId);
+      
         } catch (error) {
-          console.error("❌ Error creating order:", error);
+          console.error("❌ createOrder error:", error);
           throw error;
         }
       },
+      
 
 
       addToCart: async (proId: number, size: string, quantity: number, language: string) => {

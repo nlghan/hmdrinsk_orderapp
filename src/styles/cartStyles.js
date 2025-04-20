@@ -111,6 +111,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#fff',
         borderRadius: BORDERRADIUS.radius_20,
         elevation: 4,
+    
     },
     voucherContainer: {
         backgroundColor: '#fff',
@@ -168,6 +169,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#fff',
         padding: SPACING.space_8,
         borderRadius: BORDERRADIUS.radius_20,
+        height:80
     },
 
     selectAll: {
@@ -205,6 +207,7 @@ const styles = StyleSheet.create({
         paddingVertical: 8,
         paddingHorizontal: 30,
         borderRadius: BORDERRADIUS.radius_15,
+        height:50
     },
 
     checkoutText: {

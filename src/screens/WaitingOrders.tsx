@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, ActivityIndicator, Image, Alert, TouchableOpacity, StyleSheet } from 'react-native';
 import axiosInstance from '../utils/axiosInstance';
@@ -11,7 +10,6 @@ import EmptyListAnimation from '../components/EmptyListAnimation';
 import Icon from "react-native-vector-icons/MaterialIcons";
 import { RootStackParamList } from "../navigation/RootStackParamList";
 import { FONTFAMILY } from '../theme/theme';
-
 
 const PendingOrder = () => {
     type ProductItem = {
@@ -53,13 +51,49 @@ const PendingOrder = () => {
     const [waitingOrders, setWaitingOrders] = useState<Order[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
-    const { language, userId } = useCategoryStore();
+    const [countdowns, setCountdowns] = useState<{ [orderId: string]: number }>({});
+    // State to hold countdown time
+    const { language, userId, checkTimeOrder } = useCategoryStore();
     const { t } = useTranslation();
     const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
 
     useEffect(() => {
         fetchWaitingOrders();
     }, []);
+
+    useEffect(() => {
+        const intervals: NodeJS.Timeout[] = [];
+
+        waitingOrders.forEach(order => {
+            const [datePart, timePart] = order.dateOders.split(' ');
+            const [year, month, day] = datePart.split('-').map(Number);
+            const [hour, minute, second] = timePart.split(':').map(Number);
+
+            const localOrderTime = new Date(year, month - 1, day, hour, minute, second).getTime();
+            const endTime = localOrderTime + 30 * 60 * 1000;
+
+            const updateCountdown = () => {
+                const now = Date.now();
+                const timeLeft = Math.max(endTime - now, 0);
+                setCountdowns(prev => ({ ...prev, [order.orderId]: timeLeft }));
+
+                if (timeLeft === 0) {
+                    checkTimeOrder(); // Gọi checkTimeOrder nếu hết hạn
+                    fetchWaitingOrders();
+                }
+            };
+
+            updateCountdown(); // cập nhật lần đầu
+            const interval = setInterval(updateCountdown, 1000);
+            intervals.push(interval);
+        });
+
+        return () => {
+            intervals.forEach(clearInterval);
+        };
+    }, [waitingOrders]);
+
+
 
     const formatPrice = (price: number) => {
         return (price).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
@@ -93,8 +127,18 @@ const PendingOrder = () => {
             setLoading(false);
         }
     };
+
     const handleRestoreOrder = (orderId: string) => {
         Alert.alert('Mua lại', `Bạn có chắc chắn muốn mua lại đơn hàng ${orderId} không?`);
+    };
+
+    // Function to format the countdown time
+    const formatCountdown = (time: number | undefined) => {
+        if (time === undefined || time <= 0) return '00:00:00';
+        const hours = Math.floor(time / (1000 * 60 * 60));
+        const minutes = Math.floor((time % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((time % (1000 * 60)) / 1000);
+        return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
     };
 
     if (loading) return <ActivityIndicator size="large" color="#0000ff" />;
@@ -116,11 +160,17 @@ const PendingOrder = () => {
                     data={waitingOrders}
                     keyExtractor={(item) => item?.orderId?.toString() || `order-${Math.random()}`}
                     renderItem={({ item }) => (
-                        <TouchableOpacity
-                            onPress={() => navigation.navigate('Payment', { orderId: Number(item.orderId) })}>
-
+                        <TouchableOpacity onPress={() => navigation.navigate('Payment', { orderId: Number(item.orderId) })}>
                             <View style={styles.card}>
-                                <Text style={styles.orderId}><Text style={styles.boldText}>{t('history.order_id')}</Text> {item?.orderId}</Text>
+                                <View style={styles.orderHeader}>
+                                    <Text style={styles.orderId}><Text style={styles.boldText}>{t('history.order_id')}</Text> {item?.orderId}</Text>
+                                    <Text style={styles.countdownText}>
+                                        {formatCountdown(countdowns[item.orderId])}
+                                    </Text>
+
+                                </View>
+
+
                                 <FlatList
                                     data={item?.listItem}
                                     keyExtractor={(product) => product?.cartItemId?.toString() || `product-${Math.random()}`}
@@ -137,6 +187,7 @@ const PendingOrder = () => {
                                 />
                                 <Text style={styles.totalPrice}><Text style={styles.boldText1}>{t('history.total_price')}</Text> {formatPrice(Math.max(item.totalPrice + item.deliveryFee - item.discountPrice, 0))}đ</Text>
                                 <Text style={styles.boldText2} ><Text style={styles.boldText1}>{t('history.order_date')}</Text> {item.dateOders}</Text>
+
                                 <View style={styles.buttonContainer}>
                                     <TouchableOpacity onPress={() => handleRestoreOrder(item.orderId)} style={styles.button}>
                                         <Text style={styles.buttonText}>{t('history.payment')}</Text>
@@ -150,6 +201,7 @@ const PendingOrder = () => {
         </View>
     );
 };
+
 const styles = StyleSheet.create({
     container: {
         flex: 1,
@@ -162,21 +214,30 @@ const styles = StyleSheet.create({
         top: 15,
         left: 10,
     },
+    orderHeader: {
+        display: 'flex',
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        textAlign: 'center'
+
+    },
     buttonContainer: {
         flexDirection: 'row',
         marginTop: 10,
-        justifyContent: 'flex-end', // Đưa nút về lề phải
-        alignItems: 'center', // Căn giữa theo chiều dọc
+        justifyContent: 'flex-end',
+        alignItems: 'center',
     },
     button: {
         backgroundColor: '#ff6347',
-        padding: 10,
+        padding: 8,
         borderRadius: 5,
-        marginRight: 10,
+        width: 100
     },
     buttonText: {
         color: 'white',
-        fontWeight: 'bold',
+        fontSize: 22,
+        fontFamily: FONTFAMILY.dongle_bold,
+        textAlign: 'center'
     },
     headerContainer: {
         flexDirection: 'row',
@@ -244,17 +305,23 @@ const styles = StyleSheet.create({
     },
     totalPrice: {
         fontFamily: FONTFAMILY.dongle_bold,
-        fontSize:28,
+        fontSize: 28,
         color: '#e74c3c',
     },
-    boldText1:{
+    boldText1: {
         fontFamily: FONTFAMILY.dongle_regular,
-        fontSize:24
+        fontSize: 24,
     },
-    boldText2:{
+    boldText2: {
         fontFamily: FONTFAMILY.dongle_light,
-        fontSize:24
-    }
+        fontSize: 24,
+    },
+    countdownText: {
+        marginBottom: 8,
+        fontSize: 24,
+        fontFamily: FONTFAMILY.dongle_bold,
+        color: 'red'
+    },
 });
 
 export default PendingOrder;

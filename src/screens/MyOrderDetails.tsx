@@ -18,6 +18,8 @@ interface Order {
     address: string;
     totalPrice: number;
     status: string;
+    discountPrice: number;
+    coin: number
 }
 
 interface Payment {
@@ -90,7 +92,9 @@ const MyOrderDetails = () => {
                     orderId: data.order.orderId,
                     address: data.order.address,
                     totalPrice: data.order.totalPrice,
-                    status: data.order.status
+                    status: data.order.status,
+                    discountPrice: data.order.discountPrice,
+                    coin: data.order.pointCoinUse
                 });
                 setPayment({
                     paymentMethod: data.payment.paymentMethod || '',
@@ -159,6 +163,17 @@ const MyOrderDetails = () => {
                 {/* Thông tin đơn hàng */}
                 <View style={styles.section}>
                     <Text style={styles.sectionTitle}>{t('orderContent.orderInfo')}</Text>
+                   
+                    <View style={styles.detailRow}>
+                        <Text style={styles.label}>{t('order.discount')}:</Text>
+                        <Text style={styles.value}>{formatPrice(order?.discountPrice ?? 0)}đ</Text>
+
+                    </View>
+                    <View style={styles.detailRow}>
+                        <Text style={styles.label}>{t('cart.coin')}:</Text>
+                        <Text style={styles.value}>{formatPrice(order?.coin ?? 0)}đ</Text>
+
+                    </View>
                     <View style={styles.detailRow}>
                         <Text style={styles.label}>{t('orderContent.price')}:</Text>
                         <Text style={styles.value}>{formatPrice(payment?.amount ?? 0)}đ</Text>
@@ -359,7 +374,7 @@ const styles = StyleSheet.create({
         fontSize: 26,
         fontFamily: FONTFAMILY.dongle_bold,
         color: '#333',
-        lineHeight:16
+        lineHeight:20
     },
     itemDetail: {
         fontSize: 24,

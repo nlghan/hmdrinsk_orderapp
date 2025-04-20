@@ -1,3 +1,4 @@
+import 'react-native-reanimated';
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { NotificationProvider } from './src/components/NotificationContext';
@@ -6,6 +7,7 @@ import './src/i18n/i18n';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar, Platform, View } from 'react-native';
+import AppLinkHandler from './src/components/AppLinkHandler';
 
 const App = () => {
   return (
@@ -13,6 +15,7 @@ const App = () => {
       <GestureHandlerRootView style={{ flex: 1 }}>
         <NotificationProvider>
           <NavigationContainer>
+          <AppLinkHandler />
             {/* Ẩn status bar */}
             <StatusBar hidden={true} />
             <View
