@@ -247,8 +247,10 @@ export default StyleSheet.create({
         paddingHorizontal: 10,
         borderRadius: 20,
         width: 200,
-        height: 45
-    },
+        height: 45,
+        justifyContent: 'center', // 👉 căn giữa theo chiều dọc
+        alignItems: 'center',     // 👉 căn giữa theo chiều ngang
+    },    
     cartText: {
         fontSize: 32,
         fontFamily: FONTFAMILY.dongle_bold,

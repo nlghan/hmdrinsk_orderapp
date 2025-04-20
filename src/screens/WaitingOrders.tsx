@@ -63,37 +63,41 @@ const PendingOrder = () => {
 
     useEffect(() => {
         const intervals: NodeJS.Timeout[] = [];
-
+        const expiredOrders: Set<string> = new Set();
+    
         waitingOrders.forEach(order => {
             const [datePart, timePart] = order.dateOders.split(' ');
             const [year, month, day] = datePart.split('-').map(Number);
             const [hour, minute, second] = timePart.split(':').map(Number);
-
+    
             const localOrderTime = new Date(year, month - 1, day, hour, minute, second).getTime();
             const endTime = localOrderTime + 30 * 60 * 1000;
-
+    
             const updateCountdown = () => {
                 const now = Date.now();
                 const timeLeft = Math.max(endTime - now, 0);
+    
                 setCountdowns(prev => ({ ...prev, [order.orderId]: timeLeft }));
-
-                if (timeLeft === 0) {
-                    checkTimeOrder(); // Gọi checkTimeOrder nếu hết hạn
-                    fetchWaitingOrders();
+    
+                if (timeLeft <= 0 && !expiredOrders.has(order.orderId)) {
+                    expiredOrders.add(order.orderId); // Đánh dấu đơn này đã xử lý
+                    checkTimeOrder(); // Gọi check 1 lần
+                    setTimeout(() => {
+                        fetchWaitingOrders(); // Delay fetch để tránh gọi liên tục khi state chưa cập nhật
+                    }, 500);
                 }
             };
-
-            updateCountdown(); // cập nhật lần đầu
+    
+            updateCountdown(); // lần đầu
             const interval = setInterval(updateCountdown, 1000);
             intervals.push(interval);
         });
-
+    
         return () => {
             intervals.forEach(clearInterval);
         };
-    }, [waitingOrders]);
-
-
+    }, [waitingOrders.length]); // 👈 chỉ chạy lại khi số lượng đơn thay đổi
+    
 
     const formatPrice = (price: number) => {
         return (price).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");

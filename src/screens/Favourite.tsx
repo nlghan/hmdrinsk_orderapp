@@ -279,7 +279,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 8,
     borderRadius: 10,
     marginTop: 10,
-    height: '90%'
+    height: '94.5%'
   },
   deleteButton: {
     backgroundColor: '#FF5A5F',

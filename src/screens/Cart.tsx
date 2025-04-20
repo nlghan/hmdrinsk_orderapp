@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
     View,
     Text,
@@ -8,7 +8,9 @@ import {
     StyleSheet,
     TextInput,
     KeyboardAvoidingView,
-    Platform
+    Platform,
+    Alert,
+    LogBox
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useCartStore } from '../store/useCartStore';  // Import your store here
@@ -25,6 +27,9 @@ import { useTranslation } from 'react-i18next';
 import Notification from '../components/Notification';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axiosInstance from '../utils/axiosInstance';
+import Loading from '../components/DotLoading';
+LogBox.ignoreLogs(['new NativeEventEmitter']); // Ignore log notification by message
+LogBox.ignoreAllLogs();
 
 interface CartItem {
     cartItemId: number;
@@ -66,6 +71,9 @@ const Cart = () => {
     const { t } = useTranslation();
     const { cartTotal } = useCartStore();
     const [inputCoin, setInputCoin] = useState<string>('');  // state riêng cho giá trị xu nhập vào
+    const [isLoading, setIsLoading] = useState(false);
+    const [loading, setLoading] = useState(false);
+
 
     const [notification, setNotification] = useState({ message: '', visible: false });
     const showNotification = (message: string) => {
@@ -78,7 +86,7 @@ const Cart = () => {
     console.log("Id cart pause:" + idCartPause);
 
     const formatPrice = (price: number) => {
-        return (price).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+        return (price).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".") + 'đ';
     };
 
     useEffect(() => {
@@ -86,26 +94,31 @@ const Cart = () => {
     }, []);
 
     const updateQuantity = async (cartItemId: number, type: 'increase' | 'decrease') => {
+        setLoading(true); // Bắt đầu quá trình tăng giảm
         try {
             const { increaseQuantity, decreaseQuantity } = useCartStore.getState();
+
+            // Gọi phương thức tương ứng để tăng hoặc giảm số lượng
             if (type === 'increase') {
-                await increaseQuantity(cartItemId);
+                // Nếu increaseQuantity là một thao tác bất đồng bộ, bạn nên chờ nó hoàn thành
+                await increaseQuantity(cartItemId);  // Nếu tăng số lượng
             } else {
-                await decreaseQuantity(cartItemId);
+                // Nếu decreaseQuantity là một thao tác bất đồng bộ, bạn nên chờ nó hoàn thành
+                await decreaseQuantity(cartItemId);  // Nếu giảm số lượng
             }
         } catch (error) {
             console.error("❌ Error updating quantity:", error);
+        } finally {
+            setLoading(false); // Đảm bảo rằng setLoading(false) chỉ được gọi sau khi thao tác đã hoàn tất
         }
     };
 
+
     const updateQuantityManual = async (cartItemId: number, newQuantity: number) => {
-        try {
-            const { updateQuantity } = useCartStore.getState();
-            await updateQuantity(cartItemId, newQuantity);
-        } catch (error) {
-            console.error("❌ Error updating quantity:", error);
-        }
+        const { updateQuantity } = useCartStore.getState();
+        await updateQuantity(cartItemId, newQuantity); // Nếu lỗi sẽ tự throw lên
     };
+
 
     const handleInputChange = (cartItemId: number, value: string) => {
         setInputValues((prev) => ({
@@ -113,11 +126,65 @@ const Cart = () => {
             [cartItemId]: value,
         }));
     };
+    const inputRefs = useRef<{ [key: number]: TextInput | null }>({});
 
-    const handleSubmit = (cartItemId: number) => {
-        const newQuantity = parseInt(inputValues[cartItemId] || '1');
-        updateQuantityManual(cartItemId, newQuantity);
-        setInputValues((prev) => ({ ...prev, [cartItemId]: '' }));
+
+    const handleSubmit = async (cartItemId: number) => {
+        setLoading(true); // Start the processing
+
+        // Save the initial value of the input before update
+        const previousQuantity = inputValues[cartItemId] || '1'; // Default to '1' if no value
+
+        try {
+            // Get the new quantity value, defaulting to 1 if not provided
+            const newQuantity = parseInt(inputValues[cartItemId] || '1', 10);
+
+            // Check if the value is valid (not a number or less than 1)
+            if (isNaN(newQuantity) || newQuantity <= 0) {
+                throw new Error("Invalid value");
+            }
+
+            // Update the quantity
+            await updateQuantityManual(cartItemId, newQuantity);
+
+            // Update the input values with the new quantity
+            setInputValues((prev) => ({ ...prev, [cartItemId]: String(newQuantity) }));
+        } catch (error: unknown) {
+            console.error("❌ Error updating quantity:", error);
+
+            let errorMessage = 'Có lỗi xảy ra. Bạn muốn quay lại giá trị cũ?';
+
+            // Kiểm tra nếu error là instance của Error
+            if (error instanceof Error) {
+                errorMessage = error.message;
+            }
+
+            Alert.alert(
+                'Lỗi cập nhật',
+                errorMessage,
+                [
+                    {
+                        text: 'OK',
+                        onPress: () => {
+                            // Revert lại giá trị cũ
+                            setInputValues((prev) => ({
+                                ...prev,
+                                [cartItemId]: previousQuantity,
+                            }));
+            
+                            // Focus lại vào TextInput sau một chút delay
+                            setTimeout(() => {
+                                inputRefs.current[cartItemId]?.focus();
+                            }, 100); // Delay nhẹ để tránh race condition khi Alert đóng
+                        },
+                    },
+                ]
+            );
+            
+        }
+        finally {
+            setLoading(false); // End the processing
+        }
     };
 
 
@@ -271,13 +338,18 @@ const Cart = () => {
                                         </TouchableOpacity>
 
                                         <TextInput
+                                            ref={(ref) => (inputRefs.current[sizeItem.cartItemId] = ref)}
                                             style={styles.quantityInput}
                                             keyboardType="numeric"
                                             value={inputValues[sizeItem.cartItemId] || String(sizeItem.quantity)}
-                                            onFocus={() => handleInputChange(sizeItem.cartItemId, '')}  // Clear input value when clicked
-                                            onChangeText={(text) => handleInputChange(sizeItem.cartItemId, text)}  // Handle input changes
-                                            onSubmitEditing={() => handleSubmit(sizeItem.cartItemId)}  // Submit editing and update quantity
+                                            onFocus={() => handleInputChange(sizeItem.cartItemId, '')}
+                                            onChangeText={(text) => handleInputChange(sizeItem.cartItemId, text)}
+                                            onSubmitEditing={() => handleSubmit(sizeItem.cartItemId)}
+                                            selectTextOnFocus
                                         />
+
+
+
 
                                         <TouchableOpacity
                                             onPress={() => updateQuantity(sizeItem.cartItemId, 'increase')}
@@ -288,7 +360,9 @@ const Cart = () => {
                                     </View>
                                 </View>
                             ))}
-                            <Text style={styles.discountPrice}>{formatPrice(totalPrice)}đ</Text>
+                            <Text style={styles.discountPrice}>
+                                {loading ? '...' : formatPrice(totalPrice)}
+                            </Text>
                         </View>
                     </View>
                 </View>
@@ -298,29 +372,33 @@ const Cart = () => {
 
     const handleCreateOrder = async () => {
         try {
-          // Nếu đã có đơn hàng bị pause thì tiếp tục
-          if (idOrderPause && idCartPause) {
-            console.log("🔁 Resume paused order:", idOrderPause);
-            navigation.navigate('Payment', { orderId: idOrderPause });
-            return;
-          }
-      
-          // Tạo đơn hàng mới
-          const orderId = await createOrder(note);
-          const orderIdNumber = Number(orderId);
-      
-          if (!orderId || isNaN(orderIdNumber)) {
-            throw new Error("❌ orderId không hợp lệ.");
-          }
-      
-          console.log("✅ Created order:", orderIdNumber);
-          navigation.navigate('Payment', { orderId: orderIdNumber });
-      
+            setIsLoading(true); // 👉 Bắt đầu loading
+
+            // Nếu đã có đơn hàng bị pause thì tiếp tục
+            if (idOrderPause && idCartPause) {
+                console.log("🔁 Resume paused order:", idOrderPause);
+                navigation.navigate('Payment', { orderId: idOrderPause });
+                return;
+            }
+
+            // Tạo đơn hàng mới
+            const orderId = await createOrder(note);
+            const orderIdNumber = Number(orderId);
+
+            if (!orderId || isNaN(orderIdNumber)) {
+                throw new Error("❌ orderId không hợp lệ.");
+            }
+
+            console.log("✅ Created order:", orderIdNumber);
+            navigation.navigate('Payment', { orderId: orderIdNumber });
+
         } catch (error) {
-          console.error("❌ Error creating order:", error);
+            console.error("❌ Error creating order:", error);
+        } finally {
+            setIsLoading(false); // 👉 Kết thúc loading bất kể thành công hay thất bại
         }
-      };
-      
+    };
+
 
 
     return (
@@ -328,9 +406,26 @@ const Cart = () => {
             style={{ flex: 1 }}
             behavior={Platform.OS === "ios" ? "padding" : "height"} // Cho iOS và Android
             keyboardVerticalOffset={Platform.OS === 'ios' ? 80 : 0} // Cần chỉnh nếu bạn có header
+
         >
+            {isLoading &&
+                <View style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    backgroundColor: 'rgba(0, 0, 0, 0.59)',  // Overlay tối mờ
+                    justifyContent: 'center',
+                    zIndex: 999,  // Đảm bảo overlay nằm trên tất cả
+                }}>
+                    <Loading title={''} />
+                </View>
+            }
             <View style={styles.container}>
                 <Notification message={notification.message} visible={notification.visible} onHide={() => setNotification({ ...notification, visible: false })} />
+
+
                 {(!cart || cart.length === 0) ? (
                     <EmptyListAnimation title={t('cart.empty')} />
                 ) : (
@@ -449,8 +544,12 @@ const Cart = () => {
 
                             <View style={styles.paymentContainer}>
                                 <Text style={styles.totalText}>
-                                    {t('order.orderDetail.sum')}: <Text style={styles.totalAmount}>{formatPrice(finalTotal)}đ </Text>
+                                    {t('order.orderDetail.sum')}:
+                                    <Text style={styles.totalAmount}>
+                                        {loading ? '...' : formatPrice(finalTotal)}
+                                    </Text>
                                 </Text>
+
 
                                 <TouchableOpacity style={styles.checkoutButton} onPress={handleCreateOrder}>
                                     <Text style={styles.checkoutText}>{t('buy')}</Text>
