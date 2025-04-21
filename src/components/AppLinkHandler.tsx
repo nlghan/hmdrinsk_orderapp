@@ -4,9 +4,13 @@ import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../navigation/RootStackParamList';
 import queryString from 'query-string';
+import { useCartStore } from '../store/useCartStore';
+import { useCategoryStore } from '../store/store';
 
 export default function AppLinkHandler() {
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
+  const { setIdOrderPause, setIdCartPause, ensureActiveCart, fetchCartItem } = useCartStore();
+  const {fetchUserCoin} = useCategoryStore();
 
   const handleDeepLink = (url: string) => {
     try {
@@ -31,8 +35,12 @@ export default function AppLinkHandler() {
       console.log('Parsed status:', status);
   
       if (status === '1') {
+        setIdCartPause(null);
+        setIdOrderPause(null);
+        fetchUserCoin();
         navigation.navigate('OrderComplete');
       } else if (status === '-49') {
+        fetchUserCoin();
         navigation.navigate('OrderFailed');
       } else {
         console.log('Unknown status value:', status);

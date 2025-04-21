@@ -44,23 +44,17 @@ const ProductDetail = () => {
     const [loading, setLoading] = useState(false);
 
 
-    useEffect(() => {
-        const loadImages = async () => {
-            const imagePromises = product.productImageResponseList.map(img =>
-                Image.prefetch(img.linkImage)
-            );
-
-            try {
-                await Promise.all(imagePromises);
-            } catch (error) {
-                console.warn("⚠️ Lỗi khi preload ảnh:", error);
-            } finally {
-                setIsLoadingImages(false); // Ẩn loading sau khi ảnh đã tải
-            }
-        };
-
-        loadImages();
-    }, [product.productImageResponseList]);
+    // useEffect(() => {
+    //     const preloadImages = () => {
+    //       const sources = product.productImageResponseList.map(img => ({
+    //         uri: img.linkImage,
+    //         cache: FastImage.cacheControl.immutable,
+    //       }));
+    //       FastImage.preload(sources);
+    //       setIsLoadingImages(false);
+    //     };
+    //     preloadImages();
+    //   }, [product.productImageResponseList]);
 
 
 
@@ -196,10 +190,11 @@ const ProductDetail = () => {
             setCurrentImageIndex((prevIndex) =>
                 (prevIndex + 1) % product.productImageResponseList.length
             );
-        }, 4000);
+        }, 400000);
 
         return () => clearInterval(interval); // Dọn dẹp interval khi unmount
     }, [product.productImageResponseList]);
+
     // useEffect(() => {
     //     const preloadMainImage = async () => {
     //         try {
@@ -213,6 +208,21 @@ const ProductDetail = () => {
     //     preloadMainImage();
     // }, []);
 
+    useEffect(() => {
+        if (!product?.productImageResponseList?.length) return;
+      
+        const sources = product.productImageResponseList.map(img => ({
+          uri: img.linkImage,
+          cache: FastImage.cacheControl.immutable,
+        }));
+        FastImage.preload(sources);
+      
+        setIsLoadingImages(false);
+      }, [product.productImageResponseList]);
+      
+  
+      
+
 
     if (isLoadingImages) {
         return (
@@ -225,20 +235,20 @@ const ProductDetail = () => {
 
     return (
         <View style={{ flex: 1 }}>
-              {loading && (
-                     <View style={{
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        bottom: 0,
-                        backgroundColor: 'rgba(0, 0, 0, 0.59)',  // Overlay tối mờ
-                        justifyContent: 'center',
-                        zIndex: 999,  // Đảm bảo overlay nằm trên tất cả
-                    }}>
-                        <Loading title={''} />
-                    </View>
-                )}
+            {loading && (
+                <View style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    backgroundColor: 'rgba(0, 0, 0, 0.3)',  // Overlay tối mờ
+                    justifyContent: 'center',
+                    zIndex: 999,  // Đảm bảo overlay nằm trên tất cả
+                }}>
+                    <Loading title={''} />
+                </View>
+            )}
             <Notification message={notification.message} visible={notification.visible} onHide={() => setNotification({ ...notification, visible: false })} />
             <Header
                 style={{
@@ -271,10 +281,12 @@ const ProductDetail = () => {
                 </View>
                 <View style={productDetail.imageContainer}>
                     {/* Ảnh chính */}
-                    <Image
+                    <FastImage
                         source={{ uri: product.productImageResponseList[currentImageIndex]?.linkImage }}
                         style={productDetail.image}
+                        resizeMode={FastImage.resizeMode.contain}
                     />
+
 
                     {/* Danh sách ảnh nhỏ */}
                     <View style={productDetail.thumbnailContainer}>
@@ -287,7 +299,16 @@ const ProductDetail = () => {
                                     currentImageIndex === index && productDetail.selectedThumbnail
                                 ]}
                             >
-                                <Image source={{ uri: img.linkImage }} style={productDetail.thumbnail} />
+                                <FastImage
+                                    source={{
+                                        uri: img.linkImage,
+                                        priority: FastImage.priority.normal,
+                                        cache: FastImage.cacheControl.immutable, // Luôn cache nếu không thay đổi
+                                    }}
+                                    style={productDetail.thumbnail}
+                                />
+
+
                             </TouchableOpacity>
                         ))}
                     </View>
@@ -401,13 +422,13 @@ const ProductDetail = () => {
                     onPress={handleAddToCart}
                     disabled={loading}
                 >
-                        <Text style={productDetail.cartText}>
-                            {formatPrice(selectedPrice, quantity)}đ
-                        </Text>
-               
+                    <Text style={productDetail.cartText}>
+                        {formatPrice(selectedPrice, quantity)}đ
+                    </Text>
+
                 </TouchableOpacity>
 
-              
+
 
             </View>
 

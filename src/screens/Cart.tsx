@@ -58,7 +58,7 @@ const groupCartItems = (cart: CartItem[]) => {
 const Cart = () => {
     const { cart, fetchCartItem, setCoin, createOrder, idCartPause, idOrderPause, currentCartId } = useCartStore();  // Add createOrder from store
     const [useShopeeXu, setUseShopeeXu] = useState(false);
-    const { data, userId } = useCategoryStore();
+    const { data, userId, fetchUserCoin } = useCategoryStore();
     const { userCoin } = data;
     const shopeeXuAmount = userCoin ?? 0;
     const halfShopeeXuAmount = shopeeXuAmount * 0.5;
@@ -171,7 +171,7 @@ const Cart = () => {
                                 ...prev,
                                 [cartItemId]: previousQuantity,
                             }));
-            
+
                             // Focus lại vào TextInput sau một chút delay
                             setTimeout(() => {
                                 inputRefs.current[cartItemId]?.focus();
@@ -180,7 +180,7 @@ const Cart = () => {
                     },
                 ]
             );
-            
+
         }
         finally {
             setLoading(false); // End the processing
@@ -278,17 +278,35 @@ const Cart = () => {
                             <View key={sizeItem.size} style={styles.checkboxContainer}>
                                 <TouchableOpacity
                                     style={styles.selectButton}
-                                    onPress={async () => {
-                                        sizeItem.selected = !sizeItem.selected;
-                                        if (sizeItem.selected) {
-                                            await useCartStore.getState().deleteCartItem(sizeItem.cartItemId);
-                                        }
+                                    onPress={() => {
+                                        Alert.alert(
+                                            'Xác nhận xóa',
+                                            'Bạn có chắc muốn xóa sản phẩm này khỏi giỏ hàng?',
+                                            [
+                                                {
+                                                    text: 'Hủy',
+                                                    style: 'cancel',
+                                                },
+                                                {
+                                                    text: 'Xóa',
+                                                    style: 'destructive',
+                                                    onPress: async () => {
+                                                        sizeItem.selected = !sizeItem.selected;
+                                                        if (sizeItem.selected) {
+                                                            await useCartStore.getState().deleteCartItem(sizeItem.cartItemId);
+                                                        }
+                                                    },
+                                                },
+                                            ],
+                                            { cancelable: true }
+                                        );
                                     }}
                                 >
                                     <Text style={styles.buttonText}>
                                         <Icon name="delete" size={20} color="black" />
                                     </Text>
                                 </TouchableOpacity>
+
                             </View>
                         ))}
                     </View>
@@ -349,8 +367,6 @@ const Cart = () => {
                                         />
 
 
-
-
                                         <TouchableOpacity
                                             onPress={() => updateQuantity(sizeItem.cartItemId, 'increase')}
                                             style={styles.quantityButton}
@@ -377,6 +393,9 @@ const Cart = () => {
             // Nếu đã có đơn hàng bị pause thì tiếp tục
             if (idOrderPause && idCartPause) {
                 console.log("🔁 Resume paused order:", idOrderPause);
+                useCartStore.getState().cart = [];
+                useCartStore.getState().cartTotal = 0;
+                fetchUserCoin();
                 navigation.navigate('Payment', { orderId: idOrderPause });
                 return;
             }
@@ -390,6 +409,7 @@ const Cart = () => {
             }
 
             console.log("✅ Created order:", orderIdNumber);
+            fetchUserCoin();
             navigation.navigate('Payment', { orderId: orderIdNumber });
 
         } catch (error) {
@@ -415,7 +435,7 @@ const Cart = () => {
                     left: 0,
                     right: 0,
                     bottom: 0,
-                    backgroundColor: 'rgba(0, 0, 0, 0.59)',  // Overlay tối mờ
+                    backgroundColor: 'rgba(0, 0, 0, 0.3)',  // Overlay tối mờ
                     justifyContent: 'center',
                     zIndex: 999,  // Đảm bảo overlay nằm trên tất cả
                 }}>

@@ -139,8 +139,6 @@ export const useCartStore = create<CartStore>()(
           const accessToken = await AsyncStorage.getItem('access_token');
           if (!accessToken) throw new Error("Access token missing");
 
-          console.log(`🔍 Checking cart existence for user ${userId}`);
-
           const { data: { listCart } } = await axiosInstance.get<CartListResponse>(
             `/cart/list-cart/${userId}`,
             { headers: { Authorization: `Bearer ${accessToken}` } }
@@ -150,7 +148,6 @@ export const useCartStore = create<CartStore>()(
           const completedPauseCart = listCart.find(cart => cart.statusCart === "COMPLETED_PAUSE");
           if (completedPauseCart) {
             const pausedCartId = completedPauseCart.cartId;
-            console.log("🛑 Found paused cart, setting idCartPause:", pausedCartId);
             get().setIdCartPause(pausedCartId);
 
             // 🔁 Gọi API để lấy thông tin order tương ứng với cart bị pause
@@ -624,8 +621,7 @@ export const useCartStore = create<CartStore>()(
           throw error;
         }
       },
-      
-
+    
 
       addToCart: async (proId: number, size: string, quantity: number, language: string) => {
         try {
