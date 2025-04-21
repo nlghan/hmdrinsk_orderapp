@@ -11,11 +11,14 @@ import OrderCount from '../components/OrderCount';
 import NotificationPopup from '../components/NotificationPopup';
 import { useNotification } from '../components/NotificationContext';
 import { FONTFAMILY } from "../theme/theme";
+import ConfirmModal from "../components/ConfirmModal";
 
 const Other = () => {
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
   const { t } = useTranslation();
   const logout = useCategoryStore((state) => state.logout);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+
   const { language, userId } = useCategoryStore();
   const [orderCounts, setOrderCounts] = useState({
     confirmed: 0,
@@ -58,15 +61,17 @@ const Other = () => {
           <View style={styles.row}>
             <TouchableOpacity style={styles.box} onPress={() => navigation.navigate('DeliveringOrders')}>
               <MaterialIcons name="local-shipping" style={styles.iconBlue} size={30} />
-              <View style={styles.badge}>
-              {orderCounts ? (
-                orderCounts.confirmed > 0 ? (
-                  <Text style={styles.badgeText}>{orderCounts.confirmed}</Text>
-                ) : null
-              ) : (
-                <ActivityIndicator size="small" color="#fff" />
+              {orderCounts?.confirmed >= 1 && (
+                <View style={styles.badge}>
+                  {orderCounts ? (
+                    orderCounts.confirmed > 0 ? (
+                      <Text style={styles.badgeText}>{orderCounts.confirmed}</Text>
+                    ) : null
+                  ) : (
+                    <ActivityIndicator size="small" color="#fff" />
+                  )}
+                </View>
               )}
-              </View>             
               <Text style={styles.textSubOther}>{t('orderContent.status.ship')}</Text>
             </TouchableOpacity>
 
@@ -129,11 +134,21 @@ const Other = () => {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>{t('features.support')}</Text>
           <View style={styles.list}>
-            <TouchableOpacity style={styles.listItem} onPress={() => showNotificationModal('Test thông báo Modal')}>
+            <TouchableOpacity style={styles.listItem} onPress={() => setShowConfirmModal(true)}>
               <MaterialIcons name="star" style={styles.icon} size={24} />
               <Text style={styles.textOther}>{t('about.stat4')}</Text>
               <MaterialIcons name="arrow-forward-ios" style={styles.iconrow} size={18} />
             </TouchableOpacity>
+            <ConfirmModal
+              visible={showConfirmModal}
+              message="Bạn xác nhận muốn quay lại?"
+              onClose={() => setShowConfirmModal(false)}
+              onConfirm={() => {
+                setShowConfirmModal(false);
+                navigation.goBack(); // hoặc hành động bạn muốn thực hiện
+              }}
+            />
+
             <TouchableOpacity style={styles.listItem} onPress={() => navigation.navigate('Contact')}>
               <MaterialIcons name="comment" style={styles.icon} size={24} />
               <Text style={styles.textOther}>{t('contact1')}</Text>
@@ -173,13 +188,13 @@ const styles = StyleSheet.create({
   scrollContainer: {
     flexGrow: 1,
     paddingBottom: 20,
-    backgroundColor:'#f8f8f8'
+    backgroundColor: '#f8f8f8'
   },
-  title:{
-    textAlign:'center',
-    fontFamily:FONTFAMILY.lobster_regular,
-    fontSize:24,
-    paddingTop:25
+  title: {
+    textAlign: 'center',
+    fontFamily: FONTFAMILY.lobster_regular,
+    fontSize: 24,
+    paddingTop: 25
   },
   row: {
     flexDirection: "row",
@@ -237,7 +252,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 20,
-    fontFamily:FONTFAMILY.lobster_regular,
+    fontFamily: FONTFAMILY.lobster_regular,
     marginBottom: 10,
   },
   grid: {
@@ -301,18 +316,18 @@ const styles = StyleSheet.create({
     color: "orange",
     marginRight: 10,
   },
-  textOther:{
-    fontFamily:FONTFAMILY.dongle_light,
-    fontSize:24
+  textOther: {
+    fontFamily: FONTFAMILY.dongle_light,
+    fontSize: 24
   },
-  textOther1:{
-    fontFamily:FONTFAMILY.dongle_light,
-    fontSize:24,
-    color:'red'
+  textOther1: {
+    fontFamily: FONTFAMILY.dongle_light,
+    fontSize: 24,
+    color: 'red'
   },
-  textSubOther:{
-    fontFamily:FONTFAMILY.dongle_regular,
-    fontSize:14,
+  textSubOther: {
+    fontFamily: FONTFAMILY.dongle_regular,
+    fontSize: 14,
     color: "#333",
   }
 });
