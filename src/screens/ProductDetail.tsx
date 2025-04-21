@@ -12,6 +12,7 @@ import { useCartStore } from '../store/useCartStore';
 import Notification from '../components/Notification';
 import { COLORS, FONTFAMILY } from '../theme/theme';
 import FastImage from 'react-native-fast-image';
+import Loading from '../components/DotLoading';
 
 
 
@@ -40,6 +41,8 @@ const ProductDetail = () => {
     const increaseQuantity = () => setQuantity(prev => prev + 1);
     const decreaseQuantity = () => setQuantity(prev => (prev > 1 ? prev - 1 : 1));
     const [isLoadingImages, setIsLoadingImages] = useState(true);
+    const [loading, setLoading] = useState(false);
+
 
     useEffect(() => {
         const loadImages = async () => {
@@ -114,9 +117,9 @@ const ProductDetail = () => {
             showNotification("⚠️ Vui lòng đăng nhập để thêm vào yêu thích!");
             return;
         }
-    
+
         setIsFavorite((prev) => !prev);
-    
+
         try {
             if (!isFavorite) {
                 // Thêm sản phẩm vào danh sách yêu thích
@@ -125,7 +128,7 @@ const ProductDetail = () => {
             } else {
                 // Kiểm tra nếu sản phẩm đã có trong danh sách yêu thích
                 const existingFavItem = data.favoriteItems?.find(item => item.proId === product.proId);
-    
+
                 if (existingFavItem) {
                     // Lấy favItemId từ dữ liệu yêu thích
                     const favItemId = existingFavItem.favItemId;
@@ -144,7 +147,7 @@ const ProductDetail = () => {
             showNotification("⚠️ Có lỗi xảy ra, thử lại sau!");
         }
     };
-    
+
 
 
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -166,22 +169,27 @@ const ProductDetail = () => {
             language
         };
 
-        console.log("📦 Payload gửi đi:", payload); // Log payload trước khi gửi
+        console.log("📦 Payload gửi đi:", payload);
 
+        setLoading(true); // 🔄 Bắt đầu loading
         addToCart(payload.proId, payload.selectedSize, payload.quantity, payload.language)
             .then(() => {
                 showNotification("✅ Sản phẩm đã được thêm vào giỏ hàng!");
             })
             .catch((error) => {
-                console.error("❌ Lỗi khi thêm vào giỏ hàng:", error); // Log lỗi chi tiết
+                console.error("❌ Lỗi khi thêm vào giỏ hàng:", error);
                 const message = error.message;
                 if (message.includes("❌ Vượt quá số lượng tồn kho")) {
                     showNotification("⚠️ Số lượng sản phẩm vượt quá số lượng tồn kho!");
                 } else {
                     showNotification("❌ Lỗi khi thêm sản phẩm vào giỏ hàng. Vui lòng thử lại!");
                 }
+            })
+            .finally(() => {
+                setLoading(false); // ✅ Kết thúc loading
             });
     };
+
 
     useEffect(() => {
         const interval = setInterval(() => {
@@ -208,8 +216,8 @@ const ProductDetail = () => {
 
     if (isLoadingImages) {
         return (
-            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'white' }}>
-                <ActivityIndicator size="large" color={COLORS.primaryGreenHex} />
+            <View style={{ flex: 1 }}>
+                <Loading title={''} />
 
             </View>
         );
@@ -217,11 +225,25 @@ const ProductDetail = () => {
 
     return (
         <View style={{ flex: 1 }}>
+              {loading && (
+                     <View style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        backgroundColor: 'rgba(0, 0, 0, 0.59)',  // Overlay tối mờ
+                        justifyContent: 'center',
+                        zIndex: 999,  // Đảm bảo overlay nằm trên tất cả
+                    }}>
+                        <Loading title={''} />
+                    </View>
+                )}
             <Notification message={notification.message} visible={notification.visible} onHide={() => setNotification({ ...notification, visible: false })} />
             <Header
                 style={{
                     paddingHorizontal: 14,
-                    paddingVertical:10,
+                    paddingVertical: 10,
                     paddingBottom: 10,
                     marginBottom: 3,
                     backgroundColor: 'white',
@@ -310,7 +332,7 @@ const ProductDetail = () => {
                             {t('size')}:
                             {selectedStock !== null && (
                                 <Text style={{ fontSize: 24, fontFamily: FONTFAMILY.dongle_regular, color: '#333' }}>
-                                        ({ selectedStock} sản phẩm)
+                                    ({selectedStock} sản phẩm)
                                 </Text>
                             )}
                         </Text>
@@ -332,7 +354,7 @@ const ProductDetail = () => {
                                         }}
                                         disabled={isDisabled} // Đảm bảo nút bị disable khi stock = 0
                                     >
-                                        <Text style={{ color: isDisabled ? '#999' : '#000' , fontFamily: FONTFAMILY.dongle_regular, fontSize: 24}}>{size}</Text>
+                                        <Text style={{ color: isDisabled ? '#999' : '#000', fontFamily: FONTFAMILY.dongle_regular, fontSize: 24 }}>{size}</Text>
                                     </TouchableOpacity>
                                 );
                             })}
@@ -377,10 +399,15 @@ const ProductDetail = () => {
                 <TouchableOpacity
                     style={productDetail.cartButton}
                     onPress={handleAddToCart}
+                    disabled={loading}
                 >
-                    <Text style={productDetail.cartText}>{formatPrice(selectedPrice, quantity)}đ</Text>
+                        <Text style={productDetail.cartText}>
+                            {formatPrice(selectedPrice, quantity)}đ
+                        </Text>
+               
                 </TouchableOpacity>
 
+              
 
             </View>
 

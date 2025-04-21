@@ -182,7 +182,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     marginTop: 10,
     marginHorizontal: 8,
-    height: '84.3%'
+    height: '88%'
 
   },
   header: { fontSize: 24, marginBottom: 16, textAlign: 'center', fontFamily: FONTFAMILY.lobster_regular, },

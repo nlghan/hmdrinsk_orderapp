@@ -10,6 +10,7 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../navigation/RootStackParamList';
 import { useTranslation } from 'react-i18next';
 import { COLORS, FONTFAMILY } from '../theme/theme';
+import Loading from '../components/DotLoading';
 
 type PaymentScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Payment'>;
 type PaymentScreenRouteProp = RouteProp<RootStackParamList, 'Payment'>;
@@ -68,8 +69,17 @@ const Payment = () => {
 
     if (loading) {
         return (
-            <View style={styles.container}>
-                <ActivityIndicator size="large" color="#ff6347" />
+            <View style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                backgroundColor: 'rgba(0, 0, 0, 0.59)',  // Overlay tối mờ
+                justifyContent: 'center',
+                zIndex: 999,  // Đảm bảo overlay nằm trên tất cả
+            }}>
+                <Loading title={''} />
             </View>
         );
     }
@@ -130,7 +140,7 @@ const Payment = () => {
             const paymentUrl = `/payment/create/${paymentMethod}`;
             const paymentResponse = await axiosInstance.post(
                 paymentUrl,
-                { orderId: order.orderId, userId: order.userId },
+                { orderId: order.orderId, userId: order.userId, type:'ANDROID' },
                 { headers }
             );
 
@@ -278,7 +288,7 @@ const Payment = () => {
             await fetchCartItem();
             console.log('Hủy order thành công');
             setLoading(false);
-            navigation.goBack();
+            navigation.navigate('Main');
         } catch (error) {
             console.error('Lỗi khi hủy đơn:', error);
             setLoading(false);
@@ -342,18 +352,23 @@ const Payment = () => {
                         <Icon name="attach-money" size={20} color={paymentMethod === 'cash' ? "#FF9800" : "#555"} />
                         <Text style={styles.paymentText}>{t('order.orderDetail.method.method1')}</Text>
                     </TouchableOpacity>
-                    {/* <TouchableOpacity 
-                        style={[styles.paymentOption, paymentMethod === 'payos' && styles.selectedPayment]}
-                        onPress={() => setPaymentMethod('payos')}>
-                        <Icon name="credit-card" size={24} color={paymentMethod === 'payos' ? "#FF9800" : "#555"} />
-                        <Text style={styles.paymentText}>Thẻ ngân hàng</Text>
+                    <TouchableOpacity
+                        style={[styles.paymentOption, paymentMethod === 'credit/payOs' && styles.selectedPayment]}
+                        onPress={() => setPaymentMethod('credit/payOs')}>
+                        <Image
+                            source={
+                                paymentMethod === 'credit/payOs'
+                                    ? require('../assets/app_images/bidv.jpg')
+                                    : require('../assets/app_images/bidv.jpg')
+                            }
+                            style={{ width: 24, height: 24 }}
+                            resizeMode="contain"
+                        />
+
+                        <Text style={styles.paymentText}>{t('order.orderDetail.method.method2')}</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity 
-                        style={[styles.paymentOption, paymentMethod === 'e-wallet' && styles.selectedPayment]}
-                        onPress={() => setPaymentMethod('momo')}>
-                        <Icon name="account-balance-wallet" size={24} color={paymentMethod === 'momo' ? "#FF9800" : "#555"} />
-                        <Text style={styles.paymentText}>Momo</Text>
-                    </TouchableOpacity> */}
+
+                  
                     <TouchableOpacity
                         style={[styles.paymentOption, paymentMethod === 'credit/zaloPay' && styles.selectedPayment]}
                         onPress={() => setPaymentMethod('credit/zaloPay')}>
@@ -367,7 +382,23 @@ const Payment = () => {
                             resizeMode="contain"
                         />
 
-                        <Text style={styles.paymentText}>ZaloPay</Text>
+                        <Text style={styles.paymentText}>{t('order.orderDetail.method.method4')}</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                        style={[styles.paymentOption, paymentMethod === 'credit/momo' && styles.selectedPayment]}
+                        onPress={() => setPaymentMethod('credit/momo')}>
+                        <Image
+                            source={
+                                paymentMethod === 'credit/momo'
+                                    ? require('../assets/app_images/momo.png')
+                                    : require('../assets/app_images/momo.png')
+                            }
+                            style={{ width: 24, height: 24 }}
+                            resizeMode="contain"
+                        />
+
+                        <Text style={styles.paymentText}>{t('order.orderDetail.method.method3')}</Text>
                     </TouchableOpacity>
                     {/* <TouchableOpacity 
                         style={[styles.paymentOption, paymentMethod === 'e-wallet' && styles.selectedPayment]}

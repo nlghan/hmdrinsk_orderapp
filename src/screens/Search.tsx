@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { View, TextInput, FlatList, Text, TouchableOpacity, ActivityIndicator, Image } from "react-native";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
+import { View, TextInput, FlatList, Text, TouchableOpacity, Image } from "react-native";
 import Icon from "react-native-vector-icons/MaterialIcons";
 import { useCategoryStore } from "../store/store";
 import homeStyles from "../styles/searchStyle";
@@ -10,6 +10,8 @@ import axiosInstance from "../utils/axiosInstance";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useTranslation } from 'react-i18next';
 import { useFocusEffect } from '@react-navigation/native';
+import { debounce } from 'lodash';  // Thêm lodash debounce
+import Loading from "../components/DotLoading";
 
 const Search = () => {
     const { data } = useCategoryStore();
@@ -20,28 +22,30 @@ const Search = () => {
     const [filteredProducts, setFilteredProducts] = useState(products);
     const [loading, setLoading] = useState(false);
     const { language } = useCategoryStore();
+    const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
 
     // Gọi API 'recommend' khi component được focus hoặc khi searchTerm thay đổi
     useFocusEffect(
         React.useCallback(() => {
-            if (!searchTerm) {
+            if (!debouncedSearchTerm) {
                 fetchRecommendedProducts(); // Lấy sản phẩm gợi ý khi searchTerm rỗng
-            } else {
-                searchProducts(searchTerm); // Tìm kiếm sản phẩm theo từ khóa
-            }
-        }, [searchTerm]) // Mỗi khi searchTerm thay đổi
+            } 
+        }, [debouncedSearchTerm]) // Mỗi khi searchTerm thay đổi
     );
     
     useEffect(() => {
-        if (!searchTerm) {
+        if (!debouncedSearchTerm) {
             fetchRecommendedProducts(); // Gọi API gợi ý nếu không có từ khóa tìm kiếm
         } else {
-            searchProducts(searchTerm); // Tìm kiếm sản phẩm khi có từ khóa
+            searchProducts(debouncedSearchTerm); // Tìm kiếm sản phẩm khi có từ khóa
         }
-    }, [searchTerm]);
+    }, [debouncedSearchTerm]);
 
-    // Gọi API tìm kiếm sản phẩm
+    // Hàm tìm kiếm sản phẩm
     const searchProducts = async (keyword: string) => {
+        if (!keyword) return;
+
+        setLoading(true);
         try {
             const token = await AsyncStorage.getItem("access_token");
             const response = await axiosInstance.get(`/product/search?keyword=${keyword}&page=1&limit=10&language=${language}`, {
@@ -49,8 +53,6 @@ const Search = () => {
             });
             console.log("📥 Phản hồi từ API tìm kiếm:", response.data);
             const productsFromApi = response.data.productResponseList || [];
-
-            // Đánh dấu các sản phẩm yêu thích
             const updatedProducts = await markFavoriteStatus(productsFromApi);
             setFilteredProducts(updatedProducts);
         } catch (error) {
@@ -59,6 +61,16 @@ const Search = () => {
             setLoading(false);
         }
     };
+
+    // Đặt debounce cho hàm tìm kiếm
+    const debouncedSearch = useCallback(debounce((keyword) => {
+        setDebouncedSearchTerm(keyword); // Set debounced search term to trigger API calls
+    }, 500), []);  // Reduce debounce time to 500ms
+
+    // Chạy debounce khi searchTerm thay đổi
+    useEffect(() => {
+        debouncedSearch(searchTerm); // Gọi hàm tìm kiếm đã debounce mỗi khi searchTerm thay đổi
+    }, [searchTerm, debouncedSearch]);
 
     // Gọi API sản phẩm gợi ý
     const fetchRecommendedProducts = async () => {
@@ -147,9 +159,23 @@ const Search = () => {
         }));
     };
 
+    // Hàm lọc sản phẩm dựa trên từ khóa tìm kiếm (debounced)
+    const filterProducts = (products: any[]) => {
+        return debouncedSearchTerm
+            ? products.filter(product => {
+                const searchWords = debouncedSearchTerm.toLowerCase().split(" ");
+                const productName = product.proName.toLowerCase();
+                return searchWords.every(word => productName.includes(word)); // Kiểm tra từng từ có xuất hiện không
+            })
+            : products;
+    };
+
     const handleClearSearch = () => {
         setSearchTerm(""); // Xóa nội dung tìm kiếm
     };
+
+    // Memoize the filtered products
+    const memoizedFilteredProducts = useMemo(() => filterProducts(filteredProducts), [debouncedSearchTerm, filteredProducts]);
 
     return (
         <View style={{ flex: 1, backgroundColor: "white", padding: 10 }}>
@@ -177,21 +203,31 @@ const Search = () => {
                 )}
             </View>
             
-            {filteredProducts.length === 0 && !loading && searchTerm && (
+            {memoizedFilteredProducts.length === 0 && !loading && searchTerm && (
                 <Text style={homeStyles.noResult}>{t('menuCustomer.notFound')}</Text>
             )}
 
             {loading ? (
-                <ActivityIndicator size="large" color="#ff8c00" />
+                <View style={{
+                    position: 'absolute',
+                    top: '-60%',
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    justifyContent: 'center',
+                    zIndex: 999,  // Đảm bảo overlay nằm trên tất cả
+                }}>
+                    <Loading title={''} />
+                </View>
             ) : (
                 <>
-                    {filteredProducts.length > 0 && (
+                    {memoizedFilteredProducts.length > 0 && (
                         <View>
                             <Text style={homeStyles.suggestHeader}>{t('android.suggest')}</Text>
                         </View>
                     )}
                     <FlatList
-                        data={filteredProducts}
+                        data={memoizedFilteredProducts}
                         keyExtractor={(item) => item.proId.toString()}
                         numColumns={2}
                         renderItem={({ item, index }) => {

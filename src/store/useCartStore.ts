@@ -340,41 +340,27 @@ export const useCartStore = create<CartStore>()(
 
       updateQuantity: async (cartItemId: number, quantity: number) => {
         try {
-          const accessToken = await AsyncStorage.getItem('access_token');
-          const { userId } = useCategoryStore.getState();
-
-          if (!accessToken) throw new Error("Access token missing");
-          if (!userId) throw new Error("User ID missing");
-
-          console.log(`🔄 Updating quantity for cart item ${cartItemId} to ${quantity}...`);
-
-          const payload = {
-            userId: Number(userId),
-            cartItemId,
-            quantity,
-          };
-
-          console.log("🛠 Payload to update quantity:", payload);
-
-          // Send PUT request to update the quantity of the cart item
-          const response = await axiosInstance.put(
-            `/cart-item/update`,
-            payload,
-            { headers: { Authorization: `Bearer ${accessToken}` } }
-          );
-
-          console.log("📩 Response from server:", response.data);
-
-          // Update the cart after the quantity update
-          await get().fetchCartItem();
-          console.log("✅ Quantity updated successfully!");
-          get().updateCartTotal();
+            const accessToken = await AsyncStorage.getItem('access_token');
+            const { userId } = useCategoryStore.getState();
+    
+            if (!accessToken) throw new Error("Access token missing");
+            if (!userId) throw new Error("User ID missing");
+    
+            const payload = { userId: Number(userId), cartItemId, quantity };
+    
+            const response = await axiosInstance.put(
+                `/cart-item/update`,
+                payload,
+                { headers: { Authorization: `Bearer ${accessToken}` } }
+            );
+    
+            await get().fetchCartItem();
+            get().updateCartTotal();
         } catch (error) {
-          console.error("❌ Error updating quantity:", error);
+            await get().fetchCartItem();
+            throw new Error("Vượt quá số lượng cho phép!");
         }
-      },
-
-
+    },
 
       increaseQuantity: async (cartItemId: number) => {
         try {
