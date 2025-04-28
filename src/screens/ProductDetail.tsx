@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, Image, TouchableOpacity, ScrollView, TextInput, ActivityIndicator } from 'react-native';
+import { View, Text, Image, TouchableOpacity, ScrollView, TextInput, ActivityIndicator, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard } from 'react-native';
 import { useRoute, useNavigation, RouteProp } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { RootStackParamList } from '../navigation/RootStackParamList';
@@ -210,18 +210,18 @@ const ProductDetail = () => {
 
     useEffect(() => {
         if (!product?.productImageResponseList?.length) return;
-      
+
         const sources = product.productImageResponseList.map(img => ({
-          uri: img.linkImage,
-          cache: FastImage.cacheControl.immutable,
+            uri: img.linkImage,
+            cache: FastImage.cacheControl.immutable,
         }));
         FastImage.preload(sources);
-      
+
         setIsLoadingImages(false);
-      }, [product.productImageResponseList]);
-      
-  
-      
+    }, [product.productImageResponseList]);
+
+
+
 
 
     if (isLoadingImages) {
@@ -234,205 +234,211 @@ const ProductDetail = () => {
     }
 
     return (
-        <View style={{ flex: 1 }}>
-            {loading && (
-                <View style={{
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    backgroundColor: 'rgba(0, 0, 0, 0.3)',  // Overlay tối mờ
-                    justifyContent: 'center',
-                    zIndex: 999,  // Đảm bảo overlay nằm trên tất cả
-                }}>
-                    <Loading title={''} />
-                </View>
-            )}
-            <Notification message={notification.message} visible={notification.visible} onHide={() => setNotification({ ...notification, visible: false })} />
-            <Header
-                style={{
-                    paddingHorizontal: 14,
-                    paddingVertical: 10,
-                    paddingBottom: 10,
-                    marginBottom: 3,
-                    backgroundColor: 'white',
-                    shadowColor: '#000',
-                    shadowOffset: { width: 0, height: 2 },
-                    shadowOpacity: 0.2,
-                    shadowRadius: 4,
-                    elevation: 5,
-                }}
-            />
-
-            <ScrollView
-                contentContainerStyle={productDetail.scrollContainer}
-                showsVerticalScrollIndicator={false}
-                keyboardShouldPersistTaps="handled"
-            >
-
-                <View style={productDetail.topButtons}>
-                    <TouchableOpacity onPress={() => navigation.goBack()} style={productDetail.backButton}>
-                        <Icon name="arrow-back" size={24} color={COLORS.primaryGreenHex} />
-                    </TouchableOpacity>
-
-
-
-                </View>
-                <View style={productDetail.imageContainer}>
-                    {/* Ảnh chính */}
-                    <FastImage
-                        source={{ uri: product.productImageResponseList[currentImageIndex]?.linkImage }}
-                        style={productDetail.image}
-                        resizeMode={FastImage.resizeMode.contain}
+        <KeyboardAvoidingView
+            style={{ flex: 1 }}
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            keyboardVerticalOffset={0} // tuỳ chỉnh nếu header cao
+        >
+            <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+                <View style={{ flex: 1 }}>
+                    {loading && (
+                        <View style={{
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            right: 0,
+                            bottom: 0,
+                            backgroundColor: 'rgba(0, 0, 0, 0.3)',  // Overlay tối mờ
+                            justifyContent: 'center',
+                            zIndex: 999,  // Đảm bảo overlay nằm trên tất cả
+                        }}>
+                            <Loading title={''} />
+                        </View>
+                    )}
+                    <Notification message={notification.message} visible={notification.visible} onHide={() => setNotification({ ...notification, visible: false })} />
+                    <Header
+                        style={{
+                            paddingHorizontal: 14,
+                            paddingVertical: 10,
+                            paddingBottom: 10,
+                            marginBottom: 3,
+                            backgroundColor: 'white',
+                            shadowColor: '#000',
+                            shadowOffset: { width: 0, height: 2 },
+                            shadowOpacity: 0.2,
+                            shadowRadius: 4,
+                            elevation: 5,
+                        }}
                     />
 
+                    <ScrollView
+                        contentContainerStyle={productDetail.scrollContainer}
+                        showsVerticalScrollIndicator={false}
+                        keyboardShouldPersistTaps="handled"
+                    >
 
-                    {/* Danh sách ảnh nhỏ */}
-                    <View style={productDetail.thumbnailContainer}>
-                        {product.productImageResponseList.slice(0, 4).map((img, index) => (
-                            <TouchableOpacity
-                                key={index}
-                                onPress={() => setCurrentImageIndex(index)}
-                                style={[
-                                    productDetail.thumbnailWrapper,
-                                    currentImageIndex === index && productDetail.selectedThumbnail
-                                ]}
-                            >
-                                <FastImage
-                                    source={{
-                                        uri: img.linkImage,
-                                        priority: FastImage.priority.normal,
-                                        cache: FastImage.cacheControl.immutable, // Luôn cache nếu không thay đổi
-                                    }}
-                                    style={productDetail.thumbnail}
-                                />
-
-
+                        <View style={productDetail.topButtons}>
+                            <TouchableOpacity onPress={() => navigation.goBack()} style={productDetail.backButton}>
+                                <Icon name="arrow-back" size={24} color={COLORS.primaryGreenHex} />
                             </TouchableOpacity>
-                        ))}
-                    </View>
-                </View>
 
-                <View style={productDetail.infoContainer}>
-                    <Text style={productDetail.title}>{product.proName}</Text>
 
-                    <View style={productDetail.ratingContainer}>
-                        <TouchableOpacity
-                            style={productDetail.ratingContainer}
-                            onPress={() => navigation.navigate('AllReviews', { productId: product.proId })}
-                        >
+
+                        </View>
+                        <View style={productDetail.imageContainer}>
+                            {/* Ảnh chính */}
+                            <FastImage
+                                source={{ uri: product.productImageResponseList[currentImageIndex]?.linkImage }}
+                                style={productDetail.image}
+                                resizeMode={FastImage.resizeMode.contain}
+                            />
+
+
+                            {/* Danh sách ảnh nhỏ */}
+                            <View style={productDetail.thumbnailContainer}>
+                                {product.productImageResponseList.slice(0, 4).map((img, index) => (
+                                    <TouchableOpacity
+                                        key={index}
+                                        onPress={() => setCurrentImageIndex(index)}
+                                        style={[
+                                            productDetail.thumbnailWrapper,
+                                            currentImageIndex === index && productDetail.selectedThumbnail
+                                        ]}
+                                    >
+                                        <FastImage
+                                            source={{
+                                                uri: img.linkImage,
+                                                priority: FastImage.priority.normal,
+                                                cache: FastImage.cacheControl.immutable, // Luôn cache nếu không thay đổi
+                                            }}
+                                            style={productDetail.thumbnail}
+                                        />
+
+
+                                    </TouchableOpacity>
+                                ))}
+                            </View>
+                        </View>
+
+                        <View style={productDetail.infoContainer}>
+                            <Text style={productDetail.title}>{product.proName}</Text>
+
                             <View style={productDetail.ratingContainer}>
-                                <Icon name="star" size={18} color="gold" />
-                                <Text style={productDetail.ratingText}>{avgRating}</Text>
-                                <Text style={productDetail.reviewCount}>({totalReviews} {t('reviews')})</Text>
+                                <TouchableOpacity
+                                    style={productDetail.ratingContainer}
+                                    onPress={() => navigation.navigate('AllReviews', { productId: product.proId })}
+                                >
+                                    <View style={productDetail.ratingContainer}>
+                                        <Icon name="star" size={18} color="gold" />
+                                        <Text style={productDetail.ratingText}>{avgRating}</Text>
+                                        <Text style={productDetail.reviewCount}>({totalReviews} {t('reviews')})</Text>
+
+                                    </View>
+
+                                </TouchableOpacity>
+
+                                <TouchableOpacity onPress={handleFavoritePress} style={productDetail.favoriteButton}>
+                                    <Icon name="favorite" size={24} color={isFavorite ? "red" : "gray"} />
+                                </TouchableOpacity>
 
                             </View>
 
-                        </TouchableOpacity>
-
-                        <TouchableOpacity onPress={handleFavoritePress} style={productDetail.favoriteButton}>
-                            <Icon name="favorite" size={24} color={isFavorite ? "red" : "gray"} />
-                        </TouchableOpacity>
-
-                    </View>
 
 
-
-                    <Text style={productDetail.description}>
-                        {expanded ? product.description : `${product.description.substring(0, 100)}...`}
-                        <TouchableOpacity onPress={() => setExpanded(!expanded)}>
-                            <Text style={productDetail.readMore}>
-                                {expanded ? t('common.hide') : t('viewMore')}
+                            <Text style={productDetail.description}>
+                                {expanded ? product.description : `${product.description.substring(0, 100)}...`}
+                                <TouchableOpacity onPress={() => setExpanded(!expanded)}>
+                                    <Text style={productDetail.readMore}>
+                                        {expanded ? t('common.hide') : t('viewMore')}
+                                    </Text>
+                                </TouchableOpacity>
                             </Text>
-                        </TouchableOpacity>
-                    </Text>
 
-                    <View style={productDetail.sizeContainer}>
-                        <Text style={productDetail.sizeLabel}>
-                            {t('size')}:
-                            {selectedStock !== null && (
-                                <Text style={{ fontSize: 24, fontFamily: FONTFAMILY.dongle_regular, color: '#333' }}>
-                                    ({selectedStock} sản phẩm)
+                            <View style={productDetail.sizeContainer}>
+                                <Text style={productDetail.sizeLabel}>
+                                    {t('size')}:
+                                    {selectedStock !== null && (
+                                        <Text style={{ fontSize: 24, fontFamily: FONTFAMILY.dongle_regular, color: '#333' }}>
+                                            ({selectedStock} sản phẩm)
+                                        </Text>
+                                    )}
                                 </Text>
-                            )}
-                        </Text>
-                        <View style={productDetail.sizeOptions}>
-                            {['S', 'M', 'L'].map((size) => {
-                                const variant = product.listProductVariants.find((v) => v.size === size);
-                                const isDisabled = !variant || (variant.stock !== undefined && variant.stock <= 0); // Kiểm tra stock chính xác
+                                <View style={productDetail.sizeOptions}>
+                                    {['S', 'M', 'L'].map((size) => {
+                                        const variant = product.listProductVariants.find((v) => v.size === size);
+                                        const isDisabled = !variant || (variant.stock !== undefined && variant.stock <= 0); // Kiểm tra stock chính xác
 
-                                return (
-                                    <TouchableOpacity
-                                        key={size}
-                                        style={[
-                                            productDetail.sizeButton,
-                                            selectedSize === size && productDetail.selectedSize,
-                                            isDisabled && { backgroundColor: '#ddd', borderColor: '#ccc' }
-                                        ]}
-                                        onPress={() => {
-                                            if (!isDisabled) handleSizeSelection(size);
-                                        }}
-                                        disabled={isDisabled} // Đảm bảo nút bị disable khi stock = 0
-                                    >
-                                        <Text style={{ color: isDisabled ? '#999' : '#000', fontFamily: FONTFAMILY.dongle_regular, fontSize: 24 }}>{size}</Text>
-                                    </TouchableOpacity>
-                                );
-                            })}
+                                        return (
+                                            <TouchableOpacity
+                                                key={size}
+                                                style={[
+                                                    productDetail.sizeButton,
+                                                    selectedSize === size && productDetail.selectedSize,
+                                                    isDisabled && { backgroundColor: '#ddd', borderColor: '#ccc' }
+                                                ]}
+                                                onPress={() => {
+                                                    if (!isDisabled) handleSizeSelection(size);
+                                                }}
+                                                disabled={isDisabled} // Đảm bảo nút bị disable khi stock = 0
+                                            >
+                                                <Text style={{ color: isDisabled ? '#999' : '#000', fontFamily: FONTFAMILY.dongle_regular, fontSize: 24 }}>{size}</Text>
+                                            </TouchableOpacity>
+                                        );
+                                    })}
+                                </View>
+                            </View>
+
+
                         </View>
+
+                    </ScrollView>
+                    <View style={productDetail.fixedPriceContainer}>
+                        <View style={productDetail.quantityContainer}>
+                            <TouchableOpacity onPress={decreaseQuantity} style={productDetail.quantityButton}>
+                                <Text style={productDetail.quantityText}>-</Text>
+                            </TouchableOpacity>
+                            <TextInput
+                                style={[productDetail.quantityValue, { color: "black" }]}
+                                keyboardType="numeric"
+                                value={quantity === null ? "" : quantity.toString()}
+                                onChangeText={(text) => {
+                                    if (text === "") {
+                                        setQuantity(0);
+                                    } else {
+                                        const num = parseInt(text, 10);
+                                        if (!isNaN(num) && num >= 1) {
+                                            setQuantity(num);
+                                        }
+                                    }
+                                }}
+                                onBlur={() => {
+                                    if (quantity === 0) {
+                                        setQuantity(1);
+                                    }
+                                }}
+                            />
+
+
+                            <TouchableOpacity onPress={increaseQuantity} style={productDetail.quantityButton}>
+                                <Text style={productDetail.quantityText}>+</Text>
+                            </TouchableOpacity>
+                        </View>
+                        <TouchableOpacity
+                            style={productDetail.cartButton}
+                            onPress={handleAddToCart}
+                            disabled={loading}
+                        >
+                            <Text style={productDetail.cartText}>
+                                {formatPrice(selectedPrice, quantity)}đ
+                            </Text>
+
+                        </TouchableOpacity>
+
                     </View>
 
-
                 </View>
-
-            </ScrollView>
-            <View style={productDetail.fixedPriceContainer}>
-                <View style={productDetail.quantityContainer}>
-                    <TouchableOpacity onPress={decreaseQuantity} style={productDetail.quantityButton}>
-                        <Text style={productDetail.quantityText}>-</Text>
-                    </TouchableOpacity>
-                    <TextInput
-                        style={[productDetail.quantityValue, { color: "black" }]}
-                        keyboardType="numeric"
-                        value={quantity === null ? "" : quantity.toString()}
-                        onChangeText={(text) => {
-                            if (text === "") {
-                                setQuantity(0);
-                            } else {
-                                const num = parseInt(text, 10);
-                                if (!isNaN(num) && num >= 1) {
-                                    setQuantity(num);
-                                }
-                            }
-                        }}
-                        onBlur={() => {
-                            if (quantity === 0) {
-                                setQuantity(1);
-                            }
-                        }}
-                    />
-
-
-                    <TouchableOpacity onPress={increaseQuantity} style={productDetail.quantityButton}>
-                        <Text style={productDetail.quantityText}>+</Text>
-                    </TouchableOpacity>
-                </View>
-                <TouchableOpacity
-                    style={productDetail.cartButton}
-                    onPress={handleAddToCart}
-                    disabled={loading}
-                >
-                    <Text style={productDetail.cartText}>
-                        {formatPrice(selectedPrice, quantity)}đ
-                    </Text>
-
-                </TouchableOpacity>
-
-
-
-            </View>
-
-        </View>
+            </TouchableWithoutFeedback>
+        </KeyboardAvoidingView>
     );
 
 };

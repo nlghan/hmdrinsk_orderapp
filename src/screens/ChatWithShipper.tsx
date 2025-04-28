@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, TextInput, FlatList, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, TextInput, FlatList, StyleSheet, TouchableOpacity, TouchableWithoutFeedback, KeyboardAvoidingView, Platform, Keyboard } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
@@ -244,7 +244,7 @@ const ChatWithShipper = () => {
             if (socketRef.current) return;
             const token = await AsyncStorage.getItem('access_token');
             if (!token) return;
-            const ws = new WebSocket(`ws://192.168.9.195:1010/ws-raw?token=${encodeURIComponent(token)}&userId=${userId}`);
+            const ws = new WebSocket(`ws://192.168.89.2:1010/ws-raw?token=${encodeURIComponent(token)}&userId=${userId}`);
     
             socketRef.current = ws;
             ws.onmessage = (event) => {
@@ -309,70 +309,75 @@ const ChatWithShipper = () => {
         }
     };
 
-
     return (
-        <View style={styles.container}>
-            {/* Header */}
-            <View style={styles.header}>
-                <TouchableOpacity style={styles.backIcon} onPress={() => navigation.goBack()}>
-                    <Icon name="arrow-back" size={24} color="#FFFFFF" />
-                </TouchableOpacity>
-                <Text style={styles.headerText}>{t('chat.withShipper')}</Text>
-            </View>
-
-            {/* Danh sách tin nhắn */}
-            <FlatList
-                ref={flatListRef}
-                style={{ flex: 1 }}
-                data={messages}
-                keyExtractor={(item, index) => index.toString()}
-                renderItem={({ item }) => (
-                    <View
-                        style={[
-                            styles.messageContainer,
-                            item.senderId.toString() === userId?.toString() ? styles.sent : styles.received,
-                        ]}
-                    >
-                        <Text style={styles.senderName}>
-                            {item.senderId.toString() === userId?.toString() ? `🧑 ${customerName}` : `🚚 ${nameShipper}`}
-                        </Text>
-                        <Text style={styles.messageText}>{item.message}</Text>
-                        <Text style={styles.timestamp}>
-                            {new Date(item.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                        </Text>
+        <KeyboardAvoidingView
+            style={{ flex: 1 }}
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            keyboardVerticalOffset={0} // tuỳ chỉnh nếu header cao
+        >
+            <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+                <View style={styles.container}>
+                    {/* Header */}
+                    <View style={styles.header}>
+                        <TouchableOpacity style={styles.backIcon} onPress={() => navigation.goBack()}>
+                            <Icon name="arrow-back" size={24} color="#FFFFFF" />
+                        </TouchableOpacity>
+                        <Text style={styles.headerText}>{t('chat.withShipper')}</Text>
                     </View>
-                )}
-                onContentSizeChange={scrollToBottom}
-                onLayout={scrollToBottom}
-
-            />
-
-            {/* Input tin nhắn */}
-            <View style={styles.inputContainer}>
-                {status !== "SHIPPING" ? (
-                    <Text style={styles.lockedMessage}>
-                        {t('chat.disable')}
-                    </Text>
-                ) : (
-                    <TextInput
-                        style={[styles.input, status !== "SHIPPING" && styles.disabledInput]}
-                        value={newMessage}
-                        onChangeText={setNewMessage}
-                        placeholder={t('chat.input')}
-                        placeholderTextColor="#888"
-                        editable={status === "SHIPPING"}
+    
+                    {/* Danh sách tin nhắn */}
+                    <FlatList
+                        ref={flatListRef}
+                        style={{ flex: 1 }}
+                        data={messages}
+                        keyExtractor={(item, index) => index.toString()}
+                        renderItem={({ item }) => (
+                            <View
+                                style={[
+                                    styles.messageContainer,
+                                    item.senderId.toString() === userId?.toString() ? styles.sent : styles.received,
+                                ]}
+                            >
+                                <Text style={styles.senderName}>
+                                    {item.senderId.toString() === userId?.toString() ? `🧑 ${customerName}` : `🚚 ${nameShipper}`}
+                                </Text>
+                                <Text style={styles.messageText}>{item.message}</Text>
+                                <Text style={styles.timestamp}>
+                                    {new Date(item.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                </Text>
+                            </View>
+                        )}
+                        onContentSizeChange={scrollToBottom}
+                        onLayout={scrollToBottom}
                     />
-                )}
-                <TouchableOpacity
-                    style={[styles.sendButton, status !== "SHIPPING" && styles.disabledButton]}
-                    onPress={sendMessage}
-                    disabled={status !== "SHIPPING" || !shipperId}
-                >
-                    <Icon name="send" size={24} color="white" />
-                </TouchableOpacity>
-            </View>
-
-        </View>
+    
+                    {/* Input tin nhắn */}
+                    <View style={styles.inputContainer}>
+                        {status !== "SHIPPING" ? (
+                            <Text style={styles.lockedMessage}>
+                                {t('chat.disable')}
+                            </Text>
+                        ) : (
+                            <TextInput
+                                style={[styles.input, status !== "SHIPPING" && styles.disabledInput]}
+                                value={newMessage}
+                                onChangeText={setNewMessage}
+                                placeholder={t('chat.input')}
+                                placeholderTextColor="#888"
+                                editable={status === "SHIPPING"}
+                            />
+                        )}
+                        <TouchableOpacity
+                            style={[styles.sendButton, status !== "SHIPPING" && styles.disabledButton]}
+                            onPress={sendMessage}
+                            disabled={status !== "SHIPPING" || !shipperId}
+                        >
+                            <Icon name="send" size={24} color="white" />
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </TouchableWithoutFeedback>
+        </KeyboardAvoidingView>
     );
 };
 
