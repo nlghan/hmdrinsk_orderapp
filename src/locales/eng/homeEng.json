@@ -554,7 +554,9 @@
       "title": "Delivery to your door",
       "product": "Selected product"
     },
-    "suggest":"Search suggestions"
+    "suggest":"Search suggestions",
+    "groupOrder":"Group order",
+    "groupOrderList": "Order Groups"
   },
   "chat": {
     "title": "Contact",

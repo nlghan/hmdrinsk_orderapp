@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, Image, TouchableOpacity, ScrollView, TextInput, ActivityIndicator, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { View, Text, Image, TouchableOpacity, ScrollView, TextInput, ActivityIndicator, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard, Animated, Alert } from 'react-native';
 import { useRoute, useNavigation, RouteProp } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { RootStackParamList } from '../navigation/RootStackParamList';
@@ -13,6 +13,7 @@ import Notification from '../components/Notification';
 import { COLORS, FONTFAMILY } from '../theme/theme';
 import FastImage from 'react-native-fast-image';
 import Loading from '../components/DotLoading';
+import GroupOrderButton from '../components/GroupOrderButton';
 
 
 
@@ -42,6 +43,7 @@ const ProductDetail = () => {
     const decreaseQuantity = () => setQuantity(prev => (prev > 1 ? prev - 1 : 1));
     const [isLoadingImages, setIsLoadingImages] = useState(true);
     const [loading, setLoading] = useState(false);
+    const { hasGroupCart, createGroupOrder } = useCartStore.getState();
 
 
     // useEffect(() => {
@@ -233,6 +235,38 @@ const ProductDetail = () => {
         );
     }
 
+    const handleGroupOrder = async () => {
+        const { userId } = useCategoryStore.getState();
+    
+        if (!userId) return;
+    
+        // ✅ Nếu đã có group cart → cảnh báo và return
+        if (hasGroupCart) {
+            Alert.alert('Thông báo', 'Bạn đã là trưởng nhóm trong một đơn nhóm. Hãy hoàn thành đơn trước khi tạo đơn nhóm mới.');
+            return;
+        }
+    
+        // ✅ Nếu chưa có, tiếp tục tạo group order
+        const now = new Date();
+        const formattedDate = now.toISOString().slice(0, 19).replace("T", " ");
+        const title = `Nhóm của ${userId} - ${now.toLocaleTimeString()}`;
+    
+        const success = await createGroupOrder(
+            userId,
+            title,
+            true,
+            formattedDate,
+            "PAY_FOR_ALL"
+        );
+    
+        if (success) {
+            navigation.navigate('GroupOrder');
+        } else {
+            Alert.alert('Lỗi', 'Không thể tạo đơn nhóm. Vui lòng thử lại sau.');
+        }
+    };
+    
+
     return (
         <KeyboardAvoidingView
             style={{ flex: 1 }}
@@ -282,7 +316,7 @@ const ProductDetail = () => {
                                 <Icon name="arrow-back" size={24} color={COLORS.primaryGreenHex} />
                             </TouchableOpacity>
 
-
+                            <GroupOrderButton onPress={handleGroupOrder} />
 
                         </View>
                         <View style={productDetail.imageContainer}>

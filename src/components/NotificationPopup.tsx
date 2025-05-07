@@ -5,9 +5,11 @@ import { useTranslation } from 'react-i18next';
 
 type NotificationWS = {
     userId: number;
-    shipmentId: number;
+    shipmentId?: number;
+    groupOrderId?: number;
     message: string;
     time: string;
+    type?: string;
 };
 
 interface NotificationPopupProps {

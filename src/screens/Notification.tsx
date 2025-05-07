@@ -20,6 +20,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTranslation } from 'react-i18next';
 import { Image } from "react-native";
 import { FONTFAMILY } from "../theme/theme";
+import { useCartStore } from "../store/useCartStore";
 
 
 
@@ -29,6 +30,7 @@ interface Notification {
   time: string;
   isRead: boolean;
   shipmentId: number;
+  groupOrderId: number;
 }
 
 type NotificationScreenRouteProp = RouteProp<RootStackParamList, "Notification">;
@@ -42,7 +44,8 @@ const NotificationScreen: React.FC = () => {
   const [unreadCount, setUnreadCount] = useState<number>(0);
   const [showNotifications, setShowNotifications] = useState<boolean>(true);
   const modalRef = useRef(null);
-  const { t } = useTranslation()
+  const { t } = useTranslation();
+  const groupCartId = useCartStore((state) => state.groupCartId);
 
   const fetchNotifications = async () => {
     if (!userId) return;
@@ -86,23 +89,35 @@ const NotificationScreen: React.FC = () => {
 
   const handleNotificationClick = async (
     notificationId: string,
-    shipmentId: number
+    shipmentId: number | null,
+    groupOrderId?: number,
+    type?: string
   ) => {
     try {
       const token = await AsyncStorage.getItem('access_token');
-      await axiosInstance.put(`/notifications/read/${notificationId}`, {
+
+      await axiosInstance.put(`/notifications/read/${notificationId}`, {}, {
         headers: {
           Authorization: `Bearer ${token}`,
           Accept: 'application/json',
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
         },
       });
+
       fetchNotifications();
-      navigation.navigate("MyOrderDetails", { shipmentId: Number(shipmentId) });
+
+      // Điều hướng tùy loại thông báo
+      if (shipmentId === null && groupOrderId) {
+        navigation.navigate("GroupOrderDetail", { groupOrderId });
+      } else if (shipmentId !== null) {
+        navigation.navigate("MyOrderDetails", { shipmentId: shipmentId });
+      }
+
     } catch (error) {
       console.error("Lỗi khi đánh dấu thông báo là đã đọc:", error);
     }
   };
+
 
   const handleMarkAllAsRead = async () => {
     if (unreadCount === 0) return;
@@ -135,12 +150,12 @@ const NotificationScreen: React.FC = () => {
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{t('common.noti')}</Text>
         <TouchableOpacity
-        style={[styles.markAllButton, unreadCount === 0 && styles.markAllButton]}
-        onPress={handleMarkAllAsRead}
-        disabled={unreadCount === 0}
-      >
-        <IconM name="done-all" size={20} color="black" />
-      </TouchableOpacity>
+          style={[styles.markAllButton, unreadCount === 0 && styles.markAllButton]}
+          onPress={handleMarkAllAsRead}
+          disabled={unreadCount === 0}
+        >
+          <IconM name="done-all" size={20} color="black" />
+        </TouchableOpacity>
       </View>
 
       {/* Danh sách thông báo */}
@@ -150,7 +165,11 @@ const NotificationScreen: React.FC = () => {
         renderItem={({ item }) => (
           <TouchableOpacity
             style={[styles.notificationItem, item.isRead && styles.read]}
-            onPress={() => handleNotificationClick(item.id, item.shipmentId)}
+            onPress={() => handleNotificationClick(
+              item.id,
+              item.shipmentId,
+              groupCartId ?? undefined,
+            )}
           >
             <View style={styles.notificationContent}>
               <Image
@@ -210,11 +229,11 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFF",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
-   
+
   },
   headerTitle: {
     fontSize: 24,
-    fontFamily:FONTFAMILY.lobster_regular,
+    fontFamily: FONTFAMILY.lobster_regular,
     color: "#333",
   },
   markAllButton: {
@@ -224,7 +243,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
-   
+
   },
   markAllText: {
     color: "white",
@@ -253,21 +272,21 @@ const styles = StyleSheet.create({
   },
   message: {
     fontSize: 24,
-    fontFamily:FONTFAMILY.dongle_regular,
-    lineHeight:22,
+    fontFamily: FONTFAMILY.dongle_regular,
+    lineHeight: 22,
     color: "#424242",
   },
   time: {
     fontSize: 20,
-    fontFamily:FONTFAMILY.dongle_light,
+    fontFamily: FONTFAMILY.dongle_light,
     color: "#757575",
-    
+
   },
   emptyText: {
     textAlign: "center",
     fontSize: 26,
     color: "#9E9E9E",
-    fontFamily:FONTFAMILY.dongle_regular,
+    fontFamily: FONTFAMILY.dongle_regular,
   },
 });
 

@@ -51,6 +51,137 @@ interface SelectedVoucher {
   selectedVoucherDiscountAmount: number;
 }
 
+interface GroupCartData {
+  total: number;
+  crudGroupOrderResponse: CrudGroupOrderResponse;
+  crudGroupOrderResponseList: CrudGroupOrderResponseListItem[];
+}
+
+interface CrudGroupOrderResponse {
+  groupOrderId: number;
+  nameLeader: string;
+  address: string;
+  note: string;
+  link: string;
+  code: string;
+  nameGroup: string;
+  totalPrice: number;
+  typeGroupOrder: 'PAY_FOR_ALL' | 'SPLIT_EACH'; // giả sử chỉ có 2 loại
+  status: 'SHOPPING' | 'PAID' | 'CANCELLED'; // thêm nếu có
+  isDeleted: boolean;
+  orderDate: string; // ISO datetime string
+  deadlinePayment: string;
+  dateCreated: string;
+  dateUpdated: string;
+  dateDeleted: string | null;
+}
+
+interface CrudGroupOrderResponseListItem {
+  memberId: number;
+  name: string;
+  groupOrderId: number;
+  userId: number;
+  amount: number;
+  isPaid: boolean;
+  isLeader: boolean;
+  note: string;
+  status: 'SHOPPING' | 'PAID' | 'CANCELLED'; // giả định thêm
+  typePayment: 'NONE' | 'CASH' | 'BANK_TRANSFER'; // giả định thêm
+  dateCreated: string;
+  dateUpdated: string | null;
+  dateDeleted: string | null;
+  isDeleted: boolean;
+  crudCartGroupResponse: CrudCartGroupResponse;
+}
+
+interface CrudCartGroupResponse {
+  cartGroupId: number;
+  groupId: number;
+  userId: number;
+  memberId: number;
+  listCartItemGroup: CartItemGroup[];
+  totalPrice: number;
+  totalQuantity: number;
+}
+
+interface CartItemGroup {
+  cartItemGroupId: number;
+  proId: number;
+  proName: string;
+  cartGroupId: number;
+  size: string;
+  itemPrice: number;
+  totalPrice: number;
+  quantity: number;
+  imageUrl: string;
+}
+
+interface GroupCartData {
+  total: number;
+  crudGroupOrderResponse: CrudGroupOrderResponse;
+  crudGroupOrderResponseList: CrudGroupOrderResponseListItem[];
+}
+
+interface CrudGroupOrderResponse {
+  groupOrderId: number;
+  nameLeader: string;
+  address: string;
+  note: string;
+  link: string;
+  code: string;
+  nameGroup: string;
+  totalPrice: number;
+  typeGroupOrder: 'PAY_FOR_ALL' | 'SPLIT_EACH';
+  status: 'SHOPPING' | 'PAID' | 'CANCELLED';
+  isDeleted: boolean;
+  orderDate: string; // ISO datetime string
+  deadlinePayment: string;
+  dateCreated: string;
+  dateUpdated: string;
+  dateDeleted: string | null;
+}
+
+interface CrudGroupOrderResponseListItem {
+  memberId: number;
+  name: string;
+  groupOrderId: number;
+  userId: number;
+  amount: number;
+  isPaid: boolean;
+  isLeader: boolean;
+  note: string;
+  status: 'SHOPPING' | 'PAID' | 'CANCELLED';
+  typePayment: 'NONE' | 'CASH' | 'BANK_TRANSFER';
+  dateCreated: string;
+  dateUpdated: string | null;
+  dateDeleted: string | null;
+  isDeleted: boolean;
+  crudCartGroupResponse: CrudCartGroupResponse;
+}
+
+interface CrudCartGroupResponse {
+  cartGroupId: number;
+  groupId: number;
+  userId: number;
+  memberId: number;
+  listCartItemGroup: CartItemGroup[];
+  totalPrice: number;
+  totalQuantity: number;
+}
+
+interface CartItemGroup {
+  cartItemGroupId: number;
+  proId: number;
+  proName: string;
+  cartGroupId: number;
+  size: string;
+  itemPrice: number;
+  totalPrice: number;
+  quantity: number;
+  imageUrl: string;
+}
+
+// CartStore interface
 interface CartStore {
   cart: CartItem[];
   cartTotal: number;
@@ -64,7 +195,7 @@ interface CartStore {
   ensureActiveCart: () => Promise<number>;
   fetchCartItem: () => Promise<void>;
   fetchVoucher: () => Promise<void>;
-  setSelectedVoucher: (voucher: SelectedVoucher) => void;
+  setSelectedVoucher: (voucher: CartStore['selectedVoucher']) => void;
   addToCart: (proId: number, size: string, quantity: number, language: string) => Promise<void>;
   increaseQuantity: (cartItemId: number) => Promise<void>;
   decreaseQuantity: (cartItemId: number) => Promise<void>;
@@ -80,7 +211,21 @@ interface CartStore {
   setIdCartPause: (id: number | null) => void; // 🆕 thêm
   idOrderPause: number | null; // 🆕 thêm
   setIdOrderPause: (id: number | null) => void; // 🆕 thêm
-  handleRestoreOrder: (orderId: number, userId:number)  => void;
+  handleRestoreOrder: (orderId: number, userId: number) => void;
+  groupCartId: number | null;
+  setGroupCartId: (id: number | null) => void;
+  checkGroupCart: () => Promise<number | null>;
+  hasRejectedGroupCart: boolean,
+  setHasRejectedGroupCart: (value: boolean) => void;
+
+  // Group Cart Data sẽ được sử dụng trực tiếp từ CartStore
+  groupCartData: GroupCartData | null;
+  hasGroupCart: boolean;
+  setHasGroupCart: (value: boolean) => void;
+  createGroupOrder: (userId: number, name: string, flexiblePayment: boolean, datePayment: string, type: "PAY_FOR_ALL" | "PAY_INDIVIDUAL") => Promise<boolean>;
+  groupOrderCount: number;
+  setGroupOrderCount: (count: number) => void;
+
 }
 
 export const useCartStore = create<CartStore>()(
@@ -96,11 +241,25 @@ export const useCartStore = create<CartStore>()(
         selectedVoucherKey: null,
         selectedVoucherDiscountAmount: 0,
       },
+      groupCartData: null,
       order: null,
       orderId: 0,
       coin: 0,  // Initialize the coin state to 0
       idCartPause: null,
       idOrderPause: null,
+      hasRejectedGroupCart: false,
+      setHasRejectedGroupCart: (value: boolean) => set({ hasRejectedGroupCart: value }),
+      hasGroupCart: false,
+      setHasGroupCart: (value: boolean) => set({ hasGroupCart: value }),
+      groupOrderCount: 0,
+      setGroupOrderCount: (count) => set({ groupOrderCount: count }),
+
+      groupCartId: null,
+      setGroupCartId: (id: number | null) => {
+        console.log("👥 Đặt groupCartId:", id);
+        set({ groupCartId: id });
+      },
+
 
       setIdCartPause: (id: number | null) => {
         console.log("⏸️ Đặt idCartPause:", id);
@@ -111,6 +270,7 @@ export const useCartStore = create<CartStore>()(
         console.log("⏸️ Đặt idOrderPause:", id);
         set({ idOrderPause: id });
       },
+
 
 
       // Function to set the coin amount
@@ -129,6 +289,173 @@ export const useCartStore = create<CartStore>()(
         const cartItems = get().cart;
         const totalQuantity = cartItems.reduce((sum, item) => sum + item.quantity, 0);
         set({ cartTotal: totalQuantity });
+      },
+
+      checkGroupCart: async () => {
+        try {
+          const { userId } = useCategoryStore.getState();
+          if (!userId) throw new Error("User not logged in");
+
+          const { hasRejectedGroupCart } = get();
+          if (hasRejectedGroupCart) {
+            console.log("🚫 Người dùng đã từ chối group cart trước đó.");
+            return null;
+          }
+
+          const accessToken = await AsyncStorage.getItem('access_token');
+          if (!accessToken) throw new Error("Access token missing");
+
+          const parsedUserId = typeof userId === "string" ? parseInt(userId, 10) : Number(userId);
+          if (isNaN(parsedUserId)) throw new Error("Invalid userId");
+
+          // 1. Gọi API lấy danh sách group order đang tham gia
+          const listResponse = await axiosInstance.get(
+            `/group-order/get-group-activate/${parsedUserId}`,
+            {
+              headers: { Authorization: `Bearer ${accessToken}` },
+            }
+          );
+
+          const groupOrderList = listResponse.data?.list || [];
+          const groupOrderCount = listResponse.data?.total || 0;
+
+          // ⚠️ Cập nhật số lượng nhóm tham gia vào store
+          get().setGroupOrderCount(groupOrderCount);
+          if (groupOrderList.length === 0) {
+            console.log("❌ Không có đơn hàng nhóm nào đang hoạt động.");
+            get().setGroupCartId(null);
+            get().setHasGroupCart(false);
+            return null;
+          }
+
+          console.log("📦 Danh sách đơn nhóm:", groupOrderList);
+
+          // 2. Gọi API kiểm tra xem user có phải trưởng nhóm không
+          const response = await axiosInstance.get<number>(
+            `/group-order/get-id-group/${parsedUserId}`,
+            {
+              headers: { Authorization: `Bearer ${accessToken}` },
+            }
+          );
+
+          const groupCartId = response.data;
+          console.log("👑 Group Cart ID (trưởng nhóm):", groupCartId);
+
+          set({
+            groupCartId: groupCartId !== 0 ? groupCartId : null,
+            hasGroupCart: true,
+          });
+
+          // 3. Nếu là trưởng nhóm, hỏi người dùng có muốn tiếp tục không
+          if (groupCartId !== 0) {
+            return new Promise<number | null>((resolve) => {
+              Alert.alert(
+                "Thông báo",
+                `🛒 Bạn đang là trưởng nhóm trong một đơn hàng nhóm.\nBạn có muốn tiếp tục với đơn này không?`,
+                [
+                  {
+                    text: "Không",
+                    style: "cancel",
+                    onPress: () => {
+                      console.log("❌ Người dùng từ chối sử dụng đơn nhóm.");
+                      get().setHasRejectedGroupCart(true);
+                      get().ensureActiveCart();
+                      resolve(null);
+                    },
+                  },
+                  {
+                    text: "Có",
+                    onPress: () => {
+                      console.log("✅ Sử dụng group cart ID:", groupCartId);
+                      set({ currentCartId: groupCartId });
+                      resolve(groupCartId);
+                    },
+                  },
+                ],
+                { cancelable: false }
+              );
+            });
+          }
+
+          // 4. Nếu chỉ là thành viên, không hỏi, trả về null (không tiếp tục group cart)
+          console.log("ℹ️ Người dùng chỉ là thành viên, không tiếp tục group cart.");
+          set({
+            hasRejectedGroupCart: true,
+          });
+          return null;
+        } catch (error) {
+          console.error("❌ Error checking group cart:", error);
+          return null;
+        }
+      },
+
+
+      createGroupOrder: async (userId, name, flexiblePayment, datePayment, type) => {
+        try {
+          const existingGroupCartId = await get().checkGroupCart();
+          if (existingGroupCartId) {
+            console.log("⚠️ Đã có group cart. Không tạo mới.");
+            return false;
+          }
+
+          const accessToken = await AsyncStorage.getItem('access_token');
+          if (!accessToken) throw new Error('Access token not found');
+
+          const payload = {
+            userId,
+            name,
+            flexiblePayment,
+            datePayment,
+            type,
+          };
+
+          const response = await axiosInstance.post('/group-order/create', payload, {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+              'Content-Type': 'application/json',
+            },
+          });
+
+          const data = response.data;
+          if (!data?.groupOrderId) throw new Error("Không nhận được groupCartId");
+
+          const groupCartData: GroupCartData = {
+            total: data.totalPrice,
+            crudGroupOrderResponse: {
+              groupOrderId: data.groupOrderId,
+              nameLeader: data.nameLeader,
+              address: data.address || "",
+              note: data.note || "",
+              link: data.link || "",
+              code: data.code || "",
+              nameGroup: data.nameGroup || "",
+              totalPrice: data.totalPrice,
+              typeGroupOrder: data.typeGroupOrder,
+              status: 'SHOPPING',
+              isDeleted: data.isDeleted,
+              orderDate: data.orderDate,
+              deadlinePayment: data.deadlinePayment,
+              dateCreated: data.dateCreated,
+              dateUpdated: data.dateUpdated || null,
+              dateDeleted: data.dateDeleted || null,
+            },
+            crudGroupOrderResponseList: [],
+          };
+
+          set({
+            groupCartId: data.groupOrderId,
+            currentCartId: data.groupOrderId,
+            groupCartData,
+            hasGroupCart: true,
+            groupOrderCount:1,
+          });
+
+          return true; // ✅ Trả về true khi thành công
+
+        } catch (error) {
+          console.error("❌ Lỗi khi tạo group order:", error);
+          return false; // ✅ Trả về false nếu có lỗi
+        }
       },
 
       ensureActiveCart: async () => {
@@ -211,7 +538,7 @@ export const useCartStore = create<CartStore>()(
 
       fetchCartItem: async () => {
         try {
-          let { currentCartId } = get();
+          let { currentCartId, groupCartId, hasRejectedGroupCart } = get();
 
           if (!currentCartId) {
             console.log("🔄 No active cart, ensuring...");
@@ -225,14 +552,56 @@ export const useCartStore = create<CartStore>()(
           const accessToken = await AsyncStorage.getItem('access_token');
           if (!accessToken) throw new Error("Access token missing");
 
+          const isGroupCart = groupCartId && !hasRejectedGroupCart ;
+
+          if (isGroupCart) {
+            // 👉 Gọi API lấy chi tiết group cart
+            console.log(`👥 Fetching group cart detail for cart ${groupCartId} in ${language}...`);
+            const response = await axiosInstance.get(`/group-order/detail-group/${groupCartId}?language=${language}`, {
+              headers: { Authorization: `Bearer ${accessToken}` },
+            });
+
+            const groupData = response.data;
+            const listCartItemGroup = groupData.crudGroupOrderResponse?.crudCartGroupResponse?.listCartItemGroup ?? [];
+
+            const updatedCartItems = listCartItemGroup.map((item: { imageUrl: any; proName: any; quantity: any; itemPrice: any; totalPrice: any; size: any; }) => ({
+              ...item,
+              imageUrl: item.imageUrl || '',
+              proName: item.proName,
+              quantity: item.quantity,
+              itemPrice: item.itemPrice,
+              totalPrice: item.totalPrice,
+              size: item.size
+            }));
+
+            // Sử dụng totalQuantity từ response thay vì total
+            const cartTotal = Number(response.data.total);
+
+            // Debugging: Log cartTotal to verify its value
+            console.log("Calculated cartTotal:", cartTotal);
+
+            // Set groupCartData to store
+            set({
+              groupCartData: {
+                total: cartTotal,
+                crudGroupOrderResponse: groupData.crudGroupOrderResponse, // Assign group order response
+                crudGroupOrderResponseList: groupData.crudGroupOrderResponseList || [], // Assign members' data
+              },
+              cart: updatedCartItems,
+              cartTotal: cartTotal,
+            });
+            console.log("✅ Group cart data set:", get().groupCartData);
+
+            return;
+          }
+
+          // 🛒 Xử lý cart bình thường
           console.log(`📦 Fetching cart items for cart ${currentCartId} in ${language}...`);
 
           const response = await axiosInstance.get<CartResponse>(
             `/cart/list-cartItem/${currentCartId}?language=${language}`,
             { headers: { Authorization: `Bearer ${accessToken}` } }
           );
-
-          console.log("✅ Cart items fetched:", response.data);
 
           const updatedCartItems = (response.data.listCartItemResponses ?? []).map(item => ({
             ...item,
@@ -245,6 +614,7 @@ export const useCartStore = create<CartStore>()(
           });
           get().updateCartTotal();
 
+          console.log("✅ Normal cart items fetched:", updatedCartItems);
         } catch (error) {
           console.error("❌ Error fetching cart items:", error);
           set({ cart: [], cartTotal: 0 });
@@ -252,53 +622,55 @@ export const useCartStore = create<CartStore>()(
         }
       },
 
+
+
       handleRestoreOrder: (orderId: number, userId: number): void => {
         Alert.alert(
-            'Mua lại',
-            `Bạn có chắc chắn muốn mua lại đơn hàng ${orderId} không?`,
-            [
-                {
-                    text: 'Huỷ',
-                    style: 'cancel',
-                },
-                {
-                    text: 'Đồng ý',
-                    onPress: async () => {
-                        try {
-                            const token = await AsyncStorage.getItem('access_token');
-                            if (!token) {
-                                console.error('Không tìm thấy token');
-                                return;
-                            }
-    
-                            const response = await axiosInstance.post(
-                                '/orders/restore',
-                                {
-                                    orderId: orderId,
-                                    userId: userId,
-                                },
-                                {
-                                    headers: {
-                                        Authorization: `Bearer ${token}`,
-                                        'Content-Type': 'application/json',
-                                    },
-                                }
-                            );
-                            
-                            set({ currentCartId: response.data.cartId });
-                            get().fetchCartItem();
-                            console.log('✅ Mua lại thành công:', response.data);
-                            Alert.alert('Thành công', 'Đơn hàng đã được mua lại!');
-                        } catch (error) {
-                            console.error('❌ Lỗi khi mua lại đơn hàng:', error);
-                            Alert.alert('Lỗi', 'Không thể mua lại đơn hàng. Vui lòng thử lại sau.');
-                        }
+          'Mua lại',
+          `Bạn có chắc chắn muốn mua lại đơn hàng ${orderId} không?`,
+          [
+            {
+              text: 'Huỷ',
+              style: 'cancel',
+            },
+            {
+              text: 'Đồng ý',
+              onPress: async () => {
+                try {
+                  const token = await AsyncStorage.getItem('access_token');
+                  if (!token) {
+                    console.error('Không tìm thấy token');
+                    return;
+                  }
+
+                  const response = await axiosInstance.post(
+                    '/orders/restore',
+                    {
+                      orderId: orderId,
+                      userId: userId,
                     },
-                },
-            ]
+                    {
+                      headers: {
+                        Authorization: `Bearer ${token}`,
+                        'Content-Type': 'application/json',
+                      },
+                    }
+                  );
+
+                  set({ currentCartId: response.data.cartId });
+                  get().fetchCartItem();
+                  console.log('✅ Mua lại thành công:', response.data);
+                  Alert.alert('Thành công', 'Đơn hàng đã được mua lại!');
+                } catch (error) {
+                  console.error('❌ Lỗi khi mua lại đơn hàng:', error);
+                  Alert.alert('Lỗi', 'Không thể mua lại đơn hàng. Vui lòng thử lại sau.');
+                }
+              },
+            },
+          ]
         );
-    },
-    
+      },
+
 
       changeSize: async (cartItemId: number, size: string) => {
         try {
@@ -337,27 +709,27 @@ export const useCartStore = create<CartStore>()(
 
       updateQuantity: async (cartItemId: number, quantity: number) => {
         try {
-            const accessToken = await AsyncStorage.getItem('access_token');
-            const { userId } = useCategoryStore.getState();
-    
-            if (!accessToken) throw new Error("Access token missing");
-            if (!userId) throw new Error("User ID missing");
-    
-            const payload = { userId: Number(userId), cartItemId, quantity };
-    
-            const response = await axiosInstance.put(
-                `/cart-item/update`,
-                payload,
-                { headers: { Authorization: `Bearer ${accessToken}` } }
-            );
-    
-            await get().fetchCartItem();
-            get().updateCartTotal();
+          const accessToken = await AsyncStorage.getItem('access_token');
+          const { userId } = useCategoryStore.getState();
+
+          if (!accessToken) throw new Error("Access token missing");
+          if (!userId) throw new Error("User ID missing");
+
+          const payload = { userId: Number(userId), cartItemId, quantity };
+
+          const response = await axiosInstance.put(
+            `/cart-item/update`,
+            payload,
+            { headers: { Authorization: `Bearer ${accessToken}` } }
+          );
+
+          await get().fetchCartItem();
+          get().updateCartTotal();
         } catch (error) {
-            await get().fetchCartItem();
-            throw new Error("Vượt quá số lượng cho phép!");
+          await get().fetchCartItem();
+          throw new Error("Vượt quá số lượng cho phép!");
         }
-    },
+      },
 
       increaseQuantity: async (cartItemId: number) => {
         try {
@@ -395,56 +767,56 @@ export const useCartStore = create<CartStore>()(
           const accessToken = await AsyncStorage.getItem('access_token');
           const { userId } = useCategoryStore.getState();
           const { cart, updateCartTotal, ensureActiveCart, fetchCartItem } = get();
-      
+
           if (!accessToken) throw new Error("Access token missing");
           if (!userId) throw new Error("User ID missing");
-      
+
           console.log("🔴 Deleting item with cartItemId:", cartItemId);
-      
+
           const deletePayload = { userId: Number(userId), cartItemId };
-      
+
           await axiosInstance.delete(`/cart-item/delete/${cartItemId}`, {
             headers: { Authorization: `Bearer ${accessToken}` },
             data: deletePayload,
           });
-      
+
           console.log("🗑 Item deleted successfully");
-      
+
           const updatedCart = cart.filter(item => item.cartItemId !== cartItemId);
           set({ cart: updatedCart });
-      
+
           updateCartTotal();
-      
+
           // Nếu giỏ hàng trống, gọi đồng thời ensureActiveCart và fetchCartItem
           if (updatedCart.length === 0) {
             await get().ensureActiveCart();
             await get().fetchCartItem();
           }
-      
+
         } catch (error) {
           console.error("❌ Error deleting cart item:", error);
         }
       },
-      
-      
+
+
       deleteAllCartItems: async () => {
         try {
           const { currentCartId } = get();
           const { userId } = useCategoryStore.getState();
-      
+
           if (!userId) throw new Error("User not logged in");
           if (!currentCartId) throw new Error("No active cart found");
-      
+
           const accessToken = await AsyncStorage.getItem('access_token');
           if (!accessToken) throw new Error("Access token missing");
-      
+
           console.log(`🗑️ Deleting all items from cart ${currentCartId} for user ${userId}...`);
-      
+
           const payload = {
             userId: Number(userId),
             cartId: currentCartId,
           };
-      
+
           const response = await axiosInstance.delete(
             `/cart/delete-allItem/${currentCartId}`,
             {
@@ -452,19 +824,19 @@ export const useCartStore = create<CartStore>()(
               data: payload,
             }
           );
-      
+
           console.log("✅ All items deleted successfully:", response.data.message);
-      
+
           set({ cart: [], cartTotal: 0 });
-      
+
           // 🔄 Tạo lại giỏ nếu đã xóa hết
           await get().ensureActiveCart();
-      
+
         } catch (error) {
           console.error("❌ Error deleting all items from the cart:", error);
         }
       },
-      
+
 
       // Hàm giảm số lượng sản phẩm trong giỏ hàng (decreaseQuantity)
       decreaseQuantity: async (cartItemId: number) => {
@@ -585,25 +957,25 @@ export const useCartStore = create<CartStore>()(
         try {
           const { currentCartId, selectedVoucher, coin } = get();
           const { userId, language } = useCategoryStore.getState();
-      
+
           if (!userId || !currentCartId) throw new Error("❌ Missing user or cart");
-      
+
           const accessToken = await AsyncStorage.getItem('access_token');
           if (!accessToken) throw new Error("Access token missing");
-      
+
           const voucherId = selectedVoucher.selectedVoucherId || "string";
           const pointCoinUse = coin || 0;
-      
+
           const response = await axiosInstance.post(
             '/orders/create',
             { userId, cartId: currentCartId, voucherId, pointCoinUse, note, language },
             { headers: { Authorization: `Bearer ${accessToken}` } }
           );
-      
+
           const order = response.data.body;
           const orderId = order?.orderId;
           if (!orderId) throw new Error("Invalid orderId");
-      
+
           set({
             order,
             orderId,
@@ -613,51 +985,110 @@ export const useCartStore = create<CartStore>()(
             coin: 0,
             currentCartId: null
           });
-      
+
           return String(orderId);
-      
+
         } catch (error) {
           console.error("❌ createOrder error:", error);
           throw error;
         }
       },
-    
 
       addToCart: async (proId: number, size: string, quantity: number, language: string) => {
         try {
-          let { currentCartId } = get();
-          if (!currentCartId) {
-            console.log("🔄 No active cart, ensuring...");
-            currentCartId = await get().ensureActiveCart();
-            set({ currentCartId });
-          }
-
           const { userId } = useCategoryStore.getState();
           if (!userId) throw new Error("User not logged in");
+          console.log("👤 userId:", userId);
 
           const accessToken = await AsyncStorage.getItem('access_token');
           if (!accessToken) throw new Error("Access token missing");
 
-          console.log(`➕ Adding product ${proId} (Size: ${size}, Qty: ${quantity}) to cart ${currentCartId}`);
+          const { hasRejectedGroupCart, groupCartId, ensureActiveCart, fetchCartItem } = get();
+          console.log("🔍 hasRejectedGroupCart:", hasRejectedGroupCart);
+          console.log("🔍 groupCartId:", groupCartId);
 
-          const response = await axiosInstance.post<CartItem>(
-            `/cart-item/insert`,
-            { userId, cartId: currentCartId, proId, size, quantity, language },
-            { headers: { Authorization: `Bearer ${accessToken}` } }
-          );
+          let targetCartId: number;
+          let isGroupCart = false;
 
-          console.log("✅ Added to cart:", response.data);
+          if (!hasRejectedGroupCart && groupCartId) {
+            // ✅ Đang sử dụng group cart → gọi API lấy cart phụ
+            console.log("📦 Đang kiểm tra cart phụ với groupCartId:", groupCartId);
+            const subCartRes = await axiosInstance.get<number>(
+              `/group-order/get-id-cart-group/${userId}?groupOrderId=${groupCartId}`,
+              {
+                headers: { Authorization: `Bearer ${accessToken}` }
+              }
+            );
 
-          await get().fetchCartItem(); // Cập nhật lại giỏ hàng sau khi thêm
+            console.log("📬 Kết quả lấy cart phụ:", subCartRes.data);
+
+            if (typeof subCartRes.data === 'number' && subCartRes.data > 0) {
+              targetCartId = subCartRes.data;
+              isGroupCart = true;
+              console.log("✅ Sử dụng cart phụ:", targetCartId);
+            } else {
+              console.warn("⚠️ Không tìm thấy cart phụ hợp lệ. Chuyển sang giỏ cá nhân.");
+              targetCartId = await ensureActiveCart();
+            }
+          } else {
+            // ✅ Nếu đã từ chối → dùng giỏ cá nhân
+            console.log("🛒 Người dùng đã từ chối giỏ nhóm. Sử dụng cart cá nhân.");
+            targetCartId = await ensureActiveCart();
+          }
+
+          console.log(`🧾 Chuẩn bị thêm sản phẩm vào ${isGroupCart ? 'group' : 'personal'} cart. CartID: ${targetCartId}`);
+          console.log("🧱 Product Info:", { proId, size, quantity, language });
+
+          const payload = {
+            userId,
+            cartId: targetCartId,
+            proId,
+            size,
+            quantity,
+            language
+          };
+          console.log("📤 Payload gửi đi:", payload);
+
+          if (isGroupCart) {
+            const response = await axiosInstance.post(
+              `/cart-item/group-order/insert`,
+              payload,
+              {
+                headers: {
+                  Authorization: `Bearer ${accessToken}`,
+                  'Content-Type': 'application/json'
+                }
+              }
+            );
+            console.log("✅ Phản hồi từ API nhóm:", response.data);
+          } else {
+            const response = await axiosInstance.post(
+              `/cart-item/insert`,
+              payload,
+              {
+                headers: {
+                  Authorization: `Bearer ${accessToken}`,
+                  'Content-Type': 'application/json'
+                }
+              }
+            );
+            console.log("✅ Phản hồi từ API cá nhân:", response.data);
+          }
+
+          await fetchCartItem();
+          console.log("🔄 Cập nhật giỏ hàng thành công.");
         } catch (error: any) {
           if (axios.isAxiosError(error) && error.response) {
+            console.error("❌ Axios error:", error.response.data);
             if (error.response.status === 400) {
               throw new Error("❌ Vượt quá số lượng tồn kho");
             }
           }
+          console.error("❌ Lỗi khi thêm vào giỏ:", error);
           throw new Error("❌ Lỗi thêm vào giỏ hàng");
         }
       },
+
 
       setSelectedVoucher: ({ selectedVoucherId, selectedVoucherKey, selectedVoucherDiscountAmount }) => {
         console.log("🛒 Setting selected voucher:", { selectedVoucherId, selectedVoucherKey, selectedVoucherDiscountAmount });

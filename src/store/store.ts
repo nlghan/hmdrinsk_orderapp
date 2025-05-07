@@ -757,6 +757,10 @@ export const useCategoryStore = create<CategoryStore>()(
           };
           useCartStore.getState().idCartPause = null;
           useCartStore.getState().idOrderPause = null;
+          useCartStore.getState().groupCartId = null;
+          useCartStore.getState().hasRejectedGroupCart= false;
+          useCartStore.getState().groupCartData = null;
+          useCartStore.getState().hasGroupCart = false;
           set((state) => {
             const newState = {
               userId: null,

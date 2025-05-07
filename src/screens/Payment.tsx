@@ -637,6 +637,7 @@ const styles = StyleSheet.create({
         color: '#E53935',
         textAlign: 'right',
     },
+    
 
     /* Tổng cộng */
     footer: {

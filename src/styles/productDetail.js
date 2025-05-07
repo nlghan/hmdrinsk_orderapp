@@ -194,6 +194,40 @@ export default StyleSheet.create({
         borderRadius: 50,
         elevation: 3,
     },
+    backButton2: {
+        position: 'absolute',
+        top: 0,
+        right: 0,
+        zIndex: 10,
+        backgroundColor: 'rgb(255, 255, 255)',
+        padding: 8,
+        borderRadius: 50,
+        elevation: 3,
+    },
+    groupOrderButton: {
+        backgroundColor: 'white',
+        borderColor: '#FFA500', // Màu cam
+        borderWidth: 2,
+        borderRadius: 30,
+        paddingVertical: 8,
+        paddingHorizontal: 16,
+        position: 'absolute',
+        top: 0,
+        right: 0,
+        zIndex: 10,
+      },
+      iconTextContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+      },
+      icon: {
+        marginRight: 8,
+      },
+      buttonText: {
+        color: 'black',
+        fontWeight: 'bold',
+        fontSize: 16,
+      },
 
     fixedPriceContainer: {
         position: 'absolute',

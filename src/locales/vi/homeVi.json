@@ -557,7 +557,9 @@
             "title": "Giao hàng tận nơi",
             "product": "Sản phẩm đã chọn"
         },
-        "suggest":"Gợi ý tìm kiếm"
+        "suggest":"Gợi ý tìm kiếm",
+        "groupOrder":"Đặt đơn nhóm",
+        "groupOrderList": "Nhóm đặt hàng"
     },
     "chat": {
         "title": "Liên hệ",
