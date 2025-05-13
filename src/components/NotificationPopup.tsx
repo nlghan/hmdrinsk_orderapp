@@ -6,10 +6,14 @@ import { useCountStore } from '../store/countStore';
 
 type NotificationWS = {
     userId: number;
-    shipmentId: number;
+    shipmentId?: number;
+    groupOrderId?: number;
     message: string;
     time: string;
-};interface NotificationPopupProps {
+    type?: string;
+};
+
+interface NotificationPopupProps {
     userId: number; // Thêm kiểu rõ ràng
 }const NotificationPopup: React.FC<NotificationPopupProps> = ({ userId }) => {
     const socketNotifications = useWebSocket(userId);

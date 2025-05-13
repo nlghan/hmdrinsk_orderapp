@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from "react";
-import { TouchableOpacity, View, Text, Image } from 'react-native';
+import React, { useState, useEffect } from "react";
+import { TouchableOpacity, View, Text, Image, Alert } from 'react-native';
 import homeStyles from '../styles/home';
 import { COLORS } from '../theme/theme';
 import Icon from 'react-native-vector-icons/MaterialIcons';
@@ -9,9 +9,9 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../navigation/RootStackParamList';
 import { useCartStore } from '../store/useCartStore';
 import { useCategoryStore } from '../store/store';
+import useWebSocket from '../utils/Socket';
 import axiosInstance from "../utils/axiosInstance";
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import useWebSocket from '../utils/Socket';
 
 interface Notification {
     id: string;
@@ -21,12 +21,22 @@ interface Notification {
     shipmentId: number;
     total: number;
 }
+
 const Header = ({ style }: { style?: object }) => {
-    const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();    
-    const { cartTotal } = useCartStore();
+    const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
     const { userId } = useCategoryStore();
     const socketNotifications = useWebSocket(userId ?? 0);
     const { t } = useTranslation();
+
+    const hasGroupCart = useCartStore((state) => state.hasGroupCart);
+    const hasRejectedGroupCart = useCartStore((state) => state.hasRejectedGroupCart);
+    const cartTotal = useCartStore((state) => state.cartTotal);
+    const groupOrderCount = useCartStore((state) => state.groupOrderCount);
+    const groupCartId = useCartStore((state) => state.groupCartId);
+    const setHasRejectedGroupCart = useCartStore((state) => state.setHasRejectedGroupCart);
+    const checkGroupCart = useCartStore((state) => state.checkGroupCart);
+    const ensureActiveCart = useCartStore((state) => state.ensureActiveCart);
+
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [unreadCount, setUnreadCount] = useState<number>(0);
 
@@ -58,6 +68,30 @@ const Header = ({ style }: { style?: object }) => {
             fetchNotifications();
         }
     }, [socketNotifications]);
+
+    const handleCartPress = async () => {
+        if (groupCartId && !hasRejectedGroupCart) {
+            Alert.alert(
+                "Thông báo",
+                "Bạn sẽ chuyển sang giỏ hàng cá nhân. Có muốn tiếp tục không?",
+                [
+                    { text: "Không", style: "cancel" },
+                    {
+                        text: "Có",
+                        onPress: async () => {
+                            await ensureActiveCart();
+                            setHasRejectedGroupCart(true);
+                            navigation.navigate('Cart');
+                        },
+                    },
+                ],
+                { cancelable: false }
+            );
+        } else {
+            navigation.navigate('Cart');
+        }
+    };
+
     return (
         <View style={[homeStyles.header, style]}>
             <View style={homeStyles.logoContainer}>
@@ -66,27 +100,60 @@ const Header = ({ style }: { style?: object }) => {
             </View>
 
             <View style={homeStyles.headerIcons}>
-                <TouchableOpacity style={homeStyles.iconButton} onPress={() => {
-                    // ✅ Hủy chọn khi chuyển trang
-                    navigation.navigate('Cart');
-                }}>
-                    <Icon name="shopping-cart" size={20} color={COLORS.primaryGreenHex} />
-                    <Text style={homeStyles.iconText}>{cartTotal}</Text>
+                <TouchableOpacity
+                    style={[
+                        homeStyles.iconButton,
+                        (!hasGroupCart || hasRejectedGroupCart) && { backgroundColor: '#e8e8e8c9' }
+                    ]}
+                    onPress={async () => {
+                        if (!hasGroupCart || hasRejectedGroupCart) {
+                            setHasRejectedGroupCart(false);
+                            await checkGroupCart();
+                            navigation.navigate("GroupOrderList");
+                        } else {
+                            navigation.navigate("GroupOrderList");
+                        }
+                    }}
+                >
+                    <Icon
+                        name="groups"
+                        size={15}
+                        color={(hasGroupCart && !hasRejectedGroupCart) ? COLORS.primaryGreenHex : 'gray'}
+                    />
+                    <View style={homeStyles.notificationCount}>
+                        <Text style={homeStyles.notificationText}>{groupOrderCount}</Text>
+                    </View>
                 </TouchableOpacity>
+
+                <TouchableOpacity
+                    style={[
+                        homeStyles.iconButton,
+                        (hasGroupCart && !hasRejectedGroupCart) && { backgroundColor: '#e8e8e8c9' }
+                    ]}
+                    onPress={handleCartPress}
+                >
+                    <Icon
+                        name="shopping-cart"
+                        size={15}
+                        color={(hasGroupCart && !hasRejectedGroupCart) ? 'gray' : COLORS.primaryGreenHex}
+                    />
+                    <View style={homeStyles.notificationCount}>
+                        <Text style={homeStyles.notificationText}>{cartTotal}</Text>
+                    </View>
+                </TouchableOpacity>
+
+
                 <TouchableOpacity
                     style={homeStyles.iconButton}
                     onPress={() => navigation.navigate("Notification", { userId: userId ?? 0 })}
                 >
-                    <Icon name="notifications" size={20} color={COLORS.blackAlpha} />
-
-                    {/* Hiển thị số lượng thông báo chưa đọc nếu có, ngược lại chỉ hiển thị icon chuông */}
+                    <Icon name="notifications" size={15} color={COLORS.blackAlpha} />
                     {unreadCount > 0 && (
                         <View style={homeStyles.notificationCount}>
                             <Text style={homeStyles.notificationText}>{unreadCount}</Text>
                         </View>
                     )}
                 </TouchableOpacity>
-
             </View>
         </View>
     );

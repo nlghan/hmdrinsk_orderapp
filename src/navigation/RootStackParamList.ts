@@ -32,5 +32,8 @@ export type RootStackParamList = {
     ChatWithShipper: { shipmentId: number };
     Contact: undefined;
     Search: undefined;
+    GroupOrder: undefined;
+    GroupOrderDetail: { groupOrderId: number };
+    GroupOrderList : undefined;
   };
   

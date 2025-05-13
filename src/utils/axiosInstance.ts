@@ -1,11 +1,11 @@
 import axios, { AxiosRequestConfig, AxiosResponse, InternalAxiosRequestConfig } from 'axios';
 import { AxiosHeaders } from 'axios';
 
-const BASE_URL = 'http://192.168.78.176:1010/api';
+const BASE_URL = 'http://192.168.1.47:1010/api';
 
 const axiosInstance = axios.create({
   baseURL: BASE_URL,
-  timeout: 30000,
+  timeout: 300000,
 });
 
 const getCookie = (name: string): string | null => {

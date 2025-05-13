@@ -52,7 +52,7 @@ const styles = StyleSheet.create({
     iconButton: {
       flexDirection: 'row',
       alignItems: 'center',
-      marginLeft: 12,
+      marginLeft: 10,
       borderWidth: 1,
       borderColor: '#ccc',
       backgroundColor: '#fff',

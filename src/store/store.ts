@@ -114,7 +114,9 @@ interface CategoryStore {
   checkShipment: () => Promise<any | null>;
   editReview: (review: Omit<ProductReview, 'isDelete' | 'dateDeleted' | 'dateUpdated' | 'dateCreated'>) => Promise<void>;
   deleteReview: (reviewId: number) => Promise<void>; 
-  checkTimeOrder: () => Promise<void>;  
+  checkTimeOrder: () => Promise<void>;
+  checkVoucher: () => Promise<any | null>;
+  fetchUserCoin: () => void;
 }
 
 export const useCategoryStore = create<CategoryStore>()(
@@ -162,6 +164,37 @@ export const useCategoryStore = create<CategoryStore>()(
           return null;
         }
       };
+
+      const checkVoucher = async () => {
+        try {
+          console.log("🎟️ [checkVoucher] Đang kiểm tra trạng thái voucher...");
+      
+          const token = await AsyncStorage.getItem('access_token'); // ✅ Lấy access_token từ AsyncStorage
+          if (!token) {
+            console.error("❌ [checkVoucher] Không tìm thấy access_token!");
+            return null;
+          }
+      
+          const response = await axiosInstance.put('/voucher/check_status', null, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              Accept: '*/*'
+            }
+          });
+      
+          if (response.status === 200) {
+            console.log("✅ [checkVoucher] API trả về thành công:", response.data);
+            return response.data || { message: "API trả về 200 nhưng không có nội dung cụ thể." }; // ✅ Tránh undefined
+          } else {
+            console.error("⚠️ [checkVoucher] API trả về mã khác 200:", response.status);
+            return null;
+          }
+        } catch (error) {
+          console.error("❌ [checkVoucher] Lỗi khi kiểm tra voucher:", error);
+          return null;
+        }
+      };
+      
       
       
 
@@ -697,12 +730,6 @@ export const useCategoryStore = create<CategoryStore>()(
           if (response.status === 200) {
             console.log("✅ [checkTimeOrder] Order status check successful.");
             // Handle the response here (e.g., check if the order has expired)
-            const { isExpired } = response.data; // Assuming the response contains isExpired flag
-            if (isExpired) {
-              console.log("⚠️ Order has expired.");
-            } else {
-              console.log("✅ Order is still valid.");
-            }
           } else {
             console.error(`❌ [checkTimeOrder] Error: ${response.statusText}`);
           }
@@ -728,6 +755,10 @@ export const useCategoryStore = create<CategoryStore>()(
           };
           useCartStore.getState().idCartPause = null;
           useCartStore.getState().idOrderPause = null;
+          useCartStore.getState().groupCartId = null;
+          useCartStore.getState().hasRejectedGroupCart= false;
+          useCartStore.getState().groupCartData = null;
+          useCartStore.getState().hasGroupCart = false;
           set((state) => {
             const newState = {
               userId: null,
@@ -768,6 +799,8 @@ export const useCategoryStore = create<CategoryStore>()(
         editReview,
         deleteReview,
         checkTimeOrder,
+        checkVoucher,
+        fetchUserCoin,
 
         setUserId: async (id) => {
           set({ userId: id });
@@ -779,6 +812,7 @@ export const useCategoryStore = create<CategoryStore>()(
               fetchFavoriteItems(),
               fetchProducts(),
               checkTimeOrder(),
+              checkVoucher(),
             ]);
           
             useCartStore.getState().fetchCartItem();

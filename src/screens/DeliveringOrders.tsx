@@ -57,11 +57,12 @@ const DeliveringOrders = () => {
     const [error, setError] = useState('');
     const [showAll, setShowAll] = useState(false);
     const [currentDeliveringPage, setCurrentDeliveringPage] = useState(1);
-    const { language, userId } = useCategoryStore();
+    const { language, userId, checkShipment } = useCategoryStore();
     const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
     const { t } = useTranslation();
 
     useEffect(() => {
+        checkShipment();
         fetchConfirmedOrders();
     }, []);
 

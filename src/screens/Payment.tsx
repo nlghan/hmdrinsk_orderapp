@@ -37,35 +37,43 @@ const Payment = () => {
 
     useEffect(() => {
         const fetchOrderDetails = async () => {
-            setLoading(true);
             try {
                 const token = await AsyncStorage.getItem('access_token');
                 if (!token) {
                     setError('Không tìm thấy token đăng nhập, vui lòng đăng nhập lại.');
                     return;
                 }
-
+    
                 const response = await axiosInstance.get(`/orders/detail/${orderId}?language=${language}`, {
                     headers: {
                         Authorization: `Bearer ${token}`,
                         'Content-Type': 'application/json',
                     },
                 });
-
+    
+                const orderData = response.data.order;
+                const linkPayment = response.data.payment?.link; // 👈 lấy link từ payment
+    
                 console.log('Order Detail Response:', response.data);
-                setOrder(response.data.order);
+    
+                // Gộp link vào order để dễ dùng
+                setOrder({
+                    ...orderData,
+                    linkPayment: linkPayment || null,
+                });
             } catch (err) {
                 console.error('Lỗi khi lấy thông tin đơn hàng:', err);
                 setError('Có lỗi xảy ra khi lấy thông tin đơn hàng.');
-            } finally {
+            }finally{
                 setLoading(false);
             }
         };
-
+    
         if (orderId) {
             fetchOrderDetails();
         }
     }, [orderId]);
+    
 
     if (loading) {
         return (
@@ -75,7 +83,7 @@ const Payment = () => {
                 left: 0,
                 right: 0,
                 bottom: 0,
-                backgroundColor: 'rgba(0, 0, 0, 0.59)',  // Overlay tối mờ
+                backgroundColor: 'rgba(0, 0, 0, 0.3)',  // Overlay tối mờ
                 justifyContent: 'center',
                 zIndex: 999,  // Đảm bảo overlay nằm trên tất cả
             }}>
@@ -111,56 +119,57 @@ const Payment = () => {
                 Alert.alert('Lỗi', 'Không tìm thấy token đăng nhập, vui lòng đăng nhập lại.');
                 return;
             }
-
+    
             if (!order || !order.orderId) {
                 Alert.alert('Lỗi', 'Không tìm thấy thông tin đơn hàng.');
                 return;
             }
-
-            console.log('Bắt đầu xử lý đơn hàng với ID:', order.orderId);
-
+    
+            // 👉 Nếu đã có link thanh toán, chỉ cần mở
+            if (order.linkPayment) {
+                Linking.openURL(order.linkPayment);
+                return;
+            }
+            
+    
             const headers = {
                 Authorization: `Bearer ${token}`,
                 'Content-Type': 'application/json',
             };
-
-            console.log('Gửi yêu cầu xác nhận đơn hàng...');
+    
+            // Xác nhận đơn hàng
             const confirmResponse = await axiosInstance.post(
                 `/orders/confirm`,
                 { userId: order.userId, orderId: order.orderId },
                 { headers }
             );
-
-            console.log('Phản hồi xác nhận đơn hàng:', confirmResponse.data);
+    
             if (confirmResponse.status !== 200) {
                 throw new Error('Lỗi khi xác nhận đơn hàng');
             }
-
-            console.log(`Tạo thanh toán với phương thức: ${paymentMethod}`);
+    
+            // Tạo thanh toán
             const paymentUrl = `/payment/create/${paymentMethod}`;
             const paymentResponse = await axiosInstance.post(
                 paymentUrl,
-                { orderId: order.orderId, userId: order.userId, type:'ANDROID' },
+                { orderId: order.orderId, userId: order.userId, type: 'ANDROID' },
                 { headers }
             );
-
-            console.log('Phản hồi tạo thanh toán:', paymentResponse.data);
+    
             if (paymentResponse.status === 200) {
                 const data = paymentResponse.data;
-
-                // Trường hợp ZaloPay hoặc các phương thức cần redirect
+    
                 if (data.linkPayment) {
-                    Linking.openURL(data.linkPayment); // Mở ZaloPay redirect
-                }
-                else {
+                    Linking.openURL(data.linkPayment);
+                } else {
                     navigation.navigate('OrderComplete');
                 }
-
-
+    
             } else {
                 navigation.navigate('OrderFailed');
                 throw new Error('Lỗi khi tạo thanh toán');
             }
+    
         } catch (error) {
             console.error('Lỗi đặt hàng:', error);
             Alert.alert('Lỗi', 'Có lỗi xảy ra, vui lòng thử lại sau.');
@@ -168,7 +177,6 @@ const Payment = () => {
             setLoading(false);
         }
     };
-
 
     const handleOrderPause = async () => {
         console.log('handleOrderPause called'); // Kiểm tra xem có vào hàm không
@@ -205,20 +213,27 @@ const Payment = () => {
                 throw new Error('Lỗi khi xác nhận đơn hàng tạm dừng');
             }
 
-            // Tiến hành xử lý thanh toán như bình thường
             console.log(`Tạo thanh toán với phương thức: ${paymentMethod}`);
             const paymentUrl = `/payment/create/${paymentMethod}`;
             const paymentResponse = await axiosInstance.post(
                 paymentUrl,
-                { orderId: order.orderId, userId: order.userId },
+                { orderId: order.orderId, userId: order.userId, type: 'ANDROID' },
                 { headers }
             );
 
             console.log('Phản hồi tạo thanh toán:', paymentResponse.data);
             if (paymentResponse.status === 200) {
-                setIdCartPause(null);
-                setIdOrderPause(null);
-                navigation.navigate('OrderComplete');
+                const data = paymentResponse.data;
+
+                // Trường hợp ZaloPay hoặc các phương thức cần redirect
+                if (data.linkPayment) {
+                    Linking.openURL(data.linkPayment); // Mở ZaloPay redirect
+                }
+                else {
+                    setIdCartPause(null);
+                    setIdOrderPause(null);
+                    navigation.navigate('OrderComplete');
+                }
             } else {
                 navigation.navigate('OrderFailed');
                 throw new Error('Lỗi khi tạo thanh toán');
@@ -226,37 +241,54 @@ const Payment = () => {
         } catch (error) {
             console.error('Lỗi đặt hàng:', error);
             Alert.alert('Lỗi', 'Có lỗi xảy ra, vui lòng thử lại sau.');
-        } finally {
-            setLoading(false);
         }
     };
 
 
     // Gọi API pause_order khi rời khỏi trang hoặc back
     const handlePauseOrder = async () => {
-        try {
-            const token = await AsyncStorage.getItem('access_token');
-            if (!token || !order?.orderId || !order?.userId) return;
-
-            await axiosInstance.post(
-                '/orders/pause_order',
-                { orderId: order.orderId, userId: order.userId },
+        Alert.alert(
+            'Xác nhận',
+            'Bạn có chắc chắn muốn tạm dừng thanh toán không?',
+            [
                 {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                        'Content-Type': 'application/json',
+                    text: 'Hủy',
+                    style: 'cancel',
+                },
+                {
+                    text: 'Đồng ý',
+                    onPress: async () => {
+                        setLoading(true);
+                        try {
+                            const token = await AsyncStorage.getItem('access_token');
+                            if (!token || !order?.orderId || !order?.userId) return;
+
+                            await axiosInstance.post(
+                                '/orders/pause_order',
+                                { orderId: order.orderId, userId: order.userId },
+                                {
+                                    headers: {
+                                        Authorization: `Bearer ${token}`,
+                                        'Content-Type': 'application/json',
+                                    },
+                                }
+                            );
+
+                            setIdOrderPause(order.orderId);
+                            await Promise.all([ensureActiveCart(), fetchCartItem()]);
+
+                            console.log('✅ Pause order thành công');
+                            navigation.goBack();
+                        } catch (error) {
+                            console.error('❌ Lỗi khi gọi pause_order:', error);
+                        } finally {
+                            setLoading(false);
+                        }
                     },
-                }
-            );
-            // setIdCartPause(currentCartId);
-            setIdOrderPause(order.orderId);
-            await ensureActiveCart();
-            await fetchCartItem();
-            console.log('Pause order thành công');
-            navigation.goBack();
-        } catch (error) {
-            console.error('Lỗi khi gọi pause_order:', error);
-        }
+                },
+            ],
+            { cancelable: true }
+        );
     };
 
     const handleCancel = async () => {
@@ -265,36 +297,53 @@ const Payment = () => {
             const token = await AsyncStorage.getItem('access_token');
             if (!token || !order?.orderId || !order?.userId) return;
 
-            // Sử dụng PUT thay vì POST
+            const headers = {
+                Authorization: `Bearer ${token}`,
+                'Content-Type': 'application/json',
+            };
+
+            // Nếu là đơn đang pause thì cần xác nhận trước khi hủy
+            if (order.orderId === idOrderPause) {
+                console.log('🕒 Đơn đang ở trạng thái PAUSE, gửi yêu cầu xác nhận...');
+                const confirmResponse = await axiosInstance.post(
+                    '/orders/confirm_order_pause',
+                    { userId: order.userId, orderId: order.orderId },
+                    { headers }
+                );
+
+                if (confirmResponse.status !== 200) {
+                    console.warn('⚠️ Xác nhận đơn pause thất bại. Hủy đơn bị dừng lại.');
+                    setLoading(false);
+                    return;
+                }
+            }
+
+            // Tiến hành hủy đơn
             await axiosInstance.put(
                 '/orders/cancel-order',
                 { orderId: order.orderId, userId: order.userId },
-                {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                        'Content-Type': 'application/json',
-                    },
-                }
+                { headers }
             );
 
-            // Nếu là đơn đang pause thì reset idOrderPause
+            // Nếu là đơn pause thì reset idOrderPause
             if (order.orderId === idOrderPause) {
                 setIdOrderPause(null);
-                console.log('Huỷ tạm đơn đã pause, đặt lại idOrderPause thành null');
+                setIdCartPause(null);
+                console.log('🔁 Đã hủy đơn pause, đặt lại idOrderPause = null');
             }
 
             setOrder(null);
             await ensureActiveCart();
             await fetchCartItem();
-            console.log('Hủy order thành công');
-            setLoading(false);
+
+            console.log('✅ Hủy order thành công');
             navigation.navigate('Main');
         } catch (error) {
-            console.error('Lỗi khi hủy đơn:', error);
+            console.error('❌ Lỗi khi hủy đơn:', error);
+        } finally {
             setLoading(false);
         }
     };
-
 
 
     return (
@@ -349,7 +398,7 @@ const Payment = () => {
                     <TouchableOpacity
                         style={[styles.paymentOption, paymentMethod === 'cash' && styles.selectedPayment]}
                         onPress={() => setPaymentMethod('cash')}>
-                        <Icon name="attach-money" size={20} color={paymentMethod === 'cash' ? "#FF9800" : "#555"} />
+                        <Icon name="attach-money" size={24} color={paymentMethod === 'cash' ? "#FF9800" : "#555"} />
                         <Text style={styles.paymentText}>{t('order.orderDetail.method.method1')}</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
@@ -358,31 +407,14 @@ const Payment = () => {
                         <Image
                             source={
                                 paymentMethod === 'credit/payOs'
-                                    ? require('../assets/app_images/bidv.jpg')
-                                    : require('../assets/app_images/bidv.jpg')
+                                    ? require('../assets/app_images/bidv.png')
+                                    : require('../assets/app_images/bidv.png')
                             }
                             style={{ width: 24, height: 24 }}
                             resizeMode="contain"
                         />
 
                         <Text style={styles.paymentText}>{t('order.orderDetail.method.method2')}</Text>
-                    </TouchableOpacity>
-
-                  
-                    <TouchableOpacity
-                        style={[styles.paymentOption, paymentMethod === 'credit/zaloPay' && styles.selectedPayment]}
-                        onPress={() => setPaymentMethod('credit/zaloPay')}>
-                        <Image
-                            source={
-                                paymentMethod === 'credit/zaloPay'
-                                    ? require('../assets/app_images/zalopay.png')
-                                    : require('../assets/app_images/zalopay.png')
-                            }
-                            style={{ width: 24, height: 24 }}
-                            resizeMode="contain"
-                        />
-
-                        <Text style={styles.paymentText}>{t('order.orderDetail.method.method4')}</Text>
                     </TouchableOpacity>
 
                     <TouchableOpacity
@@ -400,12 +432,39 @@ const Payment = () => {
 
                         <Text style={styles.paymentText}>{t('order.orderDetail.method.method3')}</Text>
                     </TouchableOpacity>
-                    {/* <TouchableOpacity 
-                        style={[styles.paymentOption, paymentMethod === 'e-wallet' && styles.selectedPayment]}
-                        onPress={() => setPaymentMethod('vnpay')}>
-                        <Icon name="account-balance-wallet" size={24} color={paymentMethod === 'e-wallet' ? "#FF9800" : "#555"} />
-                        <Text style={styles.paymentText}>VNPay</Text>
-                    </TouchableOpacity> */}
+
+                    <TouchableOpacity
+                        style={[styles.paymentOption, paymentMethod === 'credit/zaloPay' && styles.selectedPayment]}
+                        onPress={() => setPaymentMethod('credit/zaloPay')}>
+                        <Image
+                            source={
+                                paymentMethod === 'credit/zaloPay'
+                                    ? require('../assets/app_images/zalopay.png')
+                                    : require('../assets/app_images/zalopay.png')
+                            }
+                            style={{ width: 24, height: 24 }}
+                            resizeMode="contain"
+                        />
+
+                        <Text style={styles.paymentText}>{t('order.orderDetail.method.method4')}</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                        style={[styles.paymentOption, paymentMethod === 'credit/vnPay' && styles.selectedPayment]}
+                        onPress={() => setPaymentMethod('credit/vnPay')}>
+                        <Image
+                            source={
+                                paymentMethod === 'credit/vnPay'
+                                    ? require('../assets/app_images/vnpay.png')
+                                    : require('../assets/app_images/vnpay.png')
+                            }
+                            style={{ width: 24, height: 24 }}
+                            resizeMode="contain"
+                        />
+
+                        <Text style={styles.paymentText}>{t('order.orderDetail.method.method5')}</Text>
+                    </TouchableOpacity>
+
                 </View>
             </ScrollView>
 
@@ -434,11 +493,42 @@ const Payment = () => {
                 {/* Số tiền thanh toán */}
                 <View style={styles.totalContainer}>
                     <Text style={styles.totalText}>{t('order.orderDetail.totalBill')}</Text>
-                    <Text style={styles.totalAmount}>{formatPrice(order.totalPrice - order.pointCoinUse + order.deliveryFee - order.discountPrice)}đ</Text>
+                    <Text style={styles.totalAmount}>
+                        {formatPrice(Math.max(order.totalPrice - order.pointCoinUse + order.deliveryFee - order.discountPrice, 0))}đ
+                    </Text>
+
                 </View>
 
                 {/* Nút đặt hàng */}
                 <View style={styles.buyContainer}>
+                    <TouchableOpacity
+                        style={[styles.orderButton1, loading && { opacity: 0.5 }]}
+                        onPress={() => {
+                            Alert.alert(
+                                'Xác nhận hủy đơn',
+                                'Bạn có chắc chắn muốn hủy thanh toán đơn hàng này không?',
+                                [
+                                    {
+                                        text: 'Không',
+                                        style: 'cancel',
+                                    },
+                                    {
+                                        text: 'Hủy đơn',
+                                        style: 'destructive',
+                                        onPress: () => handleCancel(),
+                                    },
+                                ],
+                                { cancelable: true }
+                            );
+                        }}
+                        disabled={loading}
+                    >
+                        <Text style={styles.orderText}>
+                            {loading ? t('loading') : t('order.orderDetail.cancel')}
+                        </Text>
+                    </TouchableOpacity>
+
+
                     <TouchableOpacity
                         style={[styles.orderButton, loading && { opacity: 0.5 }]}
                         onPress={() => {
@@ -452,16 +542,7 @@ const Payment = () => {
                     >
                         <Text style={styles.orderText}>{loading ? t('loading') : t('pay')}</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity
-                        style={[styles.orderButton1, loading && { opacity: 0.5 }]}
-                        onPress={() => {
-                            handleCancel();
 
-                        }}
-                        disabled={loading}
-                    >
-                        <Text style={styles.orderText}>{loading ? t('loading') : t('order.orderDetail.cancel')}</Text>
-                    </TouchableOpacity>
 
 
                 </View>
@@ -556,6 +637,7 @@ const styles = StyleSheet.create({
         color: '#E53935',
         textAlign: 'right',
     },
+    
 
     /* Tổng cộng */
     footer: {
@@ -674,7 +756,7 @@ const styles = StyleSheet.create({
     paymentText: {
         fontSize: 24,
         fontFamily: FONTFAMILY.dongle_regular,
-        marginLeft: 5,
+        marginLeft: 15,
     },
     headerContainer: {
         display: 'flex',

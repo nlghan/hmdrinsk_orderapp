@@ -34,6 +34,9 @@ import OrderFailed from '../screens/OrderFailed';
 import ChatWithShipper from '../screens/ChatWithShipper';
 import Search from '../screens/Search';
 import Contact from '../screens/Contact';
+import GroupOrder from '../screens/GroupOrder';
+import GroupOrderDetail from '../screens/GroupOrderDetail';
+import GroupOrderList from '../screens/GroupOrderList';
 
 
 
@@ -68,6 +71,9 @@ export type RootStackParamList = {
   ChatWithShipper: { shipmentId: number};
   Search: undefined;
   Contact: undefined;
+  GroupOrder: undefined;
+  GroupOrderDetail: { groupOrderId: number };
+  GroupOrderList : undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -122,7 +128,9 @@ const StackNavigator = () => {
       <Stack.Screen name="Notification" component={NotificationScreen} options={{ headerShown: false, animation: 'slide_from_right' }}/>
       <Stack.Screen name="Search" component={Search} options={{ headerShown: false, animation: 'slide_from_right' }} />
       <Stack.Screen name="Contact" component={Contact} options={{ headerShown: false, animation: 'slide_from_right' }} />
-    
+      <Stack.Screen name="GroupOrder" component={GroupOrder} options={{ headerShown: false, animation: 'slide_from_bottom' }} />
+      <Stack.Screen name="GroupOrderDetail" component={GroupOrderDetail} options={{ headerShown: false, animation: 'slide_from_right' }} />
+      <Stack.Screen name="GroupOrderList" component={GroupOrderList} options={{ headerShown: false, animation: 'slide_from_right' }} />
       
     </Stack.Navigator>
   );
