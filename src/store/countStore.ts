@@ -1,54 +1,28 @@
+import { create } from 'zustand';
 
-import { create } from "zustand";
+interface NotificationWS {
+  userId: number;
+  shipmentId: number;
+  message: string;
+  time: string;
+}
 
-type CountStore = {
-  orderCount: number;
-  setOrderCount: (count: number) => void;
-};
+interface CountStore {
+  socketNotifications: NotificationWS[];
+  refreshTrigger: number; // Trigger để kích hoạt fetch lại
+  setSocketNotifications: (notifications: NotificationWS[]) => void;
+  triggerRefresh: () => void; // Hàm để kích hoạt fetch lại
+}
 
-export const useOrderStore = create<CountStore>((set) => ({
-  orderCount: 0,
-  setOrderCount: (count) => set({ orderCount: count }),
-}));
-
-
-type CountStorePending = {
-    orderCountPending: number;
-    setOrderCountPending: (count: number) => void;
-  };
-  
-  export const useOrderStorePending = create<CountStorePending>((set) => ({
-    orderCountPending: 0,
-    setOrderCountPending: (count) => set({ orderCountPending: count }),
-}));
-
-type CountStoreCancelled = {
-    orderCountCancelled: number;
-    setOrderCountCancelled: (count: number) => void;
-  };
-  
-  export const useOrderStoreCancelled = create<CountStoreCancelled>((set) => ({
-    orderCountCancelled: 0,
-    setOrderCountCancelled: (count) => set({ orderCountCancelled: count }),
-}));
-
-type CountStoreWaiting = {
-    orderCountWaiting: number;
-    setOrderCountWaiting: (count: number) => void;
-  };
-  
-  export const useOrderStoreWaiting = create<CountStoreWaiting>((set) => ({
-    orderCountWaiting: 0,
-    setOrderCountWaiting: (count) => set({ orderCountWaiting: count }),
-}));
-
-type CountStoreRefund = {
-    orderCountRefund: number;
-    setOrderCountRefund: (count: number) => void;
-  };
-  
-  export const useOrderStoreRefund = create<CountStoreRefund>((set) => ({
-    orderCountRefund: 0,
-    setOrderCountRefund: (count) => set({ orderCountRefund: count }),
-
+export const useCountStore = create<CountStore>((set) => ({
+  socketNotifications: [],
+  refreshTrigger: 0,
+  setSocketNotifications: (notifications) =>
+    set({
+      socketNotifications: notifications.slice(-50), // Giới hạn tối đa 50 thông báo để tối ưu
+    }),
+  triggerRefresh: () =>
+    set((state) => ({
+      refreshTrigger: state.refreshTrigger + 1, // Tăng trigger để kích hoạt useEffect
+    })),
 }));

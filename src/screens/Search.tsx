@@ -193,6 +193,7 @@ const Search = () => {
                 <TextInput
                     style={homeStyles.searchInput}
                     placeholder={t('menuCustomer.want')}
+                    placeholderTextColor="gray"
                     value={searchTerm}
                     onChangeText={setSearchTerm}
                 />

@@ -114,8 +114,7 @@ interface CategoryStore {
   checkShipment: () => Promise<any | null>;
   editReview: (review: Omit<ProductReview, 'isDelete' | 'dateDeleted' | 'dateUpdated' | 'dateCreated'>) => Promise<void>;
   deleteReview: (reviewId: number) => Promise<void>; 
-  checkTimeOrder: () => Promise<void>;
-  
+  checkTimeOrder: () => Promise<void>;  
 }
 
 export const useCategoryStore = create<CategoryStore>()(
