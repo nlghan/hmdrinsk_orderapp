@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
     View, Text, ImageBackground, TouchableOpacity,
-    ScrollView, StyleSheet, Modal, Pressable, Image
+    ScrollView, StyleSheet, Modal, Pressable, Image,
+    Alert
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import styles from '../styles/groupOrderDetail';
@@ -11,12 +12,43 @@ import { RootStackParamList } from '../navigation/RootStackParamList';
 import Header from '../components/Header';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useCartStore } from '../store/useCartStore';
+import { useCategoryStore } from '../store/store';
+import axiosInstance from '../utils/axiosInstance';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import NotificationPopup from '../components/NotificationPopup';
+import { TextInput } from 'react-native'; // mới thêm
+import { Picker } from '@react-native-picker/picker';
+import DropDownPicker from 'react-native-dropdown-picker';
+import { Swipeable } from 'react-native-gesture-handler';
 
+
+
+
+interface GroupOrder {
+    memberId: number;
+    name: string;
+    groupOrderId: number;
+    nameGroup: string;
+    userId: number;
+    amount: number | null;
+    isPaid: boolean;
+    isLeader: boolean;
+    note: string;
+    status: string;
+    typePayment: string;
+    dateCreated: string;
+}
 const GroupOrderDetail = () => {
     const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
-    const { groupCartData } = useCartStore();
+    const { groupCartData, fetchCartItem, checkGroupCart } = useCartStore();
     const groupInfo = groupCartData?.crudGroupOrderResponse;
     const members = groupCartData?.crudGroupOrderResponseList || [];
+    const { userId } = useCategoryStore();
+    const rawUserId = useCategoryStore.getState().userId;
+
+    const currentMember = members.find(member => member.userId === userId);
+    const isLeader = currentMember?.isLeader;
+
 
     const formatPrice = (price: number) => {
         return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
@@ -33,6 +65,341 @@ const GroupOrderDetail = () => {
         }
     };
 
+    const handleKickMember = async (member: any) => {
+        Alert.alert(
+            'Xác nhận xoá thành viên',
+            `Bạn có chắc muốn xoá ${member.name} khỏi nhóm?`,
+            [
+                { text: 'Hủy', style: 'cancel' },
+                {
+                    text: 'Xoá',
+                    style: 'destructive',
+                    onPress: async () => {
+                        try {
+                            const token = await AsyncStorage.getItem('access_token');
+                            const groupOrderId = groupInfo?.groupOrderId;
+                            const memberId = member.userId;
+                            const leaderId = userId;
+
+                            console.log('Gọi API xoá:', { groupOrderId, leaderId, memberId });
+
+                            if (!groupOrderId || !leaderId || !memberId) {
+                                Alert.alert('Lỗi', 'Thiếu thông tin để xoá thành viên.');
+                                return;
+                            }
+
+                            await axiosInstance.delete(
+                                `/group-order/delete-member/${groupOrderId}/${leaderId}/${memberId}`,
+                                {
+                                    headers: {
+                                        Authorization: `Bearer ${token}`,
+                                    },
+                                }
+                            );
+
+                            Alert.alert('Thành công', 'Thành viên đã bị xoá khỏi nhóm');
+                            fetchGroupOrders();
+                        } catch (error) {
+                            console.error('Lỗi khi xoá thành viên:', error);
+                            Alert.alert('Lỗi', 'Không thể xoá thành viên. Vui lòng thử lại sau.');
+                        }
+                    },
+                },
+            ],
+            { cancelable: true }
+        );
+    };
+
+
+
+    const [groupOrders, setGroupOrders] = useState<GroupOrder[]>([]);
+    const [isDataLoaded, setIsDataLoaded] = useState(false);
+
+    const fetchGroupOrders = async () => {
+        const accessToken = await AsyncStorage.getItem('access_token');
+        const userId = typeof rawUserId === 'string' ? parseInt(rawUserId, 10) : Number(rawUserId);
+        if (isNaN(userId)) return;
+
+        try {
+            const res = await axiosInstance.get(`/group-order/get-group-activate/${userId}`, {
+                headers: { Authorization: `Bearer ${accessToken}` },
+            });
+            setGroupOrders(res.data.list);
+
+            // Quan trọng: fetch lại cart sau khi cập nhật nhóm
+
+            fetchCartItem();
+        } catch (error) {
+            console.error('Lỗi khi tải danh sách nhóm:', error);
+        }
+    };
+
+    // Gọi một lần khi load màn hình
+    useEffect(() => {
+        fetchGroupOrders();
+    }, []);
+
+    const [editModalVisible, setEditModalVisible] = useState(false);
+    const [editItem, setEditItem] = useState<any>(null);
+    const [newQuantity, setNewQuantity] = useState<string>('1');
+    const [newSize, setNewSize] = useState<string>('');
+
+    const quantityInputRef = React.useRef<TextInput>(null); // Khai báo ref cho TextInput số lượng
+    const [isFocused, setIsFocused] = useState(false);
+
+
+
+
+    const handleEditItem = (item: any, userIdMember: number) => {
+        setEditItem({
+            ...item,
+            memberUserId: userIdMember, // override userId để sau xác định người sở hữu món
+        });
+        setNewQuantity(item.quantity.toString());
+        setNewSize(item.size);
+        setEditModalVisible(true);
+    };
+
+
+    const handleSaveEdit = async () => {
+        setIsFocused(false);
+        if (!editItem) return;
+
+        const token = await AsyncStorage.getItem('access_token');
+
+        if (!newSize || !newQuantity) {
+            Alert.alert('Lỗi', 'Vui lòng chọn size và nhập số lượng.');
+            return;
+        }
+
+        const quantityNumber = parseInt(newQuantity, 10);
+        if (isNaN(quantityNumber) || quantityNumber <= 0) {
+            Alert.alert('Lỗi', 'Số lượng phải lớn hơn 0.');
+            setIsFocused(true);
+            return;
+        }
+
+        const isEditingOwnItem = editItem.userId === userId;
+
+        try {
+            if (isLeader && !isEditingOwnItem) {
+                const changeSizePayload = {
+                    groupOrderId: groupInfo?.groupOrderId,
+                    userIdMember: editItem.memberUserId,
+                    userIdLeader: userId,
+                    cartItemId: editItem.cartItemGroupId,
+                    size: newSize,
+                };
+
+                console.log('Calling leader/change-size with payload:', changeSizePayload);
+
+                const sizeRes = await axiosInstance.put(
+                    '/cart-item/group-order/leader/change-size',
+                    changeSizePayload,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                            'Content-Type': 'application/json',
+                        },
+                    }
+                );
+                console.log('Response from leader/change-size:', sizeRes.data);
+
+                const updateQuantityPayload = {
+                    groupOrderId: groupInfo?.groupOrderId,
+                    userIdMember: editItem.memberUserId,
+                    userIdLeader: userId,
+                    cartItemId: editItem.cartItemGroupId,
+                    quantity: quantityNumber,
+                };
+
+                console.log('Calling leader/update with payload:', updateQuantityPayload);
+
+                const quantityRes = await axiosInstance.put(
+                    '/cart-item/group-order/leader/update',
+                    updateQuantityPayload,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                            'Content-Type': 'application/json',
+                        },
+                    }
+                );
+                console.log('Response from leader/update:', quantityRes.data);
+            } else {
+                const changeSizePayload = {
+                    userId: userId,
+                    cartItemId: editItem.cartItemGroupId,
+                    size: newSize,
+                };
+
+                console.log('Calling change-size with payload:', changeSizePayload);
+
+                const sizeRes = await axiosInstance.put(
+                    '/cart-item/group-order/change-size',
+                    changeSizePayload,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                            'Content-Type': 'application/json',
+                        },
+                    }
+                );
+                console.log('Response from change-size:', sizeRes.data);
+
+                const updateQuantityPayload = {
+                    userId: userId,
+                    cartItemId: editItem.cartItemGroupId,
+                    quantity: quantityNumber,
+                };
+
+                console.log('Calling update with payload:', updateQuantityPayload);
+
+                const quantityRes = await axiosInstance.put(
+                    '/cart-item/group-order/update',
+                    updateQuantityPayload,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                            'Content-Type': 'application/json',
+                        },
+                    }
+                );
+                console.log('Response from update:', quantityRes.data);
+            }
+
+            setEditModalVisible(false);
+            setEditItem(null);
+            fetchCartItem();
+        } catch (error: any) {
+            console.error('API Error:', error);
+
+            const responseData = error?.response?.data;
+
+            if (typeof responseData === 'string' && responseData === 'Quantity is greater than stock') {
+                Alert.alert('Lỗi', 'Số lượng vượt quá tồn kho. Vui lòng nhập lại.');
+                quantityInputRef.current?.focus();
+                return;
+            }
+
+            Alert.alert('Lỗi', `Không thể cập nhật món. Vui lòng thử lại.`);
+        }
+    };
+
+
+
+    const [open, setOpen] = useState(false);
+    const [sizeOptions, setSizeOptions] = useState([
+        { label: 'Size S', value: 'S' },
+        { label: 'Size M', value: 'M' },
+        { label: 'Size L', value: 'L' },
+    ]);
+
+    const handleDeleteItem = async (item: any) => {
+        try {
+            const token = await AsyncStorage.getItem('access_token');
+
+            await axiosInstance.delete(
+                `/cart-item/group-order/delete/${item.cartItemGroupId}`, // cartItemGroupId trong URL
+                {
+                    data: {
+                        userId: userId,
+                        cartItemId: item.cartItemGroupId, // vẫn gửi trong body
+                    },
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        'Content-Type': 'application/json',
+                    },
+                }
+            );
+
+            fetchCartItem?.(); // Cập nhật lại danh sách sau khi xóa
+            console.log('✅ Đã xóa sản phẩm');
+        } catch (error) {
+            console.log('❌ Lỗi xóa món:', error);
+            Alert.alert('Lỗi', 'Không thể xóa món. Vui lòng thử lại.');
+        }
+    };
+
+    const handleDeleteAllItemsOfMember = async (member: any) => {
+        try {
+            const token = await AsyncStorage.getItem('access_token');
+
+            const isSelf = member.userId === userId;
+
+            if (!member.crudCartGroupResponse?.cartGroupId) {
+                Alert.alert('Lỗi', 'Không tìm thấy giỏ hàng của thành viên.');
+                return;
+            }
+
+            const cartId = member.crudCartGroupResponse.cartGroupId;
+
+            if (isLeader && !isSelf) {
+                // 🧑‍✈️ Leader xóa món của người khác
+                await axiosInstance.delete(
+                    `/cart/group-order/leader/delete-allItem/${member.userId}`,
+                    {
+                        data: {
+                            groupOrderId: member.groupOrderId,
+                            userIdMember: member.userId,
+                            userIdLeader: userId,
+                            cartId: cartId,
+                        },
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                            'Content-Type': 'application/json',
+                        },
+                    }
+                );
+            } else {
+                // 👤 Người thường xóa món của chính mình
+                await axiosInstance.delete(
+                    `/cart/group-order/delete-allItem/${userId}`,
+                    {
+                        data: {
+                            userId: userId,
+                            cartId: cartId,
+                        },
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                            'Content-Type': 'application/json',
+                        },
+                    }
+                );
+            }
+
+            fetchCartItem?.();
+            console.log('✅ Đã xóa toàn bộ món');
+        } catch (error) {
+            console.log('❌ Lỗi khi xóa toàn bộ món:', error);
+            Alert.alert('Lỗi', 'Không thể xóa món. Vui lòng thử lại.');
+        }
+    };
+
+
+
+
+    const renderRightActions = (item: any) => (
+        <TouchableOpacity
+            style={{
+                backgroundColor: 'transparent',
+
+                justifyContent: 'center',
+                alignItems: 'center',
+                width: 64,
+                height: '100%',
+                borderTopRightRadius: 8,
+                borderBottomRightRadius: 8,
+            }}
+            onPress={() => handleDeleteItem(item)} // Xử lý xóa ở đây
+        >
+            <Icon name="delete" size={20} color="black" />
+        </TouchableOpacity>
+    );
+
+
+
+
     return (
         <>
             <Header
@@ -48,6 +415,7 @@ const GroupOrderDetail = () => {
                     elevation: 5,
                 }}
             />
+            <NotificationPopup userId={userId ?? 0} />
             <ScrollView contentContainerStyle={styles.container}>
                 <ImageBackground
                     source={require('../assets/app_images/group.jpeg')}
@@ -113,59 +481,326 @@ const GroupOrderDetail = () => {
                 {/* Chi tiết */}
                 <View style={styles.section}>
                     <Text style={styles.sectionTitle}>Chi tiết</Text>
-                    <TouchableOpacity style={styles.detailRow}>
-                        <Icon name="receipt" size={20} color="black" />
-                        <Text style={styles.detailText}>Bạn thanh toán cho mọi người</Text>
-                        <Icon name="chevron-right" size={20} />
-                    </TouchableOpacity>
+                    <View style={styles.detailRow}>
+
+                        <TouchableOpacity
+                            style={styles.detailRow1}
+                            onPress={() => {
+                                if (isLeader) {
+                                    const groupOrderId = groupCartData?.crudGroupOrderResponse.groupOrderId;
+                                    const currentAddress = groupCartData?.crudGroupOrderResponse.address || '';
+
+                                    if (groupOrderId !== undefined) {
+                                        navigation.navigate('EditGroupAddress', {
+                                            groupOrderId,
+                                            currentAddress,
+                                        });
+                                    } else {
+                                        Alert.alert('Lỗi', 'Không tìm thấy mã nhóm');
+                                    }
+                                }
+                            }}
+                        >
+
+                            <View style={styles.detailRows}>
+                                <Icon name="pin-drop" size={20} color="black" />
+                                <Text style={styles.detailText}>{groupCartData?.crudGroupOrderResponse.address}</Text>
+                                <Icon name="chevron-right" size={20} />
+                            </View>
+
+                        </TouchableOpacity>
+                        <TouchableOpacity style={styles.detailRow1} >
+                            <View style={styles.detailRows}>
+                                <Icon name="receipt" size={20} color="black" />
+                                <Text style={styles.detailText}>Bạn thanh toán cho mọi người</Text>
+                                <Icon name="chevron-right" size={20} />
+                            </View>
+
+                        </TouchableOpacity>
+
+
+
+                    </View>
                 </View>
 
                 {/* Danh sách thành viên */}
                 <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Thành viên</Text>
-                    {members.map((member: {
-                        name: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; isLeader: any; crudCartGroupResponse: {
-                            totalPrice: number; listCartItemGroup: any;
-                        };
-                    }, index: React.Key | null | undefined) => (
-                        <View key={index} style={{ marginBottom: 12, }}>
-                            <View  style={{ display:'flex', flexDirection:'row', justifyContent:'space-between' }}>
-                                <Text style={styles.boldText}>
-                                    {member.name} {member.isLeader && '(Trưởng nhóm)'}
-                                </Text>
-                                <Text style={styles.boldText}>
-                                    {formatPrice(member.crudCartGroupResponse?.totalPrice || 0)}đ
-                                </Text>
+                    <View style={styles.subSection}>
+                        <Text style={styles.sectionTitle}>Thành viên</Text>
+                        <TouchableOpacity onPress={() => {
+                            navigation.navigate('Order', {
+                                state: { cateId: 0 } // Truyền cateId qua state
+                            }
+                            )
+                        }}>
+                            <Text style={styles.sectionTitle1}>Thêm món</Text>
+                        </TouchableOpacity>
 
-                            </View>
+                    </View>
 
+                    {members.map((member, index) => {
+                        const hasItems = member.crudCartGroupResponse?.listCartItemGroup?.length > 0;
 
-
-                            {(member.crudCartGroupResponse?.listCartItemGroup || []).map((item: { imageUrl: any; quantity: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; proName: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; size: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; totalPrice: number; }, idx: React.Key | null | undefined) => (
-                                <View key={idx} style={styles.orderItem}>
-                                    <Image source={{ uri: item.imageUrl }} style={styles.itemImage} />
-                                    <Text style={styles.itemText}>
-                                        {item.quantity}x {item.proName} ({item.size})
+                        return (
+                            <View
+                                key={index}
+                                style={[
+                                    styles.memberCard,
+                                    {
+                                        marginBottom: 12,
+                                        padding: 12,
+                                        backgroundColor: '#fff',
+                                        borderRadius: 8,
+                                    },
+                                ]}
+                            >
+                                <View style={styles.subUser}>
+                                    <Text style={[styles.boldText, { marginBottom: 4 }]}>
+                                        {member.name} {member.isLeader && '(Trưởng nhóm)'}
                                     </Text>
-                                    <View style={styles.priceContainer}>
-                                        <Text style={styles.itemPrice}>{formatPrice(item.totalPrice)}đ</Text>
-                                    </View>
+
+                                    {hasItems &&
+                                        ((isLeader && member.userId !== userId) || member.userId === userId) && (
+                                            <TouchableOpacity onPress={() => handleDeleteAllItemsOfMember(member)}>
+                                                <Icon name="clear" size={20} color="red" />
+                                            </TouchableOpacity>
+                                        )}
                                 </View>
-                            ))}
-                        </View>
-                    ))}
+
+                                {hasItems ? (
+                                    member.crudCartGroupResponse.listCartItemGroup.map((item, idx) => (
+                                        <Swipeable
+                                            key={idx}
+                                            renderRightActions={() =>
+                                                (isLeader || member.userId === userId) ? renderRightActions(item) : null
+                                            }
+                                        >
+                                            <View style={styles.orderItem}>
+                                                <Image source={{ uri: item.imageUrl }} style={styles.itemImage} />
+                                                <Text style={styles.itemText}>
+                                                    {item.quantity}x {item.proName} ({item.size})
+                                                </Text>
+                                                <View style={styles.priceContainer}>
+                                                    <Text style={styles.itemPrice}>{formatPrice(item.totalPrice)}đ</Text>
+                                                </View>
+
+                                                {(isLeader || member.userId === userId) && (
+                                                    <TouchableOpacity
+                                                        onPress={() => handleEditItem(item, member.userId)}
+                                                        style={{ marginLeft: 8 }}
+                                                    >
+                                                        <Icon name="edit" size={20} color="#1976D2" />
+                                                    </TouchableOpacity>
+                                                )}
+                                            </View>
+                                        </Swipeable>
+                                    ))
+                                ) : (
+                                    <Text style={{ color: '#666', marginBottom: 4 }}>Chưa thêm món nào.</Text>
+                                )}
+
+                                {isLeader && member.userId !== userId && (
+                                    <TouchableOpacity
+                                        onPress={() => handleKickMember(member)}
+                                        style={{ alignSelf: 'center', marginTop: 6 }}
+                                    >
+                                        <Text style={{ color: 'red', fontWeight: 'bold' }}>Xóa</Text>
+                                    </TouchableOpacity>
+                                )}
+                            </View>
+                        );
+                    })}
                 </View>
+
 
                 {/* Tổng cộng */}
                 <View style={styles.totalRow}>
                     <Text style={styles.sectionTitle}>Tổng tạm tính</Text>
                     <Text style={styles.price}>{formatPrice(groupInfo?.totalPrice || 0)}đ</Text>
                 </View>
+                <TouchableOpacity
+                    style={styles.nextButton1}
+                    onPress={() => {
+                        if (isLeader) {
+                            Alert.alert(
+                                'Xác nhận xoá nhóm',
+                                'Bạn có chắc muốn xoá đơn hàng nhóm này không?',
+                                [
+                                    { text: 'Hủy', style: 'cancel' },
+                                    {
+                                        text: 'Xoá nhóm',
+                                        style: 'destructive',
+                                        onPress: async () => {
+                                            try {
+                                                const token = await AsyncStorage.getItem('access_token');
+                                                const groupOrderId = groupInfo?.groupOrderId;
 
+                                                await axiosInstance.delete(
+                                                    `/group-order/delete/${groupOrderId}/${userId}`,
+                                                    {
+                                                        headers: {
+                                                            Authorization: `Bearer ${token}`,
+                                                        },
+                                                    }
+                                                );
+
+                                                Alert.alert('Thành công', 'Nhóm đã được xoá');
+                                                navigation.navigate('GroupOrderList');
+                                            } catch (err) {
+                                                console.error('Lỗi khi xoá nhóm:', err);
+                                            }
+                                        },
+                                    },
+                                ],
+                                { cancelable: true }
+                            );
+                            console.log('Xóa đơn hàng nhóm');
+                        } else {
+                            // TODO: Gọi API rời khỏi nhóm
+                            Alert.alert(
+                                'Xác nhận rời nhóm',
+                                'Bạn có chắc muốn rời khỏi nhóm này?',
+                                [
+                                    { text: 'Hủy', style: 'cancel' },
+                                    {
+                                        text: 'Rời nhóm',
+                                        style: 'destructive',
+                                        onPress: async () => {
+                                            try {
+                                                const token = await AsyncStorage.getItem('access_token');
+                                                const userId = typeof rawUserId === 'string' ? parseInt(rawUserId, 10) : Number(rawUserId);
+
+                                                await axiosInstance.put(
+                                                    `/group-order/leave/${groupInfo?.groupOrderId}/${userId}`,
+                                                    {},
+                                                    {
+                                                        headers: {
+                                                            Authorization: `Bearer ${token}`,
+                                                        },
+                                                    }
+                                                );
+
+                                                fetchGroupOrders();
+                                                navigation.navigate('GroupOrderList');
+                                            } catch (err) {
+                                                console.error('Lỗi khi rời nhóm:', err);
+                                            }
+                                        },
+                                    },
+                                ],
+                                { cancelable: true }
+                            );
+                            console.log('Rời khỏi đơn hàng nhóm');
+
+                        }
+                    }}
+                >
+                    <Text style={[styles.nextText1, isLeader && { color: 'red' }]}>
+                        {isLeader ? 'Xóa đơn hàng nhóm' : 'Rời khỏi đơn hàng nhóm'}
+                    </Text>
+                </TouchableOpacity>
+
+
+
+
+            </ScrollView>
+            <View style={styles.actions} >
                 <TouchableOpacity style={styles.nextButton}>
                     <Text style={styles.nextText}>Tiếp theo</Text>
                 </TouchableOpacity>
-            </ScrollView>
+
+            </View>
+
+            <Modal
+                visible={editModalVisible}
+                transparent
+                animationType="slide"
+                onRequestClose={() => setEditModalVisible(false)}
+            >
+                <View style={{
+                    flex: 1,
+                    backgroundColor: 'rgba(0,0,0,0.5)',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                }}>
+                    <View style={{
+                        width: '85%',
+                        backgroundColor: '#fff',
+                        borderRadius: 8,
+                        padding: 16,
+                    }}>
+                        <Text style={{ fontWeight: 'bold', fontSize: 16, marginBottom: 12 }}>
+                            Chỉnh sửa món
+                        </Text>
+
+                        <Text style={{ marginBottom: 4 }}>Số lượng</Text>
+                        <TextInput
+                            ref={quantityInputRef}  // Gắn ref vào TextInput
+                            style={{
+                                borderWidth: 1,
+                                borderColor: isFocused ? 'red' : '#ccc', // Đổi màu viền khi focus
+                                borderRadius: 4,
+                                padding: 8,
+                                marginBottom: 12,
+                            }}
+                            keyboardType="numeric"
+                            value={newQuantity}
+                            onChangeText={setNewQuantity}
+                            onFocus={() => setIsFocused(true)}  // Khi focus
+                            onBlur={() => setIsFocused(false)}  // Khi mất focus
+                        />
+
+
+                        <Text style={{ marginBottom: 4 }}>Size</Text>
+                        <DropDownPicker
+                            open={open}
+                            value={newSize}
+                            items={sizeOptions}
+                            setOpen={setOpen}
+                            setValue={setNewSize}
+                            setItems={setSizeOptions}
+                            placeholder="Chọn size"
+                            containerStyle={{ marginBottom: 20 }}
+                            style={{
+                                borderColor: '#ccc',
+                                borderRadius: 4,
+                            }}
+                            dropDownContainerStyle={{
+                                borderColor: '#ccc',
+                            }}
+                        />
+
+
+                        <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                            <TouchableOpacity
+                                style={{
+                                    backgroundColor: '#eee',
+                                    padding: 10,
+                                    borderRadius: 4,
+                                    flex: 1,
+                                    marginRight: 8,
+                                }}
+                                onPress={() => setEditModalVisible(false)}
+                            >
+                                <Text style={{ textAlign: 'center' }}>Hủy</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                style={{
+                                    backgroundColor: '#28a745',
+                                    padding: 10,
+                                    borderRadius: 4,
+                                    flex: 1,
+                                }}
+                                onPress={handleSaveEdit}
+                            >
+                                <Text style={{ color: 'white', textAlign: 'center' }}>Lưu</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </View>
+            </Modal>
+
+
         </>
     );
 };

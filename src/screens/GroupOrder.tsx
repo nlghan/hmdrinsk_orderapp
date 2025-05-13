@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import {
     View, Text, StyleSheet, TouchableOpacity, ImageBackground,
-    ScrollView, Modal, Pressable
+    ScrollView, Modal, Pressable,
+    Alert
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { COLORS } from '../theme/theme';
@@ -13,6 +14,11 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../navigation/RootStackParamList';
 import { useCartStore } from '../store/useCartStore';
 import Clipboard from '@react-native-clipboard/clipboard';
+import EditGroupNameModal from '../components/EditGroupNameModal'; // import đúng đường dẫn tới component
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import axiosInstance from '../utils/axiosInstance';
+import { useCategoryStore } from '../store/store';
+
 
 type NavigationProp = StackNavigationProp<RootStackParamList, 'GroupOrder'>;
 
@@ -29,6 +35,49 @@ const GroupOrder: React.FC = () => {
     const groupCartData = useCartStore(state => state.groupCartData);
 
     const inviteCode = groupCartData?.crudGroupOrderResponse?.code ?? '';
+    const link = groupCartData?.crudGroupOrderResponse?.link ?? '';
+
+    const [isEditModalVisible, setIsEditModalVisible] = useState(false);
+    const [groupName, setGroupName] = useState(groupCartData?.crudGroupOrderResponse?.nameGroup || '');
+
+    const updateGroupName = async (newName: string) => {
+        const accessToken = await AsyncStorage.getItem('access_token');
+        const { userId } = useCategoryStore.getState();
+
+        try {
+            const response = await axiosInstance.put(
+                '/group-order/update-name',
+                {
+                    nameGroup: newName,
+                    groupId: groupCartData?.crudGroupOrderResponse?.groupOrderId,
+                    leaderId: userId,
+                },
+                {
+                    headers: {
+                        Authorization: `Bearer ${accessToken}`,
+                    },
+                }
+            );
+
+            const data = response.data;
+            console.log('Phản hồi update-name:', data);
+
+            // Có thể dùng response.status === 200 hoặc kiểm tra message thành công
+            if (response.status === 200 && data === "Successfully updated name group") {
+                setGroupName(newName);
+                setIsEditModalVisible(false);
+            } else {
+                console.error('Cập nhật tên nhóm không thành công:', data);
+                Alert.alert('Lỗi', 'Không thể cập nhật tên nhóm.');
+            }
+        } catch (error: any) {
+            console.error('Lỗi API:', error?.response?.data || error.message);
+            Alert.alert('Lỗi', 'Có lỗi xảy ra khi gọi API.');
+        }
+    };
+
+
+
 
     const onTimeChange = (event: any, selectedDate?: Date) => {
         setShowTimePicker(false);
@@ -43,7 +92,7 @@ const GroupOrder: React.FC = () => {
     };
 
     const handleInvite = () => {
-        Clipboard.setString(inviteCode);
+        Clipboard.setString(link);
         setShowCopiedModal(true);
 
         setTimeout(() => {
@@ -105,10 +154,17 @@ const GroupOrder: React.FC = () => {
                         <View style={styles.infoSubTitle}>
                             <Text style={styles.label}>Tên nhóm</Text>
                             <Text style={styles.value}>
-                                {groupCartData?.crudGroupOrderResponse?.nameGroup || 'Tên nhóm chưa có'}
+                                {groupName || 'Tên nhóm chưa có'}
                             </Text>
+
                         </View>
-                        <View style={styles.infoEditIcon}><Icon name="edit" size={24} color="black" /></View>
+                        <TouchableOpacity
+                            onPress={() => setIsEditModalVisible(true)}
+                            style={styles.infoEditIcon}
+                        >
+                            <Icon name="edit" size={24} color="black" />
+                        </TouchableOpacity>
+
                     </View>
 
                     <TouchableOpacity onPress={() => setShowOptionModal(true)} activeOpacity={0.7}>
@@ -187,13 +243,21 @@ const GroupOrder: React.FC = () => {
                 <Modal visible={showCopiedModal} transparent animationType="fade">
                     <View style={styles.modalBackdrop}>
                         <View style={[styles.modalContent, { alignItems: 'center' }]}>
-                            <Text style={styles.modalText}>✅ Đã sao chép mã: {inviteCode}</Text>
+                            <Text style={styles.modalText}>✅ Đã sao chép mã: {link}</Text>
                             <Text style={[styles.modalText, { fontSize: 12, marginTop: 6 }]}>
                                 Gửi mã này mời bạn bè tham gia nhé!
                             </Text>
                         </View>
                     </View>
                 </Modal>
+
+                {/* Modal để đổi tên nhóm */}
+                <EditGroupNameModal
+                    visible={isEditModalVisible}
+                    initialName={groupName}
+                    onCancel={() => setIsEditModalVisible(false)}
+                    onSave={updateGroupName}
+                />
             </ScrollView>
         </View>
     );

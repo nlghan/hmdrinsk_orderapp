@@ -37,6 +37,7 @@ import Contact from '../screens/Contact';
 import GroupOrder from '../screens/GroupOrder';
 import GroupOrderDetail from '../screens/GroupOrderDetail';
 import GroupOrderList from '../screens/GroupOrderList';
+import EditGroupAddress from '../screens/EditGroupAddress';
 
 
 
@@ -59,21 +60,26 @@ export type RootStackParamList = {
   HistoryOrders: undefined;
   DeliveringOrders: undefined;
   PendingOrders: undefined;
-  OrderFailed:undefined;
+  OrderFailed: undefined;
   CancelledOrders: undefined;
   WaitingOrders: undefined;
   RefundOrders: undefined;
   MyOrderDetails: { shipmentId: number };
   Orther: undefined;
   Payment: { orderId: number };
-  OrderComplete:undefined;
+  OrderComplete: undefined;
   Notification: undefined;
-  ChatWithShipper: { shipmentId: number};
+  ChatWithShipper: { shipmentId: number };
   Search: undefined;
   Contact: undefined;
   GroupOrder: undefined;
   GroupOrderDetail: { groupOrderId: number };
-  GroupOrderList : undefined;
+  GroupOrderList: undefined;
+  EditGroupAddress: {
+    groupOrderId: number;
+    currentAddress?: string;
+  };
+
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -84,9 +90,9 @@ const StackNavigator = () => {
   return (
     <Stack.Navigator initialRouteName="Login">
 
-      <Stack.Screen name="Login" component={Login} options={{ headerShown: false, animation:'slide_from_right' }} />
-      <Stack.Screen name="Register" component={Register} options={{ headerShown: false, animation:'slide_from_right' }} />
-      <Stack.Screen name="ForgotPassword" component={ForgotPassword} options={{ headerShown: false, animation:'slide_from_right' }} />
+      <Stack.Screen name="Login" component={Login} options={{ headerShown: false, animation: 'slide_from_right' }} />
+      <Stack.Screen name="Register" component={Register} options={{ headerShown: false, animation: 'slide_from_right' }} />
+      <Stack.Screen name="ForgotPassword" component={ForgotPassword} options={{ headerShown: false, animation: 'slide_from_right' }} />
       <Stack.Screen
         name="Main"
         component={TabNavigator}
@@ -96,7 +102,7 @@ const StackNavigator = () => {
         }}
       />
 
-      <Stack.Screen name="Info" component={Info} options={{ headerShown: false }} />    
+      <Stack.Screen name="Info" component={Info} options={{ headerShown: false }} />
       <Stack.Screen name="ProductDetail" component={ProductDetail} options={{
         headerShown: false,
         animation: 'slide_from_right'  // Thử đổi thành 'slide_from_right' hoặc 'fade'
@@ -114,7 +120,7 @@ const StackNavigator = () => {
       <Stack.Screen name="AddReview" component={AddReviewScreen} options={{ title: t('common.addReview'), headerShown: false, animation: 'slide_from_right' as const }} />
       <Stack.Screen name="ListVoucher" component={ListVoucher} options={{ title: t('common.addReview'), headerShown: false, animation: 'slide_from_right' as const }} />
       <Stack.Screen name="DeliveringOrders" component={DeliveringOrders} options={{ headerShown: false, animation: 'slide_from_right' }} />
-      <Stack.Screen name="PendingOrders" component={PendingOrders} options={{ headerShown: false, animation: 'slide_from_right' }}/>
+      <Stack.Screen name="PendingOrders" component={PendingOrders} options={{ headerShown: false, animation: 'slide_from_right' }} />
       <Stack.Screen name="HistoryOrders" component={HistoryOrders} options={{ headerShown: false, animation: 'slide_from_right' }} />
       <Stack.Screen name="CancelledOrders" component={CancelledOrders} options={{ headerShown: false, animation: 'slide_from_right' }} />
       <Stack.Screen name="WaitingOrders" component={WaitingOrders} options={{ headerShown: false, animation: 'slide_from_right' }} />
@@ -125,13 +131,14 @@ const StackNavigator = () => {
       <Stack.Screen name="Payment" component={Payment} options={{ headerShown: false, animation: 'slide_from_right' }} />
       <Stack.Screen name="OrderComplete" component={OrderComplete} options={{ headerShown: false, animation: 'slide_from_right' }} />
       <Stack.Screen name="OrderFailed" component={OrderFailed} options={{ headerShown: false, animation: 'slide_from_right' }} />
-      <Stack.Screen name="Notification" component={NotificationScreen} options={{ headerShown: false, animation: 'slide_from_right' }}/>
+      <Stack.Screen name="Notification" component={NotificationScreen} options={{ headerShown: false, animation: 'slide_from_right' }} />
       <Stack.Screen name="Search" component={Search} options={{ headerShown: false, animation: 'slide_from_right' }} />
       <Stack.Screen name="Contact" component={Contact} options={{ headerShown: false, animation: 'slide_from_right' }} />
       <Stack.Screen name="GroupOrder" component={GroupOrder} options={{ headerShown: false, animation: 'slide_from_bottom' }} />
       <Stack.Screen name="GroupOrderDetail" component={GroupOrderDetail} options={{ headerShown: false, animation: 'slide_from_right' }} />
       <Stack.Screen name="GroupOrderList" component={GroupOrderList} options={{ headerShown: false, animation: 'slide_from_right' }} />
-      
+      <Stack.Screen name="EditGroupAddress" component={EditGroupAddress} options={{ headerShown: false, animation: 'slide_from_right' }} />
+
     </Stack.Navigator>
   );
 };

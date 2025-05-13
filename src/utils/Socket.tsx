@@ -1,5 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useCartStore } from '../store/useCartStore';
+import { useNavigation } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { RootStackParamList } from '../navigation/RootStackParamList';
 
 interface NotificationWS {
     userId: number;
@@ -14,6 +18,8 @@ const useWebSocket = (userId: number) => {
     const socketRef = useRef<WebSocket | null>(null);
     const reconnectRef = useRef<NodeJS.Timeout | null>(null);
     const heartbeatRef = useRef<NodeJS.Timeout | null>(null);
+    const { fetchCartItem, checkGroupCart } = useCartStore.getState();
+    const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
 
     useEffect(() => {
         if (!userId || socketRef.current) return;
@@ -33,7 +39,7 @@ const useWebSocket = (userId: number) => {
                     return;
                 }
                 const encodedToken = encodeURIComponent(token);
-                const ws = new WebSocket(`ws://192.168.1.47:1010/ws-raw?token=${encodedToken}&userId=${userId}`);
+                const ws = new WebSocket(`ws://192.168.1.44:1010/ws-raw?token=${encodedToken}&userId=${userId}`);
                 socketRef.current = ws;
 
                 ws.onopen = () => {
@@ -56,17 +62,18 @@ const useWebSocket = (userId: number) => {
                 };
 
                 ws.onmessage = (event) => {
-                    console.log('📩 Nhận được tin nhắn từ server:', event.data);
                     try {
                         const message = JSON.parse(event.data);
-                        console.log('🚀 ~ WebSocket Message:', message);
-                
-                        // Xử lý cả NEW_NOTIFICATION và NEW_GROUP_JOIN
-                        if (message.type === 'NEW_NOTIFICATION' || message.type === 'NEW_GROUP_JOIN' || message.type === 'MEMBER_LEFT_GROUP') {
+                        console.log('📩 Message from server:', message);
+
+                        // 👉 Chỉ thêm vào danh sách notification nếu KHÔNG phải là UPDATE_CART
+                        if (
+                            ['NEW_NOTIFICATION', 'NEW_GROUP_JOIN', 'MEMBER_LEFT_GROUP', 'MEMBER_KICKED'].includes(message.type)
+                        ) {
                             setNotifications((prev) => {
                                 const isDuplicate = prev.some(noti => noti.time === message.time);
                                 if (isDuplicate) return prev;
-                
+
                                 const newNotification: NotificationWS = {
                                     userId: message.userId,
                                     shipmentId: message.shipmentId,
@@ -74,15 +81,32 @@ const useWebSocket = (userId: number) => {
                                     message: message.message,
                                     time: message.time,
                                 };
-                
+
                                 return [...prev, newNotification];
                             });
                         }
+
+                        // 👉 Luôn fetch lại cart khi có các loại message này
+                        if (
+                            ['NEW_GROUP_JOIN', 'MEMBER_LEFT_GROUP', 'MEMBER_KICKED', 'UPDATE_CART'].includes(message.type)
+                        ) {
+                            try {
+                                fetchCartItem?.();
+                            } catch (error) {
+                                console.error('Lỗi khi fetch cart từ WebSocket:', error);
+                            }
+                        }
+
+                        // 👉 Navigate nếu bị kick
+                        if (message.type === 'MEMBER_KICKED') {
+                            navigation.navigate('GroupOrderList');
+                        }
+
                     } catch (error) {
-                        console.log('❌ Lỗi khi parse JSON:', error);
+                        console.log('❌ JSON parse error:', error);
                     }
                 };
-                
+
             } catch (error) {
                 console.log('🚨 Lỗi khi lấy token:', error);
             }
