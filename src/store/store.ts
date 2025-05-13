@@ -117,8 +117,6 @@ interface CategoryStore {
   checkTimeOrder: () => Promise<void>;
   checkVoucher: () => Promise<any | null>;
   fetchUserCoin: () => void;
-  
-  
 }
 
 export const useCategoryStore = create<CategoryStore>()(

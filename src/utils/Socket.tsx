@@ -32,7 +32,6 @@ const useWebSocket = (userId: number) => {
                     console.log('⚠️ Không tìm thấy token, hủy kết nối WebSocket.');
                     return;
                 }
-
                 const encodedToken = encodeURIComponent(token);
                 const ws = new WebSocket(`ws://192.168.1.47:1010/ws-raw?token=${encodedToken}&userId=${userId}`);
                 socketRef.current = ws;

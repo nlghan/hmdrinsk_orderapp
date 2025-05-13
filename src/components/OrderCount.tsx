@@ -3,6 +3,7 @@ import axiosInstance from '../utils/axiosInstance';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useCategoryStore } from "../store/store";
 import { useTranslation } from 'react-i18next';
+import { useCountStore } from '../store/countStore';
 
 interface OrderCountProps {
   onDataFetched: (counts: OrderCounts) => void;
@@ -18,6 +19,7 @@ interface OrderCounts {
 
 const OrderCount: React.FC<OrderCountProps> = ({onDataFetched }) => {
   const { language, userId } = useCategoryStore();
+  const { refreshTrigger } = useCountStore();
   const [orderCounts, setOrderCounts] = useState<OrderCounts>({
     confirmed: 0,
     // waiting: 0,
@@ -69,7 +71,7 @@ const OrderCount: React.FC<OrderCountProps> = ({onDataFetched }) => {
     };
 
     fetchOrderCounts();
-  }, [userId, language]);
+  }, [userId, language, refreshTrigger]);
 
   return null; // Không cần render gì cả, chỉ cần gọi API và truyền dữ liệu lên component cha
 };
