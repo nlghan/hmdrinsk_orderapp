@@ -15,7 +15,7 @@ const styles = StyleSheet.create({
   },
   input: {
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor: 'black',
     borderRadius: 8,
     padding: 10,
     fontSize: 16,
@@ -25,11 +25,13 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   saveButton: {
-    backgroundColor: '#FF7F24',
+    backgroundColor: '#FF8C42',
     padding: 12,
     borderRadius: 8,
     alignItems: 'center',
     flex: 1,
+    borderWidth: 1,
+    borderColor: 'orange',
    
   },
   saveButtonText: {
@@ -39,15 +41,17 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   cancelButton: {
-    backgroundColor: '#eaeaea',
+    backgroundColor: '#FFE1D0',
     padding: 12,
     borderRadius: 8,
     alignItems: 'center',
     flex: 1,
     marginRight: 8,
+    borderWidth: 1,
+    borderColor: 'gray',
   },
   cancelButtonText: {
-    color: 'gray',
+    color: '#333',
     fontSize: 16,
     fontFamily: FONTFAMILY.dongle_regular,
     fontWeight: 'bold',

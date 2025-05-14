@@ -423,10 +423,9 @@
         "chooseLanguage": "Chọn ngôn ngữ",
         "listComment": "Tất cả đánh giá",
         "addCmt": "Thêm đánh giá",
-        "editCmt":"Chỉnh sửa đánh giá",
-        "confirmDelete":"Xóa đánh giá",
-        "areYouSure":"Bạn chắn chắn muốn xóa đánh giá này?"
-      
+        "editCmt": "Chỉnh sửa đánh giá",
+        "confirmDelete": "Xóa đánh giá",
+        "areYouSure": "Bạn chắn chắn muốn xóa đánh giá này?"
     },
     "productContent": {
         "page": "Trang",
@@ -557,9 +556,38 @@
             "title": "Giao hàng tận nơi",
             "product": "Sản phẩm đã chọn"
         },
-        "suggest":"Gợi ý tìm kiếm",
-        "groupOrder":"Đặt đơn nhóm",
-        "groupOrderList": "Nhóm đặt hàng"
+        "suggest": "Gợi ý tìm kiếm",
+        "groupOrder": "Đặt đơn nhóm",
+        "groupOrderList": "Nhóm đặt hàng",
+        "status_label": {
+            "SHOPPING": "Đang hoạt động",
+            "CREATED": "Đã tạo",
+            "FINISHED": "Đã hoàn thành",
+            "leader": "Trưởng nhóm",
+            "member": "Thành viên",
+            "joinDate": "Ngày tham gia"
+        },
+        "newName": "Nhập tên nhóm mới",
+        "saveBtn": "Lưu",
+        "changeGroupName": "Đổi tên nhóm",
+        "groupOrderNote": {
+            "notice_pending_members": "Còn {{count}} người chưa thêm món",
+            "notice_discount_unlock": "Sau khi họ thêm món, chúng tôi sẽ mở khóa ",
+            "notice_discount_unlock2": " mức giảm giá {{discount}}",
+            "discount_title": "Được giảm giá đến 10%, không cần mức chi tiêu tối thiểu!",
+            "discount_subtitle": "Mời thêm thành viên để hưởng mức giảm giá hấp dẫn hơn."
+        },
+        "leader_pays": "Trưởng nhóm thanh toán cho mọi người",
+        "add": "Thêm món",
+        "no_items_added": "Chưa thêm món nào.",
+        "leave_group_order": "Rời khỏi đơn hàng nhóm",
+        "delete_group_order": "Xóa đơn hàng nhóm",
+        "next": "Tiếp theo",
+        "editProduct": "Chỉnh sửa món",
+        "link_copied": "✅ Đã sao chép liên kết: ",
+        "share_invite_tip": "Gửi mã này mời bạn bè tham gia nhé!",
+        "deleteBtn":"Xóa",
+        "anytime":"Không giới hạn"
     },
     "chat": {
         "title": "Liên hệ",

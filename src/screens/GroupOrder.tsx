@@ -18,13 +18,13 @@ import EditGroupNameModal from '../components/EditGroupNameModal'; // import đ�
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axiosInstance from '../utils/axiosInstance';
 import { useCategoryStore } from '../store/store';
-
+import { useTranslation } from 'react-i18next';
 
 type NavigationProp = StackNavigationProp<RootStackParamList, 'GroupOrder'>;
 
 const GroupOrder: React.FC = () => {
     const navigation = useNavigation<NavigationProp>();
-
+    const { t } = useTranslation();
     const [showTimePicker, setShowTimePicker] = useState(false);
     const [selectedTime, setSelectedTime] = useState<Date | null>(null);
     const [showOptionModal, setShowOptionModal] = useState(false);
@@ -123,8 +123,8 @@ const GroupOrder: React.FC = () => {
                     </TouchableOpacity>
 
                     <View style={styles.card}>
-                        <Text style={styles.discountTitle}>Được giảm giá đến 10%, không cần mức chi tiêu tối thiểu!</Text>
-                        <Text style={styles.discountSubtitle}>Mời thêm thành viên để hưởng mức giảm giá hấp dẫn hơn.</Text>
+                        <Text style={styles.discountTitle}>{t('android.groupOrderNote.discount_title')}</Text>
+                        <Text style={styles.discountSubtitle}>{t('android.groupOrderNote.discount_subtitle')}</Text>
                         <View style={styles.discountSteps}>
                             {[
                                 { percent: '2%', people: '2 người' },
@@ -243,7 +243,7 @@ const GroupOrder: React.FC = () => {
                 <Modal visible={showCopiedModal} transparent animationType="fade">
                     <View style={styles.modalBackdrop}>
                         <View style={[styles.modalContent, { alignItems: 'center' }]}>
-                            <Text style={styles.modalText}>✅ Đã sao chép mã: {link}</Text>
+                            <Text style={styles.modalText}>✅ Đã sao chép liên kết: {link}</Text>
                             <Text style={[styles.modalText, { fontSize: 12, marginTop: 6 }]}>
                                 Gửi mã này mời bạn bè tham gia nhé!
                             </Text>

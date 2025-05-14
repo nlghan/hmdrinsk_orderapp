@@ -7,6 +7,9 @@ import {
   TouchableOpacity,
   Alert,
   ScrollView,
+  SafeAreaView,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import DropDownPicker from 'react-native-dropdown-picker';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
@@ -257,82 +260,89 @@ const EditGroupAddress = () => {
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.container} nestedScrollEnabled={true}>
-      <NotificationPopup userId={userId ?? 0} />
+    <SafeAreaView style={{ flex: 1 }}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        style={{ flex: 1 }}
+      >
+        <View style={styles.container}>
+          <NotificationPopup userId={userId ?? 0} />
 
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.backIcon} onPress={handleCancel}>
-          <Icon name="arrow-back" size={20} color="#FF9800" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>{t('android.groupOrderList')}</Text>
-      </View>
+          <View style={styles.header}>
+            <TouchableOpacity style={styles.backIcon} onPress={handleCancel}>
+              <Icon name="arrow-back" size={20} color="#FF9800" />
+            </TouchableOpacity>
+            <Text style={styles.headerTitle}>{t('android.groupOrderList')}</Text>
+          </View>
 
-      <Text style={styles.label}>Tỉnh / Thành phố</Text>
-      <DropDownPicker
-        open={provinceOpen}
-        value={province}
-        items={provinceItems}
-        setOpen={setProvinceOpen}
-        setValue={(callback) => {
-          const selectedValue = callback(province);
-          handleProvinceChange(selectedValue);
-          return selectedValue;
-        }}
-        setItems={setProvinceItems}
-        zIndex={3000}
-        zIndexInverse={1000}
-        containerStyle={styles.dropDownContainer}
-      />
+          {/* Các dropdown giữ nguyên như cũ */}
+          <Text style={styles.label}>{t('information.city')}</Text>
+          <DropDownPicker
+            open={provinceOpen}
+            value={province}
+            items={provinceItems}
+            setOpen={setProvinceOpen}
+            setValue={(callback) => {
+              const selectedValue = callback(province);
+              handleProvinceChange(selectedValue);
+              return selectedValue;
+            }}
+            setItems={setProvinceItems}
+            zIndex={3000}
+            zIndexInverse={1000}
+            containerStyle={styles.dropDownContainer}
+          />
 
-      <Text style={styles.label}>Quận / Huyện</Text>
-      <DropDownPicker
-        open={districtOpen}
-        value={district}
-        items={districtItems}
-        setOpen={setDistrictOpen}
-        setValue={(callback) => {
-          const selectedValue = callback(district);
-          handleDistrictChange(selectedValue);
-          return selectedValue;
-        }}
-        setItems={setDistrictItems}
-        zIndex={2000}
-        zIndexInverse={2000}
-        containerStyle={styles.dropDownContainer}
-      />
+          <Text style={styles.label}>{t('information.district')}</Text>
+          <DropDownPicker
+            open={districtOpen}
+            value={district}
+            items={districtItems}
+            setOpen={setDistrictOpen}
+            setValue={(callback) => {
+              const selectedValue = callback(district);
+              handleDistrictChange(selectedValue);
+              return selectedValue;
+            }}
+            setItems={setDistrictItems}
+            zIndex={2000}
+            zIndexInverse={2000}
+            containerStyle={styles.dropDownContainer}
+          />
 
-      <Text style={styles.label}>Phường / Xã</Text>
-      <DropDownPicker
-        open={wardOpen}
-        value={ward}
-        items={wardItems}
-        setOpen={setWardOpen}
-        setValue={setWard}
-        setItems={setWardItems}
-        zIndex={1000}
-        zIndexInverse={3000}
-        containerStyle={styles.dropDownContainer}
-        placeholder="Nhập phường hoặc điền tay"
-      />
+          <Text style={styles.label}>{t('information.ward')}</Text>
+          <DropDownPicker
+            open={wardOpen}
+            value={ward}
+            items={wardItems}
+            setOpen={setWardOpen}
+            setValue={setWard}
+            setItems={setWardItems}
+            zIndex={1000}
+            zIndexInverse={3000}
+            containerStyle={styles.dropDownContainer}
+          />
 
+          <Text style={styles.label}>{t('information.detailAddress')}</Text>
+          <TextInput
+            placeholder={t('information.detailAddress')}
+            style={styles.input}
+            value={locationDetail}
+            onChangeText={setLocationDetail}
+          />
 
-      <Text style={styles.label}>Vị trí chi tiết</Text>
-      <TextInput
-        placeholder="Nhập số nhà, tên đường..."
-        style={styles.input}
-        value={locationDetail}
-        onChangeText={setLocationDetail}
-      />
+          <View style={styles.actionButtons}>
+            <TouchableOpacity style={styles.cancelButton} onPress={handleCancel}>
+              <Text style={styles.cancelButtonText}>{t('order.orderDetail.cancel')}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
+              <Text style={styles.saveButtonText}>{t('android.saveBtn')}</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
 
-      <View style={styles.actionButtons}>
-        <TouchableOpacity style={styles.cancelButton} onPress={handleCancel}>
-          <Text style={styles.cancelButtonText}>Hủy</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
-          <Text style={styles.saveButtonText}>Lưu</Text>
-        </TouchableOpacity>
-      </View>
-    </ScrollView>
   );
 };
 

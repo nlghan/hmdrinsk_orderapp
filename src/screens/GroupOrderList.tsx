@@ -199,13 +199,16 @@ const GroupOrderList: React.FC = () => {
                             </View>
                         </View>
                         <Text style={[styles.groupOrderInfo, getStatusStyle(item.status)]}>
-                            Trạng thái: {item.status}
+                            <Text style={[styles.groupOrderInfo, getStatusStyle(item.status)]}>
+                                {t('common.status')}: {t(`android.status_label.${item.status}`)}
+                            </Text>
+
                         </Text>
                         <Text style={styles.groupOrderInfo}>
-                            Vai trò: <Text style={styles.boldText}>{item.isLeader ? 'Trưởng nhóm' : 'Thành viên'}</Text>
+                            {t('userContent.role')}: <Text style={styles.boldText}>{item.isLeader ? t('android.status_label.leader') : t('android.status_label.member')}</Text>
                         </Text>
                         <Text style={styles.groupOrderInfo}>
-                            Ngày tham gia: {new Date(item.dateCreated).toLocaleString()}
+                            {t('android.status_label.joinDate')}: {new Date(item.dateCreated).toLocaleString()}
                         </Text>
                     </View>
                 </TouchableOpacity>
@@ -227,13 +230,13 @@ const GroupOrderList: React.FC = () => {
                     <DotLoading title={''} />
                 </View>
             ) : groupOrders.length === 0 ? (
-                <EmptyListAnimation title="Bạn chưa tham gia nhóm nào đang hoạt động." />
+                <EmptyListAnimation title={t('history.empty_list')} />
             ) : (
                 <FlatList
                     data={groupOrders}
                     keyExtractor={(item) => item.groupOrderId.toString()}
                     renderItem={renderGroupOrder}
-                    ListEmptyComponent={<EmptyListAnimation title="Không có nhóm nào!" />}
+                    ListEmptyComponent={<EmptyListAnimation title={t('history.empty_list')} />}
                     showsVerticalScrollIndicator={false}
                 />
 
@@ -267,11 +270,11 @@ const styles = StyleSheet.create({
         shadowRadius: 4, elevation: 3, marginBottom: 16,
     },
     groupOrderHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
-    groupOrderInfo: { fontSize: 15, color: '#555', marginBottom: 6 },
+    groupOrderInfo: { fontSize: 26, color: '#555', marginBottom: 6, fontFamily: FONTFAMILY.dongle_regular },
     boldText: { fontWeight: '600', color: '#222' },
     groupHeaderLeft: { flexDirection: 'row', alignItems: 'center' },
     avatar: { width: 40, height: 40, borderRadius: 20, marginRight: 10 },
-    groupNameText: { fontSize: 18, fontWeight: '600', color: '#333', marginRight: 8 },
+    groupNameText: { fontSize: 22, color: '#333', marginRight: 8, fontFamily: FONTFAMILY.lobster_regular },
     swipeActions: {
         backgroundColor: 'transparent',
         padding: 10,
