@@ -53,7 +53,7 @@ const styles = StyleSheet.create({
     },
     sectionTitle1: {
         fontSize: 16,
-        marginBottom: 8,
+     
         color: '#2da780',
         fontFamily: FONTFAMILY.lobster_regular,
     },

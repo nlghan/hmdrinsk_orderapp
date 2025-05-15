@@ -492,7 +492,7 @@ const GroupOrderDetail = () => {
                     </Text>
 
                     <Text style={styles.noticeSubText}>
-                        {t('android.groupOrderNote.notice_discount_unlock')} <Text style={{ color: '#FF5722' }}>{t('android.groupOrderNote.notice_discount_unlock2',  { discount: '2%' })}</Text>
+                        {t('android.groupOrderNote.notice_discount_unlock')} <Text style={{ color: '#FF5722' }}>{t('android.groupOrderNote.notice_discount_unlock2', { discount: '2%' })}</Text>
                     </Text>
                 </View>
 
@@ -521,7 +521,7 @@ const GroupOrderDetail = () => {
                         >
 
                             <View style={styles.detailRows}>
-                                <Icon name="pin-drop" size={20} color="black" />
+                                <Icon name="pin-drop" size={20} color="green" />
                                 <Text style={styles.detailText}>{groupCartData?.crudGroupOrderResponse.address}</Text>
                                 <Icon name="chevron-right" size={20} />
                             </View>
@@ -574,7 +574,7 @@ const GroupOrderDetail = () => {
                             >
                                 <View style={styles.subUser}>
                                     <Text style={[styles.boldText, { marginBottom: 4 }]}>
-                                        {member.name} {member.isLeader && (t('android.status_label.leader'))}
+                                        {member.name}{member.isLeader ? ` (${t('android.status_label.leader')})` : ''}
                                     </Text>
 
                                     {hasItems &&
@@ -717,7 +717,7 @@ const GroupOrderDetail = () => {
                     }}
                 >
                     <Text style={[styles.nextText1, isLeader && { color: 'red' }]}>
-                        {isLeader ? t('android.leave_group_order') : t('android.delete_group_order')}
+                        {isLeader ? t('android.delete_group_order') : t('android.leave_group_order')}
                     </Text>
                 </TouchableOpacity>
 
@@ -725,12 +725,18 @@ const GroupOrderDetail = () => {
 
 
             </ScrollView>
-            <View style={styles.actions} >
-                <TouchableOpacity style={styles.nextButton}>
-                    <Text style={styles.nextText}>{t('android.next')}</Text>
-                </TouchableOpacity>
+            {isLeader &&
+                <View style={styles.actions} >
+                    <TouchableOpacity
+                        style={styles.nextButton}
+                        onPress={() => navigation.navigate('Preview', { groupOrderId: groupCartData?.crudGroupOrderResponse.groupOrderId ?? 0, currentAddress : groupCartData?.crudGroupOrderResponse.address || ''})
+                        }>
+                        <Text style={styles.nextText}>{t('android.next')}</Text>
+                    </TouchableOpacity>
 
-            </View>
+
+                </View>}
+
 
             <Modal
                 visible={editModalVisible}
@@ -761,7 +767,7 @@ const GroupOrderDetail = () => {
                             color: '#FF7F3F',
                             textAlign: 'center',
                         }}>
-                           {t('android.editProduct')}
+                            {t('android.editProduct')}
                         </Text>
 
                         <Text style={{
@@ -879,7 +885,7 @@ const GroupOrderDetail = () => {
                     <View style={[styles.modalContent, { alignItems: 'center' }]}>
                         <Text style={styles.modalText}>{t('android.link_copied')} {link}</Text>
                         <Text style={[styles.modalText, { fontSize: 12, marginTop: 6 }]}>
-                           {t('android.share_invite_tip')}
+                            {t('android.share_invite_tip')}
                         </Text>
                     </View>
                 </View>
