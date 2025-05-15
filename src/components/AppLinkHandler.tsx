@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Alert, Linking } from 'react-native';
 import axios from 'axios';
 import { useNavigation } from '@react-navigation/native';
@@ -14,6 +14,9 @@ export default function AppLinkHandler() {
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
   const { setIdOrderPause, setIdCartPause } = useCartStore();
   const { fetchUserCoin } = useCategoryStore();
+  const [modalVisible, setModalVisible] = useState(false);
+const [modalMessage, setModalMessage] = useState('');
+const { language} = useCategoryStore();
 
   const handleDeepLink = async (url: string) => {
     try {

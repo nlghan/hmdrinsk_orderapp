@@ -11,7 +11,7 @@ import Icon from "react-native-vector-icons/MaterialIcons";
 import { RootStackParamList } from "../navigation/RootStackParamList";
 import { FONTFAMILY } from '../theme/theme';
 
-const PendingOrder = () => {
+const WaitingOrder = () => {
     type ProductItem = {
         cartItemId: string;
         proId: string;
@@ -328,4 +328,4 @@ const styles = StyleSheet.create({
     },
 });
 
-export default PendingOrder;
+export default WaitingOrder;

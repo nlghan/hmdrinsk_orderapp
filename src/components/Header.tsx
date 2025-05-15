@@ -12,6 +12,7 @@ import { useCategoryStore } from '../store/store';
 import useWebSocket from '../utils/Socket';
 import axiosInstance from "../utils/axiosInstance";
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import ConfirmModal from './ConfirmModal';
 
 interface Notification {
     id: string;
@@ -24,7 +25,7 @@ interface Notification {
 
 const Header = ({ style }: { style?: object }) => {
     const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
-    const { userId } = useCategoryStore();
+    const { language, userId } = useCategoryStore();
     const socketNotifications = useWebSocket(userId ?? 0);
     const { t } = useTranslation();
 
@@ -39,6 +40,8 @@ const Header = ({ style }: { style?: object }) => {
 
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [unreadCount, setUnreadCount] = useState<number>(0);
+    const [isModalVisible, setModalVisible] = useState(false);
+    const [isConfirmed, setConfirmed] = useState(false);
 
     const fetchNotifications = async () => {
         if (!userId) return;
@@ -71,25 +74,21 @@ const Header = ({ style }: { style?: object }) => {
 
     const handleCartPress = async () => {
         if (groupCartId && !hasRejectedGroupCart) {
-            Alert.alert(
-                "Thông báo",
-                "Bạn sẽ chuyển sang giỏ hàng cá nhân. Có muốn tiếp tục không?",
-                [
-                    { text: "Không", style: "cancel" },
-                    {
-                        text: "Có",
-                        onPress: async () => {
-                            await ensureActiveCart();
-                            setHasRejectedGroupCart(true);
-                            navigation.navigate('Cart');
-                        },
-                    },
-                ],
-                { cancelable: false }
-            );
+            setModalVisible(true);
         } else {
             navigation.navigate('Cart');
         }
+    };
+
+    const handleConfirm = async () => {
+        await ensureActiveCart();
+        setHasRejectedGroupCart(true);
+        setModalVisible(false);
+        navigation.navigate('Cart');
+    };
+
+    const handleClose = () => {
+        setModalVisible(false);
     };
 
     return (
@@ -124,6 +123,16 @@ const Header = ({ style }: { style?: object }) => {
                         <Text style={homeStyles.notificationText}>{groupOrderCount}</Text>
                     </View>
                 </TouchableOpacity>
+                <ConfirmModal
+                    visible={isModalVisible}
+                    message={
+                        language === 'EN'
+                            ? 'You will be redirected to the personal cart. Do you want to continue?'
+                            : 'Bạn sẽ chuyển sang giỏ hàng cá nhân. Có muốn tiếp tục không?'
+                    }
+                    onClose={handleClose}
+                    onConfirm={handleConfirm}
+                />
 
                 <TouchableOpacity
                     style={[

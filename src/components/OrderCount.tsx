@@ -11,7 +11,7 @@ interface OrderCountProps {
 
 interface OrderCounts {
   confirmed: number;
-//   waiting: number;
+  waiting: number;
   cancelled: number;
   pending: number;
   refunded: number;
@@ -22,7 +22,7 @@ const OrderCount: React.FC<OrderCountProps> = ({onDataFetched }) => {
   const { refreshTrigger } = useCountStore();
   const [orderCounts, setOrderCounts] = useState<OrderCounts>({
     confirmed: 0,
-    // waiting: 0,
+    waiting: 0,
     cancelled: 0,
     pending: 0,
     refunded: 0,
@@ -32,17 +32,13 @@ const OrderCount: React.FC<OrderCountProps> = ({onDataFetched }) => {
     const fetchOrderCounts = async () => {
         const token = await AsyncStorage.getItem('access_token');
       try {
-        const [confirmedRes, cancelledRes, pendingRes, refundedRes] = await Promise.all([
+        const [confirmedRes, waitingRes, cancelledRes, pendingRes, refundedRes] = await Promise.all([
           axiosInstance.get(`/orders/view/confirmed/${userId}?language=${language}`, {
             headers: { Authorization: `Bearer ${token}` },
           }),
-        //   axiosInstance.get(`/orders/list-waiting/${userId}`, {
-        //     headers: { 
-        //       Authorization: `Bearer ${token}`,
-        //       Accept: 'application/json',
-        //       'Content-Type': 'application/json',
-        //     },
-        //   }),
+          axiosInstance.get(`/shipment/view/list-waiting/${userId}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
           axiosInstance.get(`/orders/view/order-cancel/payment-have/${userId}?language=${language}`, {
             headers: { Authorization: `Bearer ${token}`, accept: '*/*' },
           }),
@@ -56,7 +52,7 @@ const OrderCount: React.FC<OrderCountProps> = ({onDataFetched }) => {
 
         const newOrderCounts = {
           confirmed: confirmedRes.data.length|| 0,
-        //   waiting: waitingRes.data.total || 0,
+          waiting: waitingRes.data.total || 0,
           cancelled: cancelledRes.data.total || 0,
           pending: pendingRes.data.total || 0,
           refunded: refundedRes.data.total || 0,

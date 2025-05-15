@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView, ActivityIndicator, StyleSheet, Image, TouchableOpacity } from 'react-native';
+import { View, Text, ScrollView, ActivityIndicator, StyleSheet, Image, TouchableOpacity, Alert } from 'react-native';
 import { useRoute } from '@react-navigation/native';
 import axiosInstance from '../utils/axiosInstance';
 import { useCategoryStore } from "../store/store";
@@ -12,6 +12,7 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from "../navigation/RootStackParamList";
 import NotificationPopup from '../components/NotificationPopup';
 import { FONTFAMILY } from '../theme/theme';
+import DropDownPicker from 'react-native-dropdown-picker';
 
 interface Order {
     orderId: number;
@@ -56,6 +57,11 @@ const MyOrderDetails = () => {
     const [error, setError] = useState<string>('');
     const { language, userId } = useCategoryStore();
     const { t } = useTranslation();
+    const [cancelError, setCancelError] = useState<string | null>(null);
+    const [cancelReason, setCancelReason] = useState('');
+    const [isReasonSelected, setIsReasonSelected] = useState(false);
+    const [isRequestSent, setIsRequestSent] = useState<boolean>(false);
+    const [open, setOpen] = useState(false);
     const formatPrice = (price: number) => {
         return (price).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
     };
@@ -76,54 +82,156 @@ const MyOrderDetails = () => {
         WAITINF: 'Chờ giao'
     };
 
+    const fetchOrderDetails = async () => {
+        try {
+            const token = await AsyncStorage.getItem('access_token');
+            const response = await axiosInstance.get(`/orders/detail/${shipmentId}?language=${language}`, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+
+            const data = response.data;
+            console.log("test", data);
+            setCustomerName(data.customerName || 'Không có tên');
+            setOrder({
+                orderId: data.order.orderId,
+                address: data.order.address,
+                totalPrice: data.order.totalPrice,
+                status: data.order.status,
+                discountPrice: data.order.discountPrice,
+                coin: data.order.pointCoinUse
+            });
+            setPayment({
+                paymentMethod: data.payment.paymentMethod || '',
+                amount: data.payment.amount || '',
+                statusPayment: data.payment.statusPayment || '',
+            });
+            setShipment({
+                nameShipper: data.shipment.nameShipper,
+                dateDeliver: data.shipment.dateDeliver,
+                status: data.shipment.status,
+                address: data.shipment.address
+            });
+            setItems(data.listItem.map((item: any) => ({
+                proName: item.proName,
+                quantity: item.quantity,
+                totalPrice: item.totalPrice,
+                size: item.size,
+                imageUrl: item.imageUrl,
+            })));
+        } catch (err) {
+            console.error("Lỗi fetchOrderDetails:", err);
+            setError('Không thể tải chi tiết đơn hàng.');
+        } finally {
+            setLoading(false);
+        }
+    };
 
     useEffect(() => {
-        const fetchOrderDetails = async () => {
-            try {
-                const token = await AsyncStorage.getItem('access_token');
-                const response = await axiosInstance.get(`/orders/detail/${shipmentId}?language=${language}`, {
-                    headers: { Authorization: `Bearer ${token}` },
-                });
-
-                const data = response.data;
-                console.log("test", data);
-                setCustomerName(data.customerName || 'Không có tên');
-                setOrder({
-                    orderId: data.order.orderId,
-                    address: data.order.address,
-                    totalPrice: data.order.totalPrice,
-                    status: data.order.status,
-                    discountPrice: data.order.discountPrice,
-                    coin: data.order.pointCoinUse
-                });
-                setPayment({
-                    paymentMethod: data.payment.paymentMethod || '',
-                    amount: data.payment.amount || '',
-                    statusPayment: data.payment.statusPayment || '',
-                });
-                setShipment({
-                    nameShipper: data.shipment.nameShipper,
-                    dateDeliver: data.shipment.dateDeliver,
-                    status: data.shipment.status,
-                    address: data.shipment.address
-                });
-                setItems(data.listItem.map((item: any) => ({
-                    proName: item.proName,
-                    quantity: item.quantity,
-                    totalPrice: item.totalPrice,
-                    size: item.size,
-                    imageUrl: item.imageUrl,
-                })));
-            } catch (err) {
-                console.error("Lỗi fetchOrderDetails:", err);
-                setError('Không thể tải chi tiết đơn hàng.');
-            } finally {
-                setLoading(false);
-            }
-        };
-
         fetchOrderDetails();
     }, [shipmentId]);
+
+    useEffect(() => {
+        const loadRequestSentStatus = async () => {
+            const storedStatus = await AsyncStorage.getItem(`cancelRequest_${order?.orderId}`);
+            if (storedStatus === 'true') {
+                setIsRequestSent(true);
+            }
+        };
+        loadRequestSentStatus();
+    }, [order?.orderId]);
+
+    const handleCancelOrder = async (reason: string) => {
+        if (!reason) {
+            setCancelError(
+                language === 'EN'
+                    ? 'Please select a reason for cancellation.'
+                    : 'Vui lòng chọn lý do hủy đơn.'
+            );
+            return;
+        }
+
+        try {
+            // Hiển thị hộp thoại xác nhận
+            const confirm = await new Promise((resolve) => {
+                Alert.alert(
+                    language === 'EN' ? 'Confirm Order Cancellation' : 'Xác nhận hủy đơn',
+                    language === 'EN'
+                        ? 'Are you sure you want to cancel this order?'
+                        : 'Bạn có chắc chắn muốn hủy đơn hàng này?',
+                    [
+                        {
+                            text: language === 'EN' ? 'No' : 'Không',
+                            onPress: () => resolve(false),
+                            style: 'cancel',
+                        },
+                        {
+                            text: language === 'EN' ? 'Yes' : 'Có',
+                            onPress: () => resolve(true),
+                        },
+                    ]
+                );
+            });
+
+            if (confirm) {
+                // Lấy token từ AsyncStorage
+                const token = await AsyncStorage.getItem('access_token');
+                if (!token) {
+                    setCancelError(
+                        language === 'EN'
+                            ? 'Please log in again.'
+                            : 'Vui lòng đăng nhập lại.'
+                    );
+                    return;
+                }
+                if (!userId) {
+                    setCancelError(
+                        language === 'EN'
+                            ? 'Unable to identify UserId.'
+                            : 'Không thể xác định UserId.'
+                    );
+                    return;
+                }
+
+                // Gửi yêu cầu hủy đơn
+                const response = await axiosInstance.post(
+                    `/orders/reason-cancel`,
+                    {
+                        orderId: order?.orderId,
+                        userId,
+                        cancelReason: reason,
+                    },
+                    {
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                            'Content-Type': 'application/json',
+                        },
+                    }
+                );
+
+                console.log(
+                    language === 'EN' ? 'Order canceled successfully:' : 'Hủy đơn hàng thành công:',
+                    { status: response.status, data: response.data }
+                );
+                setCancelError(null);
+                setIsRequestSent(true);
+                await AsyncStorage.setItem(`cancelRequest_${order?.orderId}`, 'true');
+                fetchOrderDetails();
+            } else {
+                setCancelReason('');
+                setIsReasonSelected(false);
+            }
+        } catch (error) {
+            console.error(
+                language === 'EN' ? 'Error canceling order:' : 'Lỗi khi hủy đơn hàng:',
+                error
+            );
+            setCancelError(
+                language === 'EN'
+                    ? 'Cancellation request can only be sent once.'
+                    : 'Chỉ được gửi yêu cầu hủy đơn một lần.'
+            );
+        }
+    };
 
     if (loading) return <ActivityIndicator size="large" color="#FF9800" />;
     if (error) return <Text style={{ color: 'red', textAlign: 'center' }}>{error}</Text>;
@@ -147,7 +255,9 @@ const MyOrderDetails = () => {
                 <View style={styles.section}>
                     <Text style={styles.sectionTitle}>{t('order.orderDetail.info')}</Text>
                     <View style={styles.detailRow}>
-                        <Text style={styles.label}>{t('order.customer')}:</Text>
+                        <Text style={styles.label}>{t('order.customer')}:</Text>                        
+                    </View>
+                    <View style={styles.detailRow}>
                         <Text style={styles.value}>{customerName}</Text>
                     </View>
                     <View style={styles.detailRow}>
@@ -163,7 +273,7 @@ const MyOrderDetails = () => {
                 {/* Thông tin đơn hàng */}
                 <View style={styles.section}>
                     <Text style={styles.sectionTitle}>{t('orderContent.orderInfo')}</Text>
-                   
+
                     <View style={styles.detailRow}>
                         <Text style={styles.label}>{t('order.discount')}:</Text>
                         <Text style={styles.value}>{formatPrice(order?.discountPrice ?? 0)}đ</Text>
@@ -219,8 +329,10 @@ const MyOrderDetails = () => {
                         <Text style={styles.value}>{shipment?.nameShipper || 'Không có'}</Text>
                     </View>
                     <View style={styles.detailRow}>
-                        <Text style={styles.label}>{t('history.delivery_date')}:</Text>
-                        <Text style={styles.value}>{shipment?.dateDeliver || 'Chưa cập nhật'}</Text>
+                        <Text style={styles.label}>{t('history.delivery_date')}</Text>                        
+                    </View>
+                    <View style={styles.detailRow}>
+                        <Text style={styles.value}>{shipment?.dateDeliver || 'Không có'}</Text>
                     </View>
                     <View style={styles.detailRow}>
                         <Text style={styles.label}>{t('shippingStatus')}:</Text>
@@ -254,6 +366,95 @@ const MyOrderDetails = () => {
                         <Text style={styles.emptyText}>{t('prodcutContent.noPro')}</Text>
                     )}
                 </View>
+
+                {/* Giao diện chọn lý do hủy đơn */}
+                <View style={styles.section}>
+                    {cancelError && <Text style={styles.errorText}>{cancelError}</Text>}
+                    {payment?.statusPayment !== 'FAILED' &&
+                        payment?.statusPayment !== 'REFUND' &&
+                        order?.status !== 'CANCELLED' &&
+                        shipment?.status !== 'SUCCESS' &&
+                        shipment?.status != null ? (
+                        <View style={{ marginTop: 10, zIndex: open ? 1000 : 1 }}>
+                            {!isRequestSent ? (
+                                <>
+                                    <DropDownPicker
+                                        open={open}
+                                        setOpen={setOpen}
+                                        value={cancelReason}
+                                        setValue={setCancelReason}
+                                        items={[
+                                            { label: t('cancel.title'), value: '', disabled: true },
+                                            { label: t('cancel.reason1'), value: 'CHANGED_MY_MIND' },
+                                            { label: t('cancel.reason2'), value: 'FOUND_CHEAPER_ELSEWHERE' },
+                                            { label: t('cancel.reason3'), value: 'ORDERED_BY_MISTAKE' },
+                                            { label: t('cancel.reason4'), value: 'DELIVERY_TOO_SLOW' },
+                                            { label: t('cancel.reason5'), value: 'WRONG_PRODUCT_SELECTED' },
+                                            { label: t('cancel.reason6'), value: 'NOT_NEEDED_ANYMORE' },
+                                            { label: t('cancel.reason7'), value: 'PAYMENT_ISSUES' },
+                                            { label: t('cancel.reason8'), value: 'PREFER_DIFFERENT_STORE' },
+                                            { label: t('cancel.reason9'), value: 'UNSATISFIED_WITH_SERVICE' },
+                                            { label: t('cancel.reason10'), value: 'OTHER_REASON' },
+                                        ]}
+                                        placeholder={t('cancel.title')}
+                                        onChangeValue={(value: any) => {
+                                            setCancelReason(value);
+                                            setIsReasonSelected(!!value);
+                                        }}
+                                        style={{
+                                            borderColor: '#ccc',
+                                            borderWidth: 1,
+                                            borderRadius: 4,
+                                            backgroundColor: '#fff',
+                                            padding: 10,
+                                        }}
+                                        textStyle={{
+                                            fontSize: 16,
+                                            color: '#333',
+                                        }}
+                                        dropDownContainerStyle={{
+                                            borderColor: '#ccc',
+                                            borderWidth: 1,
+                                            borderRadius: 4,
+                                            backgroundColor: '#fff',
+                                        }}
+                                        zIndex={1000}
+                                    />
+
+                                    <TouchableOpacity
+                                        onPress={() => handleCancelOrder(cancelReason)}
+                                        disabled={!isReasonSelected}
+                                        style={{
+                                            marginTop: 10,
+                                            padding: 10,
+                                            borderRadius: 4,
+                                            backgroundColor: isReasonSelected ? '#dc3545' : '#ccc',
+                                            alignItems: 'center',
+                                        }}
+                                    >
+                                        <Text style={{ color: '#fff', fontSize: 16, fontWeight: 'bold' }}>
+                                            {t('cancel.confirm')}
+                                        </Text>
+                                    </TouchableOpacity>
+                                </>
+                            ) : (
+                                <View
+                                    style={{
+                                        padding: 10,
+                                        backgroundColor: '#f8f9fa',
+                                        borderWidth: 1,
+                                        borderColor: '#dee2e6',
+                                        borderRadius: 4,
+                                        alignItems: 'center',
+                                        marginTop: 10,
+                                    }}
+                                >
+                                    <Text style={{ color: '#28a745', fontSize: 16 }}>{t('cancel.success')}</Text>
+                                </View>
+                            )}
+                        </View>
+                    ) : null}
+                </View>
             </View>
         </ScrollView>
     );
@@ -266,6 +467,7 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: '#f8f8f8',
         padding: 16,
+        marginBottom: 50,
     },
     body: {
         flex: 1,
@@ -277,6 +479,12 @@ const styles = StyleSheet.create({
         minHeight: 50, // Đảm bảo không bị quá nhỏ
         justifyContent: 'center',
         marginTop: 4, // Tạo khoảng cách với tiêu đề
+    },
+    errorText: {
+        color: 'red',
+        fontSize: 14,
+        marginVertical: 10,
+        textAlign: 'center',
     },
     addressText: {
         fontSize: 16,
@@ -374,19 +582,19 @@ const styles = StyleSheet.create({
         fontSize: 26,
         fontFamily: FONTFAMILY.dongle_bold,
         color: '#333',
-        lineHeight:20
+        lineHeight: 20
     },
     itemDetail: {
         fontSize: 24,
         fontFamily: FONTFAMILY.dongle_light,
         color: '#666',
-        lineHeight:24
+        lineHeight: 24
     },
     itemPrice: {
         fontSize: 26,
         fontFamily: FONTFAMILY.dongle_bold,
         color: '#d9534f',
-        lineHeight:18
+        lineHeight: 18
     },
     emptyText: {
         textAlign: 'center',

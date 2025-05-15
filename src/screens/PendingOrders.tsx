@@ -10,9 +10,10 @@ import EmptyListAnimation from '../components/EmptyListAnimation';
 import LinearGradient from 'react-native-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from "@react-navigation/stack";
+import { FONTFAMILY } from '../theme/theme';
 import { RootStackParamList } from "../navigation/RootStackParamList";
 
-const WaitingOrder = () => {
+const PendingOrder = () => {
     // Định nghĩa kiểu dữ liệu
     type ProductItem = {
         cartItemId: string;
@@ -38,15 +39,22 @@ const WaitingOrder = () => {
     type Order = {
         orderId: string;
         address: string;
-        deliveryFee: number;
-        discountPrice: number;
+        phoneNumber: string;
         totalPrice: number;
         status: string;
         dateCreated: string;
         dateDelivered: string;
         dateOders: string;
         shipment: Shipment;
-        listItem: ProductItem[];
+        cartItems: ProductItem[];
+        payment: {
+            deliveryFee: number;
+            discountPrice: number;
+            infoPaymentResponse: {
+                amount: number;
+                status: string;
+            };
+        };
     };
     const [waitingOrders, setWaitingOrders] = useState<Order[]>([]);
     const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
@@ -55,52 +63,69 @@ const WaitingOrder = () => {
     const [error, setError] = useState('');
     const { language, userId } = useCategoryStore();
 
-    // useEffect(() => {
-    //     fetchWaitingList();
-    // }, []);
+    useEffect(() => {
+        fetchWaitingList();
+    }, []);
 
     const fetchWaitingList = async () => {
         setLoading(true);
         setError('');
         const token = await AsyncStorage.getItem('access_token');
         try {
-            const response = await axiosInstance.get(`/orders/list-waiting/${userId}`, {
-                headers: { 
+            const response = await axiosInstance.get(`/shipment/view/list-waiting/${userId}`, {
+                headers: {
                     Authorization: `Bearer ${token}`,
                     Accept: 'application/json',
                     'Content-Type': 'application/json'
                 },
             });
             console.log("check", response.data);
-    
-            const listOrders = response.data.listOrderWaiting.list || [];    
-    
+
+            const listOrders = response.data.listShipment || [];
+
             const promises = listOrders.map(async (order: Order) => {
                 try {
-                    const responsePayment = await axiosInstance.get(`/orders/info-payment?orderId=${order.orderId}`, {
-                        headers: { 
+                    const responsePayment = await axiosInstance.get(`/orders/info-payment-language?orderId=${order.orderId}&language=${language}`, {
+                        headers: {
                             Authorization: `Bearer ${token}`,
                             Accept: 'application/json',
                             'Content-Type': 'application/json'
                         },
                     });
-                    return { ...order, payment: responsePayment.data };
+                    console.log("responsePayment", responsePayment.data);
+                    return { ...order, payment: responsePayment.data, cartItems: responsePayment.data.cartItems || [], };
+
                 } catch (error) {
                     console.error(`Lỗi khi lấy payment cho orderId ${order.orderId}:`, error);
                     return { ...order, payment: null };
                 }
             });
-    
             const listWithPaymentInfo = await Promise.all(promises);
             setWaitingOrders(listWithPaymentInfo);
+            console.log("listWithPaymentInfo", listWithPaymentInfo);
         } catch (error) {
             console.error('Lỗi fetchWaitingList:', error);
-            setError('Không thể tải danh sách đơn hàng chờ.');
+            setError(language === 'EN' ? 'Unable to load the waiting list data.' : 'Không thể tải dữ liệu danh sách chờ.');
         } finally {
             setLoading(false);
         }
     };
-    
+    const formatPrice = (price: number) => {
+        return (price).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    };
+    const getFirstImageUrl = (imageUrl: string): string => {
+        if (!imageUrl) {
+            return 'https://via.placeholder.com/60'; // Hình mặc định nếu rỗng
+        }
+
+        // Tách chuỗi thành mảng các URL
+        const urls = imageUrl.split(',').map((url) => url.trim());
+
+        // Lấy phần tử đầu tiên và trích xuất URL sau "1: "
+        const firstUrlMatch = urls[0].match(/1:\s*(https?:\/\/[^\s]+)/);
+
+        return firstUrlMatch ? firstUrlMatch[1] : 'https://via.placeholder.com/60';
+    };
 
 
     if (loading) return <ActivityIndicator size="large" color="#0000ff" />;
@@ -108,58 +133,64 @@ const WaitingOrder = () => {
 
     return (
         <View style={styles.container}>
-            <LinearGradient colors={['#f7eee9de', '#f3ebe0']} style={styles.container}>
-                <View style={styles.headerContainer}>
-                    <TouchableOpacity style={styles.backIcon} onPress={() => navigation.goBack()}>
-                        <Icon name="arrow-back" size={22} color="#FF9800" />
-                    </TouchableOpacity>
-                    <Text style={styles.header}>{t('orderPending')}</Text>
-                </View>
+            {/* <LinearGradient colors={['#f7eee9de', '#f3ebe0']} style={styles.container}> */}
+            <View style={styles.headerContainer}>
+                <TouchableOpacity style={styles.backIcon} onPress={() => navigation.goBack()}>
+                    <Icon name="arrow-back" size={22} color="#FF9800" />
+                </TouchableOpacity>
+                <Text style={styles.header}>{t('orderPending')}</Text>
+            </View>
 
-                <View style={styles.body}>
-                <EmptyListAnimation title={t('history.empty_list')} />
-                    {/* {waitingOrders.length === 0 ? (
-                        <EmptyListAnimation title={t('history.empty_list')} />
-                    ) : (
-                        <FlatList
-                            data={waitingOrders}
-                            keyExtractor={(item) => item?.orderId?.toString() || `order-${Math.random()}`}
-                            renderItem={({ item }) => (
-                                <View style={styles.card}>
+            <View style={styles.body}>
+                {waitingOrders.length === 0 ? (
+                    <EmptyListAnimation title={t('history.empty_list')} />
+                ) : (
+                    <FlatList
+                        data={waitingOrders}
+                        keyExtractor={(item) => item?.orderId?.toString() || `order-${Math.random()}`}
+                        renderItem={({ item }) => (
+                            <View style={styles.card}>
+                                <TouchableOpacity
+                                    onPress={() => navigation.navigate('MyOrderDetails', { shipmentId: Number(item?.orderId) })}>
                                     <Text style={styles.orderId}>{t('history.order_id')} {item?.orderId}</Text>
                                     <FlatList
-                                        data={item?.listItem}
-                                        keyExtractor={(product) => product?.cartItemId?.toString() ?? `product-${Math.random()}`}
-                                        renderItem={({ item: product }) => (
+                                        data={item?.cartItems}
+                                        keyExtractor={(product) => product?.cartItemId?.toString() || `product-${Math.random()}`}
+                                        renderItem={({ item: product }: { item: ProductItem }) => (
                                             <View style={styles.productContainer}>
-                                                <Image source={{ uri: product.imageUrl }} style={styles.image} />
+                                                <Image
+                                                    source={{ uri: getFirstImageUrl(product.imageUrl) }}
+                                                    style={styles.image}
+                                                    onError={(e) => console.log('Lỗi tải hình:', e.nativeEvent.error)}
+                                                />
                                                 <View style={styles.info}>
-                                                    <Text style={styles.title}>
-                                                        <Text style={styles.boldText}>{t('history.name')}</Text> {product.proName}
-                                                    </Text>
-                                                    <Text style={styles.size}>
-                                                        <Text style={styles.boldText}>{t('history.quantity')}</Text> {product.quantity}
-                                                    </Text>
-                                                    <Text style={styles.price}>
-                                                        <Text style={styles.boldText}>{t('history.price')}</Text> {product.totalPrice} đ
-                                                    </Text>
+                                                    <Text style={styles.title}>{t('history.name')} {product.proName}</Text>
+                                                    <Text style={styles.size}>{t('history.quantity')} {product.quantity}</Text>
+                                                    <Text style={styles.price}>{t('history.price')} {formatPrice(product.totalPrice)}đ</Text>
                                                 </View>
                                             </View>
                                         )}
                                     />
+                                    {/* <Text style={styles.boldText}>{t('address')}: {item.address}</Text> */}
+
+                                    <Text style={styles.boldText2}><Text style={styles.boldText}>{t('phone')}:</Text> {item.phoneNumber} </Text>
+
+                                    <Text style={styles.boldText2}><Text style={styles.boldText}>{t('order.discount')}:</Text> {item.payment?.discountPrice} VND</Text>
+                                    <Text style={styles.boldText2}><Text style={styles.boldText}>{t('order.shipFee')}:</Text> {item.payment?.deliveryFee} VND</Text>
                                     <Text style={styles.totalPrice}>
-                                        <Text style={styles.boldText}>{t('history.total_price')}</Text> {Math.max(item.totalPrice + item.deliveryFee - item.discountPrice, 0)} đ
+                                        <Text style={styles.boldText}>{t('history.total_price')}</Text> {item.payment?.infoPaymentResponse.amount} đ
                                     </Text>
                                     <Text>
-                                        <Text style={styles.boldText}>{t('history.order_date')}</Text> {item.dateOders}
+                                        <Text style={styles.boldText}>{t('history.order_date')}</Text> {item.dateCreated}
                                     </Text>
+                                </TouchableOpacity>
 
-                                </View>
-                            )}
-                        />
-                    )} */}
-                </View>
-            </LinearGradient>
+                            </View>
+                        )}
+                    />
+                )}
+            </View>
+            {/* </LinearGradient> */}
         </View>
     );
 };
@@ -170,7 +201,7 @@ const styles = StyleSheet.create({
         borderRadius: 10,
     },
     flatlistContainer: {
-        backgroundColor: '#FFFFFF',
+        backgroundColor: '#fff',
         padding: 5,
         marginHorizontal: 8,
         borderRadius: 10,
@@ -193,6 +224,7 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         color: '#333',
         textAlign: 'center',
+        fontFamily: FONTFAMILY.lobster_regular,
     },
     body: {
         flex: 1,
@@ -210,12 +242,17 @@ const styles = StyleSheet.create({
         elevation: 4,
     },
     orderId: {
-        fontSize: 16,
-        fontWeight: 'bold',
         marginBottom: 8,
+        fontSize: 30,
+        fontFamily: FONTFAMILY.dongle_bold,
     },
     boldText: {
-        fontWeight: 'bold',
+        fontFamily: FONTFAMILY.dongle_regular,
+        fontSize: 26,
+    },
+        boldText2: {
+        fontFamily: FONTFAMILY.dongle_light,
+        fontSize: 24
     },
     productContainer: {
         flexDirection: 'row',
@@ -233,24 +270,25 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
     },
     title: {
-        fontSize: 16,
-        fontWeight: 'bold',
+        fontSize: 26,
         color: '#333',
         marginBottom: 4,
+        fontFamily: FONTFAMILY.dongle_regular,
     },
     size: {
-        fontSize: 14,
+        fontSize: 24,
         color: 'gray',
+        fontFamily: FONTFAMILY.dongle_regular,
     },
     price: {
-        fontSize: 15,
-        fontWeight: 'bold',
+        fontSize: 26,
         color: '#27ae60',
         marginTop: 4,
+        fontFamily: FONTFAMILY.dongle_regular,
     },
     totalPrice: {
-        fontSize: 16,
-        fontWeight: 'bold',
+        fontSize: 26,
+        fontFamily: FONTFAMILY.dongle_regular,
         color: '#e74c3c',
         marginTop: 6,
     },
@@ -270,4 +308,4 @@ const styles = StyleSheet.create({
     },
 });
 
-export default WaitingOrder;
+export default PendingOrder;
