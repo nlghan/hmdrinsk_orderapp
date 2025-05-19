@@ -587,7 +587,8 @@
         "link_copied": "✅ Đã sao chép liên kết: ",
         "share_invite_tip": "Gửi mã này mời bạn bè tham gia nhé!",
         "deleteBtn":"Xóa",
-        "anytime":"Không giới hạn"
+        "anytime":"Không giới hạn",
+        "noAddress":"Chưa cập nhật địa chỉ giao hàng"
     },
     "chat": {
         "title": "Liên hệ",

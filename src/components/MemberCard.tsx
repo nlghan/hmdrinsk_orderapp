@@ -39,7 +39,15 @@ const MemberCard: React.FC<MemberCardProps> = ({ userInfo }) => {
       <ImageBackground source={require('../assets/app_images/nen.png')} style={styles.backgroundImage} resizeMode="cover">
         <View style={styles.cardHeader}>
           {/* Avatar */}
-          <Image source={{ uri: userInfo.avatar }} style={styles.avatar} />
+          <Image
+            source={
+              userInfo.avatar
+                ? { uri: userInfo.avatar }
+                : require('../assets/app_images/avatar_trang.jpg')
+            }
+            style={styles.avatar}
+          />
+
 
           {/* Thông tin tên */}
           <View>
@@ -91,7 +99,7 @@ const styles = StyleSheet.create({
     fontSize: 28,
     color: '#177460',
     fontFamily: FONTFAMILY.dongle_bold,
-    
+
   },
   cardEmail: {
     fontSize: 24,

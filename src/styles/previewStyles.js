@@ -139,12 +139,7 @@ const styles = StyleSheet.create({
         borderColor: '#ddd',
     },
     nextButton: {
-        backgroundColor: '#FF9800',
-        padding: 12,
-        borderRadius: 10,
-        alignItems: 'center',
-        marginBottom: 20,
-        width: '100%',
+        backgroundColor: '#FF9800', padding: 12, borderRadius: 10, alignItems: 'center', marginBottom: '5%', width: '100%', marginTop:'4%'
     },
     nextText: {
         fontSize: 28,
@@ -202,6 +197,6 @@ const styles = StyleSheet.create({
         color: '#fff',
         fontWeight: '600',
     },
-    detailRows: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderRadius: 10, gap: 10 },
+    detailRows: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderRadius: 10, gap: 10, padding:10},
 });
 export default styles;

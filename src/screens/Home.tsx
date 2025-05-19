@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import {
   View, Text, TouchableOpacity, Image, FlatList,
   SafeAreaView, ActivityIndicator, TouchableWithoutFeedback, RefreshControl,
-  ListRenderItem, Keyboard, Alert
+  ListRenderItem, Keyboard,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useCategoryStore } from '../store/store';
@@ -25,6 +25,8 @@ import useWebSocket from '../utils/Socket';
 import NotificationPopup from '../components/NotificationPopup';
 import axiosInstance from '../utils/axiosInstance';
 import Notification from '../components/Notification';
+import Alert from '../components/Alert';
+import GlobalAlert from './GlobalAlert';
 
 
 const Home = () => {
@@ -264,6 +266,7 @@ const Home = () => {
 
   return (
     <View style={{ flex: 1 }}>
+      <GlobalAlert children={undefined} />
       <Notification message={notification.message} visible={notification.visible} onHide={() => setNotification({ ...notification, visible: false })} />
       <NotificationPopup userId={userId ?? 0} />
       <View>

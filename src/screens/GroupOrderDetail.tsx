@@ -522,9 +522,14 @@ const GroupOrderDetail = () => {
 
                             <View style={styles.detailRows}>
                                 <Icon name="pin-drop" size={20} color="green" />
-                                <Text style={styles.detailText}>{groupCartData?.crudGroupOrderResponse.address}</Text>
+                                <Text style={styles.detailText}>
+                                    {groupCartData?.crudGroupOrderResponse.address?.trim()
+                                        ? groupCartData.crudGroupOrderResponse.address
+                                        : t('android.noAddress')}
+                                </Text>
                                 <Icon name="chevron-right" size={20} />
                             </View>
+
 
                         </TouchableOpacity>
                         <TouchableOpacity style={styles.detailRow1} >
@@ -725,14 +730,54 @@ const GroupOrderDetail = () => {
 
 
             </ScrollView>
-            {isLeader &&
+            {isLeader && groupCartData?.crudGroupOrderResponse.totalPrice != 0 &&
                 <View style={styles.actions} >
                     <TouchableOpacity
                         style={styles.nextButton}
-                        onPress={() => navigation.navigate('Preview', { groupOrderId: groupCartData?.crudGroupOrderResponse.groupOrderId ?? 0, currentAddress : groupCartData?.crudGroupOrderResponse.address || ''})
-                        }>
+                        onPress={() => {
+                            const address = groupCartData?.crudGroupOrderResponse.address || '';
+                            const groupOrderId = groupCartData?.crudGroupOrderResponse.groupOrderId ?? 0;
+
+                            if (!address.trim()) {
+                                Alert.alert('❗ Thiếu địa chỉ', 'Vui lòng cập nhật địa chỉ giao hàng trước khi tiếp tục.');
+                                return;
+                            }
+
+                            const hasEmptyMember = members.some(
+                                member => !member.crudCartGroupResponse?.listCartItemGroup?.length
+                            );
+
+                            if (hasEmptyMember) {
+                                Alert.alert(
+                                    'Thành viên chưa đặt món',
+                                    'Một số thành viên chưa thêm đồ uống. Bạn có muốn tiếp tục thanh toán không?',
+                                    [
+                                        { text: 'Huỷ', style: 'cancel' },
+                                        {
+                                            text: 'Tiếp tục',
+                                            style: 'default',
+                                            onPress: () => {
+                                                navigation.navigate('Preview', {
+                                                    groupOrderId,
+                                                    currentAddress: address,
+                                                });
+                                            },
+                                        },
+                                    ],
+                                    { cancelable: true }
+                                );
+                            } else {
+                                navigation.navigate('Preview', {
+                                    groupOrderId,
+                                    currentAddress: address,
+                                });
+                            }
+                        }}
+                    >
                         <Text style={styles.nextText}>{t('android.next')}</Text>
                     </TouchableOpacity>
+
+
 
 
                 </View>}

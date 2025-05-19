@@ -57,12 +57,12 @@ const styles = StyleSheet.create({
         marginRight: 14,
     },
     confirmButton: {
-        backgroundColor: '#FF9800', padding: 12, borderRadius: 10, alignItems: 'center', marginBottom: 20, width: '100%'
+        backgroundColor: '#FF9800', padding: 12, borderRadius: 10, alignItems: 'center', marginBottom: '5%', width: '100%', marginTop:'4%'
     },
     confirmButtonText: {
+        fontSize: 28,
+        fontFamily: FONTFAMILY.dongle_bold,
         color: '#fff',
-        fontSize: 16,
-        fontWeight: '600',
     },
     actions: {
         position: 'absolute',

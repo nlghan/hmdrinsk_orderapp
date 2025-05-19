@@ -5,6 +5,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import axiosInstance from '../utils/axiosInstance';
 import { useCategoryStore } from './store';
 import { Alert } from 'react-native';
+import { useAlertStore } from './alertStore';
 
 interface CartItem {
   cartItemId: number;
@@ -222,7 +223,7 @@ interface CartStore {
   groupCartData: GroupCartData | null;
   hasGroupCart: boolean;
   setHasGroupCart: (value: boolean) => void;
-  createGroupOrder: (userId: number, name: string, flexiblePayment: boolean, datePayment: string, type: "PAY_FOR_ALL" | "PAY_INDIVIDUAL") => Promise<boolean>;
+  createGroupOrder: (userId: number, name: string, flexiblePayment: boolean, datePayment: { hour: number; minute: number; second: number; nano: number } | null, type: "PAY_FOR_ALL" | "PAY_INDIVIDUAL", typeTime: "NO_TIME" | "TIME") => Promise<boolean>;
   groupOrderCount: number;
   setGroupOrderCount: (count: number) => void;
 
@@ -348,34 +349,25 @@ export const useCartStore = create<CartStore>()(
 
           // 3. Nếu là trưởng nhóm, hỏi người dùng có muốn tiếp tục không
           if (groupCartId !== 0) {
-            return new Promise<number | null>((resolve) => {
-              Alert.alert(
-                "Thông báo",
-                `🛒 Bạn đang là trưởng nhóm trong một đơn hàng nhóm.\nBạn có muốn tiếp tục với đơn này không?`,
-                [
-                  {
-                    text: "Không",
-                    style: "cancel",
-                    onPress: () => {
-                      console.log("❌ Người dùng từ chối sử dụng đơn nhóm.");
-                      get().setHasRejectedGroupCart(true);
-                      get().ensureActiveCart();
-                      resolve(null);
-                    },
-                  },
-                  {
-                    text: "Có",
-                    onPress: () => {
-                      console.log("✅ Sử dụng group cart ID:", groupCartId);
-                      set({ currentCartId: groupCartId });
-                      resolve(groupCartId);
-                    },
-                  },
-                ],
-                { cancelable: false }
+            return await new Promise<number | null>((resolve) => {
+              useAlertStore.getState().showAlert(
+                'Thông báo',
+                'Bạn là trưởng nhóm một đơn nhóm. \nTiếp tục đơn này?',
+                () => { // onConfirm
+                  console.log("✅ Sử dụng group cart ID:", groupCartId);
+                  set({ currentCartId: groupCartId });
+                  resolve(groupCartId);
+                },
+                () => { // onCancel
+                  console.log("❌ Người dùng từ chối sử dụng đơn nhóm.");
+                  get().setHasRejectedGroupCart(true);
+                  get().ensureActiveCart();
+                  resolve(null);
+                }
               );
             });
           }
+
 
           // 4. Nếu chỉ là thành viên, không hỏi, trả về null (không tiếp tục group cart)
           console.log("ℹ️ Người dùng chỉ là thành viên, không tiếp tục group cart.");
@@ -389,25 +381,39 @@ export const useCartStore = create<CartStore>()(
         }
       },
 
-
-      createGroupOrder: async (userId, name, flexiblePayment, datePayment, type) => {
+      createGroupOrder: async (
+        userId: number,
+        name: string,
+        flexiblePayment: boolean,
+        datePayment: { hour: number; minute: number; second: number; nano: number } | null,
+        type: "PAY_FOR_ALL" | "PAY_INDIVIDUAL",
+        typeTime: "NO_TIME" | "TIME"
+      ): Promise<boolean> => {
         try {
-          const existingGroupCartId = await get().checkGroupCart();
-          if (existingGroupCartId) {
-            console.log("⚠️ Đã có group cart. Không tạo mới.");
-            return false;
-          }
+          // const existingGroupCartId = await get().checkGroupCart();
+          // if (existingGroupCartId) {
+          //   console.log("⚠️ Đã có group cart. Không tạo mới.");
+          //   return false;
+          // }
 
           const accessToken = await AsyncStorage.getItem('access_token');
           if (!accessToken) throw new Error('Access token not found');
 
-          const payload = {
+          const payload: any = {
             userId,
             name,
             flexiblePayment,
-            datePayment,
             type,
+            typeTime,
           };
+
+          if (datePayment) {
+            payload.datePayment = datePayment;
+          }
+
+          // ⚠️ Thêm log tại đây
+          console.log("📦 Payload gửi đi:", payload);
+
 
           const response = await axiosInstance.post('/group-order/create', payload, {
             headers: {
@@ -417,7 +423,7 @@ export const useCartStore = create<CartStore>()(
           });
 
           const data = response.data;
-          if (!data?.groupOrderId) throw new Error("Không nhận được groupCartId");
+          if (!data?.groupOrderId) throw new Error("Không nhận được groupOrderId");
 
           const groupCartData: GroupCartData = {
             total: data.totalPrice,
@@ -447,16 +453,17 @@ export const useCartStore = create<CartStore>()(
             currentCartId: data.groupOrderId,
             groupCartData,
             hasGroupCart: true,
-            groupOrderCount:1,
+            groupOrderCount: 1,
           });
 
-          return true; // ✅ Trả về true khi thành công
+          return true;
 
         } catch (error) {
           console.error("❌ Lỗi khi tạo group order:", error);
-          return false; // ✅ Trả về false nếu có lỗi
+          return false;
         }
       },
+
 
       ensureActiveCart: async () => {
         try {
@@ -552,7 +559,7 @@ export const useCartStore = create<CartStore>()(
           const accessToken = await AsyncStorage.getItem('access_token');
           if (!accessToken) throw new Error("Access token missing");
 
-          const isGroupCart = groupCartId && !hasRejectedGroupCart ;
+          const isGroupCart = groupCartId && !hasRejectedGroupCart;
 
           if (isGroupCart) {
             // 👉 Gọi API lấy chi tiết group cart

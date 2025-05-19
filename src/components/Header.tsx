@@ -12,6 +12,7 @@ import { useCategoryStore } from '../store/store';
 import useWebSocket from '../utils/Socket';
 import axiosInstance from "../utils/axiosInstance";
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useAlertStore } from "../store/alertStore";
 
 interface Notification {
     id: string;
@@ -69,28 +70,36 @@ const Header = ({ style }: { style?: object }) => {
         }
     }, [socketNotifications]);
 
+    let isShowingAlert = false;
+
     const handleCartPress = async () => {
+        if (isShowingAlert) return;
+
         if (groupCartId && !hasRejectedGroupCart) {
-            Alert.alert(
-                "Thông báo",
-                "Bạn sẽ chuyển sang giỏ hàng cá nhân. Có muốn tiếp tục không?",
-                [
-                    { text: "Không", style: "cancel" },
-                    {
-                        text: "Có",
-                        onPress: async () => {
-                            await ensureActiveCart();
-                            setHasRejectedGroupCart(true);
-                            navigation.navigate('Cart');
-                        },
+            isShowingAlert = true;
+            await new Promise<void>((resolve) => {
+                useAlertStore.getState().showAlert(
+                    "Thông báo",
+                    "Bạn sẽ chuyển sang giỏ hàng cá nhân. Có muốn tiếp tục không?",
+                    async () => {
+                        await ensureActiveCart();
+                        setHasRejectedGroupCart(true);
+                        navigation.navigate('Cart');
+                        resolve();
+                        isShowingAlert = false;
                     },
-                ],
-                { cancelable: false }
-            );
+                    () => {
+                        resolve();
+                        isShowingAlert = false;
+                    }
+                );
+            });
         } else {
             navigation.navigate('Cart');
         }
     };
+
+
 
     return (
         <View style={[homeStyles.header, style]}>

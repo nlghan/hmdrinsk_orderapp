@@ -13,6 +13,7 @@ import { Buffer } from 'buffer';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import { useTranslation } from 'react-i18next'; // Import hook useTranslation
 import { useCartStore } from '../store/useCartStore';
+import GlobalAlert from './GlobalAlert';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Login'>;
 const getUserIdFromToken = (token: string) => {
@@ -217,6 +218,7 @@ const Login: React.FC<Props> = ({ navigation }) => {
 
   return (
     <View style={loginStyles.container}>
+      <GlobalAlert children={undefined} />
       <View style={loginStyles.languageContainer}>
         <LanguageSwitcher />
       </View>

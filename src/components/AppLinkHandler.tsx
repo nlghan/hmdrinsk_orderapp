@@ -12,7 +12,7 @@ import 'react-native-url-polyfill/auto';
 
 export default function AppLinkHandler() {
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
-  const { setIdOrderPause, setIdCartPause } = useCartStore();
+  const { setIdOrderPause, setIdCartPause, setGroupCartId, ensureActiveCart } = useCartStore();
   const { fetchUserCoin } = useCategoryStore();
 
   const handleDeepLink = async (url: string) => {
@@ -93,7 +93,7 @@ export default function AppLinkHandler() {
             console.log('✅ Tham gia nhóm thành công:', response.data);
 
             Alert.alert('Thành công', 'Bạn đã tham gia nhóm!');
-           
+
             navigation.navigate('GroupOrderList');
           } catch (err) {
             if (axios.isAxiosError(err)) {
@@ -108,13 +108,30 @@ export default function AppLinkHandler() {
             }
 
             Alert.alert('Lỗi', 'Không thể tham gia nhóm.');
-           
+
           }
         } else {
           Alert.alert('Lỗi', 'Thiếu mã nhóm hoặc trạng thái không hợp lệ.');
-         
+
         }
-      } else {
+      } if (path === 'open/order-group-complete') { 
+         console.log('ℹ️ xử lý đơn hàng nhóm');
+
+        if (status === '1') {
+          setGroupCartId(null);
+          ensureActiveCart();
+          fetchUserCoin();
+          navigation.navigate('OrderComplete');
+        } else if (status === '-49') {
+          fetchUserCoin();
+          navigation.navigate('OrderFailed');
+        } else {
+          console.log('⚠️ Unknown status value:', status);
+          navigation.navigate('OrderFailed');
+        }
+
+      }
+      else {
         console.log('ℹ️ Không phải đường dẫn open/group-order, xử lý status theo giá trị khác.');
 
         if (status === '1') {

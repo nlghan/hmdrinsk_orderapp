@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import {
-    View, Text, StyleSheet, TouchableOpacity, ImageBackground,
-    ScrollView, Modal, Pressable,
-    Alert
+    View, Text, TouchableOpacity, ImageBackground,
+    ScrollView, Modal, Pressable, Alert
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { COLORS } from '../theme/theme';
@@ -13,10 +12,7 @@ import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../navigation/RootStackParamList';
 import { useCartStore } from '../store/useCartStore';
-import Clipboard from '@react-native-clipboard/clipboard';
-import EditGroupNameModal from '../components/EditGroupNameModal'; // import đúng đường dẫn tới component
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import axiosInstance from '../utils/axiosInstance';
+import EditGroupNameModal from '../components/EditGroupNameModal';
 import { useCategoryStore } from '../store/store';
 import { useTranslation } from 'react-i18next';
 
@@ -25,65 +21,99 @@ type NavigationProp = StackNavigationProp<RootStackParamList, 'GroupOrder'>;
 const GroupOrder: React.FC = () => {
     const navigation = useNavigation<NavigationProp>();
     const { t } = useTranslation();
+
     const [showTimePicker, setShowTimePicker] = useState(false);
     const [selectedTime, setSelectedTime] = useState<Date | null>(null);
     const [showOptionModal, setShowOptionModal] = useState(false);
     const [showPaymentModal, setShowPaymentModal] = useState(false);
     const [paymentOption, setPaymentOption] = useState('Bạn thanh toán cho mọi người');
     const [showCopiedModal, setShowCopiedModal] = useState(false);
+    const [isEditModalVisible, setIsEditModalVisible] = useState(false);
 
-    const groupCartData = useCartStore(state => state.groupCartData);
+    const { groupCartData, createGroupOrder } = useCartStore();
+    const { userId } = useCategoryStore.getState();
+
+    const [groupName, setGroupName] = useState('Nhóm mới');
 
     const inviteCode = groupCartData?.crudGroupOrderResponse?.code ?? '';
     const link = groupCartData?.crudGroupOrderResponse?.link ?? '';
 
-    const [isEditModalVisible, setIsEditModalVisible] = useState(false);
-    const [groupName, setGroupName] = useState(groupCartData?.crudGroupOrderResponse?.nameGroup || '');
-
-    const updateGroupName = async (newName: string) => {
-        const accessToken = await AsyncStorage.getItem('access_token');
-        const { userId } = useCategoryStore.getState();
+    // Hàm tạo nhóm, dùng tên nhóm lưu trong state
+    const createGroup = async () => {
+        if (!userId) {
+            Alert.alert('Lỗi', 'Không xác định được user.');
+            return;
+        }
 
         try {
-            const response = await axiosInstance.put(
-                '/group-order/update-name',
-                {
-                    nameGroup: newName,
-                    groupId: groupCartData?.crudGroupOrderResponse?.groupOrderId,
-                    leaderId: userId,
-                },
-                {
-                    headers: {
-                        Authorization: `Bearer ${accessToken}`,
-                    },
+            const title = groupName || `Nhóm của ${userId} - ${new Date().toLocaleTimeString()}`;
+
+            const flexiblePayment = paymentOption === 'Cá nhân tự thanh toán';
+            const type = flexiblePayment ? 'PAY_FOR_ALL' : 'PAY_FOR_ALL';
+
+            const datePayment = selectedTime
+                ? {
+                    hour: selectedTime.getHours(),
+                    minute: selectedTime.getMinutes(),
+                    second: selectedTime.getSeconds(),
+                    nano: 0,
                 }
+                : null;
+
+            // Thêm typeTime theo yêu cầu
+            const groupOrderData = {
+                userId,
+                title,
+                flexiblePayment,
+                datePayment,
+                type,
+                typeTime,  // Truyền thêm typeTime
+            };
+
+            const success = await createGroupOrder(
+                userId,
+                title,
+                flexiblePayment,
+                datePayment,
+                type,
+                typeTime  // Bạn cần chỉnh hàm createGroupOrder nhận thêm param này
             );
 
-            const data = response.data;
-            console.log('Phản hồi update-name:', data);
-
-            // Có thể dùng response.status === 200 hoặc kiểm tra message thành công
-            if (response.status === 200 && data === "Successfully updated name group") {
-                setGroupName(newName);
-                setIsEditModalVisible(false);
+            if (success) {
+                navigation.navigate('GroupOrderList');
             } else {
-                console.error('Cập nhật tên nhóm không thành công:', data);
-                Alert.alert('Lỗi', 'Không thể cập nhật tên nhóm.');
+                Alert.alert('Lỗi', 'Không thể tạo đơn nhóm. Vui lòng thử lại sau.');
             }
-        } catch (error: any) {
-            console.error('Lỗi API:', error?.response?.data || error.message);
-            Alert.alert('Lỗi', 'Có lỗi xảy ra khi gọi API.');
+        } catch (error) {
+            console.error('Tạo nhóm lỗi:', error);
+            Alert.alert('Lỗi', 'Đã xảy ra lỗi khi tạo nhóm.');
         }
     };
 
 
-
-
-    const onTimeChange = (event: any, selectedDate?: Date) => {
-        setShowTimePicker(false);
-        if (selectedDate) setSelectedTime(selectedDate);
+    // Chỉ cập nhật state local, không gọi API
+    const updateGroupName = (newName: string) => {
+        setGroupName(newName);
+        setIsEditModalVisible(false);
     };
 
+    const [typeTime, setTypeTime] = useState<'TIME' | 'NO_TIME'>('NO_TIME');
+
+    // Cập nhật hàm chọn thời gian
+    const onTimeChange = (event: any, selectedDate?: Date) => {
+        setShowTimePicker(false);
+        if (selectedDate) {
+            setSelectedTime(selectedDate);
+            setTypeTime('TIME');  // Chọn thời gian -> typeTime = TIME
+        }
+    };
+
+    // Khi người dùng chọn "Không giới hạn"
+    const onSelectNoTime = () => {
+        setSelectedTime(null);
+        setTypeTime('NO_TIME'); // Không giới hạn -> NO_TIME
+        setShowOptionModal(false);
+    };
     const formatTime = (date: Date | null): string => {
         if (!date) return 'Không đặt thời hạn';
         const hours = date.getHours().toString().padStart(2, '0');
@@ -92,15 +122,9 @@ const GroupOrder: React.FC = () => {
     };
 
     const handleInvite = () => {
-        Clipboard.setString(link);
-        setShowCopiedModal(true);
-
-        setTimeout(() => {
-            setShowCopiedModal(false);
-            navigation.navigate('Main');
-        }, 2500);
+        createGroup();
+        // Phần copy link và modal sao chép đã tạm ẩn, có thể thêm lại nếu cần
     };
-
 
     return (
         <View style={styles.container}>
@@ -142,7 +166,7 @@ const GroupOrder: React.FC = () => {
                     </View>
                 </ImageBackground>
 
-                {/* Info block */}
+                {/* Info */}
                 <View style={styles.infoBlock}>
                     <View style={styles.infoLayout}>
                         <View style={styles.infoIcon}><Icon name="home" size={24} color="#FF9800" /></View>
@@ -153,18 +177,11 @@ const GroupOrder: React.FC = () => {
                         <View style={styles.infoIcon}><Icon name="group" size={24} color="#FF9800" /></View>
                         <View style={styles.infoSubTitle}>
                             <Text style={styles.label}>Tên nhóm</Text>
-                            <Text style={styles.value}>
-                                {groupName || 'Tên nhóm chưa có'}
-                            </Text>
-
+                            <Text style={styles.value}>{groupName || 'Chưa có tên nhóm'}</Text>
                         </View>
-                        <TouchableOpacity
-                            onPress={() => setIsEditModalVisible(true)}
-                            style={styles.infoEditIcon}
-                        >
+                        <TouchableOpacity onPress={() => setIsEditModalVisible(true)} style={styles.infoEditIcon}>
                             <Icon name="edit" size={24} color="black" />
                         </TouchableOpacity>
-
                     </View>
 
                     <TouchableOpacity onPress={() => setShowOptionModal(true)} activeOpacity={0.7}>
@@ -206,16 +223,15 @@ const GroupOrder: React.FC = () => {
                     </View>
                 </View>
 
-                {/* Mời thêm thành viên */}
                 <TouchableOpacity style={styles.inviteButton} onPress={handleInvite}>
-                    <Text style={styles.inviteButtonText}>Mời thêm thành viên</Text>
+                    <Text style={styles.inviteButtonText}>Tạo đơn nhóm</Text>
                 </TouchableOpacity>
 
-                {/* Modal: Hạn thêm món */}
+                {/* Modals */}
                 <Modal visible={showOptionModal} transparent animationType="fade" onRequestClose={() => setShowOptionModal(false)}>
                     <View style={styles.modalBackdrop}>
                         <View style={styles.modalContent}>
-                            <Pressable style={styles.modalOption} onPress={() => { setSelectedTime(null); setShowOptionModal(false); }}>
+                            <Pressable style={styles.modalOption} onPress={onSelectNoTime}>
                                 <Text style={styles.modalText}>Không giới hạn</Text>
                             </Pressable>
                             <Pressable style={styles.modalOption} onPress={() => { setShowOptionModal(false); setShowTimePicker(true); }}>
@@ -225,7 +241,7 @@ const GroupOrder: React.FC = () => {
                     </View>
                 </Modal>
 
-                {/* Modal: Hình thức thanh toán */}
+
                 <Modal visible={showPaymentModal} transparent animationType="fade" onRequestClose={() => setShowPaymentModal(false)}>
                     <View style={styles.modalBackdrop}>
                         <View style={styles.modalContent}>
@@ -239,7 +255,6 @@ const GroupOrder: React.FC = () => {
                     </View>
                 </Modal>
 
-                {/* Modal: Đã sao chép mã */}
                 <Modal visible={showCopiedModal} transparent animationType="fade">
                     <View style={styles.modalBackdrop}>
                         <View style={[styles.modalContent, { alignItems: 'center' }]}>
@@ -251,7 +266,6 @@ const GroupOrder: React.FC = () => {
                     </View>
                 </Modal>
 
-                {/* Modal để đổi tên nhóm */}
                 <EditGroupNameModal
                     visible={isEditModalVisible}
                     initialName={groupName}

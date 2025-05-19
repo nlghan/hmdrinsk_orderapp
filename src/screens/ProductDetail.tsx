@@ -237,35 +237,41 @@ const ProductDetail = () => {
 
     const handleGroupOrder = async () => {
         const { userId } = useCategoryStore.getState();
-    
+
         if (!userId) return;
-    
+
         // ✅ Nếu đã có group cart → cảnh báo và return
         if (hasGroupCart) {
             Alert.alert('Thông báo', 'Bạn đã là trưởng nhóm trong một đơn nhóm. Hãy hoàn thành đơn trước khi tạo đơn nhóm mới.');
             return;
         }
-    
-        // ✅ Nếu chưa có, tiếp tục tạo group order
-        const now = new Date();
-        const formattedDate = now.toISOString().slice(0, 19).replace("T", " ");
-        const title = `Nhóm của ${userId} - ${now.toLocaleTimeString()}`;
-    
-        const success = await createGroupOrder(
-            userId,
-            title,
-            true,
-            formattedDate,
-            "PAY_FOR_ALL"
-        );
-    
-        if (success) {
+
+        // // ✅ Nếu chưa có, tiếp tục tạo group order
+        // const now = new Date();
+        // const formattedDate = now.toISOString().slice(0, 19).replace("T", " ");
+        // const title = `Nhóm của ${userId} - ${now.toLocaleTimeString()}`;
+
+        // const success = await createGroupOrder(
+        //     userId,
+        //     title,
+        //     true,
+        //     formattedDate,
+        //     "PAY_FOR_ALL"
+        // );
+
+        // if (success) {
+        //     navigation.navigate('GroupOrder');
+        // } else {
+        //     Alert.alert('Lỗi', 'Không thể tạo đơn nhóm. Vui lòng thử lại sau.');
+        // }
+
+        else {
             navigation.navigate('GroupOrder');
-        } else {
-            Alert.alert('Lỗi', 'Không thể tạo đơn nhóm. Vui lòng thử lại sau.');
         }
+
+
     };
-    
+
 
     return (
         <KeyboardAvoidingView

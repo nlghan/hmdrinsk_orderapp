@@ -585,7 +585,8 @@
     "link_copied": "✅ Link copied: ",
     "share_invite_tip": "Send this code to invite your friends!",
     "deleteBtn":"Delete",
-    "anytime":"Anytime"
+    "anytime":"Anytime",
+    "noAddress":"No shipping address updated"
   },
   "chat": {
     "title": "Contact",

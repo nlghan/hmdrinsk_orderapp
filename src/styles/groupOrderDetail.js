@@ -200,7 +200,7 @@ const styles = StyleSheet.create({
         color: 'black',
     },
     totalRow: { flexDirection: 'row', justifyContent: 'space-between', marginVertical: 12, marginHorizontal: 16 },
-    nextButton: { backgroundColor: '#FF9800', padding: 12, borderRadius: 10, alignItems: 'center', marginBottom: 20, width: '100%' },
+    nextButton: {  backgroundColor: '#FF9800', padding: 12, borderRadius: 10, alignItems: 'center', marginBottom: '5%', width: '100%', marginTop:'4%' },
     nextText: {
         fontSize: 28,
         fontFamily: FONTFAMILY.dongle_bold,

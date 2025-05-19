@@ -46,7 +46,7 @@ const GroupOrderList: React.FC = () => {
     const rawUserId = useCategoryStore.getState().userId;
     const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
     const { t } = useTranslation();
-    const { setGroupCartId, setHasGroupCart, fetchCartItem } = useCartStore.getState();
+    const { setGroupCartId, setHasGroupCart, fetchCartItem, groupCartData } = useCartStore.getState();
 
     const fetchGroupOrders = async () => {
         const accessToken = await AsyncStorage.getItem('access_token');
@@ -72,6 +72,7 @@ const GroupOrderList: React.FC = () => {
     const handleSaveGroupName = async (newName: string) => {
         const accessToken = await AsyncStorage.getItem('access_token');
         const { userId } = useCategoryStore.getState();
+
 
         if (!editingGroup) return;
 
@@ -114,25 +115,56 @@ const GroupOrderList: React.FC = () => {
 
     const handlePress = async (item: GroupOrder) => {
         try {
+            setLoading(true);
             const accessToken = await AsyncStorage.getItem('access_token');
             const userId = typeof rawUserId === 'string' ? parseInt(rawUserId, 10) : Number(rawUserId);
             if (isNaN(userId)) return;
 
-            const res = await axiosInstance.get(`/group-order/get-id-cart-group/${userId}?groupOrderId=${item.groupOrderId}`, {
-                headers: { Authorization: `Bearer ${accessToken}` },
-            });
+            // Gọi API để lấy cartId
+            const cartRes = await axiosInstance.get(
+                `/group-order/get-id-cart-group/${userId}?groupOrderId=${item.groupOrderId}`,
+                {
+                    headers: { Authorization: `Bearer ${accessToken}` },
+                }
+            );
 
-            const cartId = res.data;
+            const cartId = cartRes.data;
             setGroupCartId(item.groupOrderId);
             setHasGroupCart(true);
             useCartStore.getState().hasRejectedGroupCart = false;
             useCartStore.getState().currentCartId = cartId;
             fetchCartItem();
-            navigation.navigate('GroupOrderDetail', { groupOrderId: item.groupOrderId });
+
+            // Gọi API detail group
+            const detailRes = await axiosInstance.get(
+                `/group-order/detail-group/${item.groupOrderId}?language=EN`,
+                {
+                    headers: { Authorization: `Bearer ${accessToken}` },
+                }
+            );
+
+            const status = detailRes.data?.crudGroupOrderResponse?.status;
+            const isLeader = detailRes.data?.crudGroupOrderResponse?.isLeader;
+
+            if (status === 'CHECKOUT') {
+                if (isLeader) {
+                    navigation.navigate('ChoosePay', { groupOrderId: item.groupOrderId });
+                } else {
+                    return
+                }
+            } else {
+                navigation.navigate('GroupOrderDetail', { groupOrderId: item.groupOrderId });
+            }
         } catch (error) {
-            console.error('Lỗi khi lấy cartId cho user trong group:', error);
+            console.error('Lỗi khi xử lý chọn nhóm:', error);
+            Alert.alert('Lỗi', 'Không thể lấy thông tin chi tiết nhóm.');
+        } finally {
+            setLoading(false);
         }
     };
+
+
+
 
     const renderGroupOrder = ({ item }: { item: GroupOrder }) => {
         const renderRightActions = () => (

@@ -41,12 +41,13 @@ const Preview = () => {
         try {
             const accessToken = await AsyncStorage.getItem('access_token');
             const response = await axiosInstance.get('/group-order/preview', {
-                params: { groupId: groupOrderId, language: 'VN' },
+                params: { groupId: groupOrderId, language: language },
                 headers: { Authorization: `Bearer ${accessToken}` },
             });
+            console.log('📦 Preview API Response:', response.data);
             setData(response.data);
         } catch (error) {
-            console.error('Failed to fetch preview data:', error);
+            console.error('❌ Failed to fetch preview data:', error);
         } finally {
             setLoading(false);
         }
@@ -105,7 +106,7 @@ const Preview = () => {
         );
 
     const { crudCartGroupResponse, deliveryFee, groupMemberDiscount, quantity } = data;
-    const items = crudCartGroupResponse[0]?.listCartItemGroup || [];
+    const items = data.crudCartGroupResponse.flatMap((group: any) => group.listCartItemGroup || []);
 
     const subtotal = items.reduce((sum: number, item: any) => sum + item.totalPrice, 0);
     const discount3 = subtotal >= 40000 ? Math.floor(subtotal * 0.05) : 0;
@@ -129,7 +130,7 @@ const Preview = () => {
                     <Text style={styles.sectionTitleBig}>Địa chỉ giao hàng</Text>
                     <View style={styles.detailRows}>
                         <Icon name="pin-drop" size={20} color="green" />
-                        <Text style={{ fontSize: 15, color: '#333' }}>{currentAddress || 'Không có địa chỉ'}</Text>
+                        <Text style={{ fontSize: 15, color: '#333', marginRight:5  }}>{currentAddress || 'Không có địa chỉ'}</Text>
 
                     </View>
 
