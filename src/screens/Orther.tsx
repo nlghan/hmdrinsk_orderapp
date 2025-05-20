@@ -22,7 +22,7 @@ const Other = () => {
   const { language, userId } = useCategoryStore();
   const [orderCounts, setOrderCounts] = useState({
     confirmed: 0,
-    // waiting: 0,
+    waiting: 0,
     cancelled: 0,
     pending: 0,
     refunded: 0,
@@ -77,53 +77,68 @@ const Other = () => {
 
             <TouchableOpacity style={styles.box} onPress={() => navigation.navigate('WaitingOrders')}>
               <MaterialIcons name="schedule" style={styles.iconYellow} size={30} />
-              {/* {orderCounts.waiting > 0 && (
+              {orderCounts?.waiting >= 1 && (
                 <View style={styles.badge}>
-                  <Text style={styles.badgeText}>{orderCounts.waiting}</Text>
+                  {orderCounts ? (
+                    orderCounts.waiting > 0 ? (
+                      <Text style={styles.badgeText}>{orderCounts.waiting}</Text>
+                    ) : null
+                  ) : (
+                    <ActivityIndicator size="small" color="#fff" />
+                  )}
                 </View>
-              )} */}
+              )}
               <Text style={styles.textSubOther}>{t('orderContent.status.wait')}</Text>
+
             </TouchableOpacity>
+
+
 
             <TouchableOpacity style={styles.box} onPress={() => navigation.navigate('CancelledOrders')}>
               <MaterialIcons name="cancel" style={styles.iconRed} size={30} />
-              <View style={styles.badge}>
-                {orderCounts ? (
-                  orderCounts.cancelled > 0 ? (
-                    <Text style={styles.badgeText}>{orderCounts.cancelled}</Text>
-                  ) : null
-                ) : (
-                  <ActivityIndicator size="small" color="white" />
-                )}
-              </View>
+              {orderCounts?.cancelled >= 1 && (
+                <View style={styles.badge}>
+                  {orderCounts ? (
+                    orderCounts.cancelled > 0 ? (
+                      <Text style={styles.badgeText}>{orderCounts.cancelled}</Text>
+                    ) : null
+                  ) : (
+                    <ActivityIndicator size="small" color="white" />
+                  )}
+                </View>
+              )}
               <Text style={styles.textSubOther}>{t('orderContent.status.cancel')}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.box} onPress={() => navigation.navigate('PendingOrders')}>
               <MaterialIcons name="payment" style={styles.iconGreen} size={30} />
-              <View style={styles.badge}>
-                {orderCounts ? (
-                  orderCounts.pending > 0 ? (
-                    <Text style={styles.badgeText}>{orderCounts.pending}</Text>
-                  ) : null
-                ) : (
-                  <ActivityIndicator size="small" color="#fff" />
-                )}
-              </View>
+              {orderCounts?.pending >= 1 && (
+                <View style={styles.badge}>
+                  {orderCounts ? (
+                    orderCounts.pending > 0 ? (
+                      <Text style={styles.badgeText}>{orderCounts.pending}</Text>
+                    ) : null
+                  ) : (
+                    <ActivityIndicator size="small" color="#fff" />
+                  )}
+                </View>
+              )}
               <Text style={styles.textSubOther}>{t('orderContent.status.confirm')}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.box} onPress={() => navigation.navigate('RefundOrders')}>
               <MaterialIcons name="account-balance-wallet" style={styles.iconPurple} size={30} />
-              <View style={styles.badge}>
-                {orderCounts ? (
-                  orderCounts.refunded > 0 ? (
-                    <Text style={styles.badgeText}>{orderCounts.refunded}</Text>
-                  ) : null
-                ) : (
-                  <ActivityIndicator size="large" color="#fff" />
-                )}
-              </View>
+              {orderCounts?.refunded >= 1 && (
+                <View style={styles.badge}>
+                  {orderCounts ? (
+                    orderCounts.refunded > 0 ? (
+                      <Text style={styles.badgeText}>{orderCounts.refunded}</Text>
+                    ) : null
+                  ) : (
+                    <ActivityIndicator size="small" color="#fff" />
+                  )}
+                </View>
+              )}
               <Text style={styles.textSubOther}>{t('orderContent.status.refund')}</Text>
             </TouchableOpacity>
           </View>
@@ -166,6 +181,7 @@ const Other = () => {
               <Text style={styles.textOther}>{t('personalInfo')}</Text>
               <MaterialIcons name="arrow-forward-ios" style={styles.iconrow} size={18} />
             </TouchableOpacity>
+
             <TouchableOpacity style={styles.listItem} onPress={() => navigation.navigate('LanguageChange')}>
               <MaterialIcons name="settings" style={styles.icon} size={24} />
               <Text style={styles.textOther}>{t('language')}</Text>

@@ -25,7 +25,7 @@ interface Notification {
 
 const Header = ({ style }: { style?: object }) => {
     const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
-    const { userId } = useCategoryStore();
+    const { language, userId } = useCategoryStore();
     const socketNotifications = useWebSocket(userId ?? 0);
     const { t } = useTranslation();
 
@@ -40,6 +40,8 @@ const Header = ({ style }: { style?: object }) => {
 
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [unreadCount, setUnreadCount] = useState<number>(0);
+    const [isModalVisible, setModalVisible] = useState(false);
+    const [isConfirmed, setConfirmed] = useState(false);
 
     const fetchNotifications = async () => {
         if (!userId) return;
@@ -133,6 +135,7 @@ const Header = ({ style }: { style?: object }) => {
                         <Text style={homeStyles.notificationText}>{groupOrderCount}</Text>
                     </View>
                 </TouchableOpacity>
+                
 
                 <TouchableOpacity
                     style={[
