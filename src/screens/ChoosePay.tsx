@@ -64,24 +64,28 @@ const ChoosePay = () => {
         try {
             const accessToken = await AsyncStorage.getItem('access_token');
             const leaderId = typeof rawUserId === 'string' ? parseInt(rawUserId, 10) : Number(rawUserId);
-            console.log('leaderId: ' + leaderId);
+            console.log('✅ leaderId:', leaderId);
             if (!accessToken || isNaN(leaderId)) throw new Error('Token hoặc UserId không hợp lệ');
 
-            const headers = { Authorization: `Bearer ${accessToken}` };
+            const headers = {
+                Authorization: `Bearer ${accessToken}`,
+                'Content-Type': 'application/json',
+            };
 
             const methodMap: Record<string, { typePayment: string; endpoint: string }> = {
                 cash: { typePayment: 'CASH', endpoint: 'cash' },
                 card: { typePayment: 'PAYOS', endpoint: 'credit/payOs' },
                 momo: { typePayment: 'MOMO', endpoint: 'credit/momo' },
-                zalopay: { typePayment: 'ZALOPAY', endpoint: 'credit/zaloPay' },
+                zalopay: { typePayment: 'ZALO', endpoint: 'credit/zaloPay' },
                 vnpay: { typePayment: 'VNPAY', endpoint: 'credit/vnPay' },
             };
 
             const method = methodMap[selectedMethod];
             if (!method) throw new Error('Phương thức thanh toán không hợp lệ');
+            console.log('✅ Chọn phương thức:', method.typePayment, method.endpoint);
 
-            // Cập nhật phương thức thanh toán
-            await axiosInstance.put(
+            // 1. Cập nhật loại thanh toán chính
+            const updateRes = await axiosInstance.put(
                 '/group-order/update-type-payment-main',
                 {
                     typePayment: method.typePayment,
@@ -90,53 +94,49 @@ const ChoosePay = () => {
                 },
                 { headers }
             );
+            console.log('✅ Cập nhật phương thức thanh toán:', updateRes.status);
 
-            if (method.typePayment === 'CASH') {
-                // Xử lý thanh toán tiền mặt
-                await axiosInstance.post(
-                    `/payment-group/create/${method.endpoint}`,
-                    {
-                        groupOrderId,
-                        leaderUserId: leaderId,
-                        type: 'ANDROID',
-                        language,
-                    },
-                    { headers }
-                );
+            // 2. Tạo giao dịch thanh toán
+            const payload = {
+                groupOrderId,
+                leaderUserId: leaderId,
+                type: 'ANDROID',
+                language,
+            };
 
-                await ensureActiveCart();
-                setHasRejectedGroupCart(true);
-                navigation.navigate('OrderComplete');
-            } else {
-                // Các phương thức thanh toán khác (Momo, card, Zalopay, Vnpay)
-                const response = await axiosInstance.post(
-                    `/payment-group/create/${method.endpoint}`,
-                    {
-                        groupOrderId,      // Đổi từ orderId thành groupOrderId
-                        leaderUserId: leaderId,  // key đúng như API expects
-                        type: 'ANDROID',    // hoặc 'WEB' nếu phù hợp
-                        language,
-                    },
-                    { headers }
-                );
+            console.log(`🚀 Gửi request tạo link thanh toán (${method.endpoint}):`, payload);
 
-                if (response.status === 200) {
-                    const data = response.data;
-                    if (data.linkPayment) {
-                        Linking.openURL(data.linkPayment);
-                    } else {
-                        navigation.navigate('OrderComplete');
-                    }
+            const response = await axiosInstance.post(
+                `/payment-group/create/${method.endpoint}`,
+                payload,
+                { headers }
+            );
+
+            console.log('✅ Phản hồi tạo thanh toán:', response.status, response.data);
+
+            if (response.status === 200) {
+                const data = response.data;
+                if (data.linkPayment) {
+                    console.log('🌐 Mở link thanh toán:', data.linkPayment);
+                    Linking.openURL(data.linkPayment);
                 } else {
-                    navigation.navigate('OrderFailed');
-                    throw new Error('Lỗi khi tạo thanh toán');
+                    console.warn('⚠️ Không có link thanh toán, chuyển về trang hoàn tất');
+                    navigation.navigate('OrderComplete');
                 }
+            } else {
+                console.error('❌ Tạo thanh toán thất bại:', response.status);
+                navigation.navigate('OrderFailed');
             }
-        } catch (error) {
-            console.error('Lỗi thanh toán:', error);
+        } catch (error: any) {
+            console.error('❌ Lỗi trong handleConfirmPayment:', error?.message || error);
+            if (error.response) {
+                console.error('📩 Chi tiết lỗi từ server:', error.response.data);
+            }
             navigation.navigate('OrderFailed');
         }
     };
+
+
 
 
     return (

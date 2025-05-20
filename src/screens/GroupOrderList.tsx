@@ -2,7 +2,8 @@ import React, { useEffect, useState } from 'react';
 import {
     View, Text, FlatList, ActivityIndicator, StyleSheet,
     Image, TouchableOpacity, TextInput,
-    Alert
+    Alert,
+    Linking
 } from 'react-native';
 import axiosInstance from '../utils/axiosInstance';
 import { useCategoryStore } from '../store/store';
@@ -123,7 +124,7 @@ const GroupOrderList: React.FC = () => {
             }
         } catch (error: any) {
             console.error('Lỗi API:', error?.response?.data || error.message);
-           showNotification(t('error'))
+            showNotification(t('error'))
         }
     };
 
@@ -131,26 +132,56 @@ const GroupOrderList: React.FC = () => {
     const handlePress = async (item: GroupOrder) => {
         try {
             setLoading(true);
+            console.log('🔍 Bắt đầu handlePress với groupOrderId:', item.groupOrderId);
+
             const accessToken = await AsyncStorage.getItem('access_token');
             const userId = typeof rawUserId === 'string' ? parseInt(rawUserId, 10) : Number(rawUserId);
-            if (isNaN(userId)) return;
+            if (isNaN(userId)) {
+                console.warn('⚠️ userId không hợp lệ:', rawUserId);
+                return;
+            }
 
-            // Gọi API để lấy cartId
+            // 1. Gọi API kiểm tra thời gian còn lại
+            const timeRes = await axiosInstance.get(
+                `/group-order/${item.groupOrderId}/time-remaining`,
+                {
+                    headers: { Authorization: `Bearer ${accessToken}` },
+                }
+            );
+            const remainingTime = timeRes.data;
+            console.log('⏰ Thời gian còn lại:', remainingTime);
+
+            if (remainingTime === "00:00:00") {
+                useAlertStore.getState().showAlert(
+                    t('common.noti'),
+                    'Nhóm đã hết hạn. Vui lòng xác nhận để hủy nhóm',
+                    () => {
+                        console.log('🗑️ Hủy nhóm');
+                        useAlertStore.getState().hideAlert();
+                        // TODO: Gọi API hủy nhóm nếu cần
+                    },
+                    undefined
+                );
+                return;
+            }
+
+            // 2. Lấy cartId
             const cartRes = await axiosInstance.get(
                 `/group-order/get-id-cart-group/${userId}?groupOrderId=${item.groupOrderId}`,
                 {
                     headers: { Authorization: `Bearer ${accessToken}` },
                 }
             );
-
             const cartId = cartRes.data;
+            console.log('✅ Lấy được cartId:', cartId);
+
             setGroupCartId(item.groupOrderId);
             setHasGroupCart(true);
             useCartStore.getState().hasRejectedGroupCart = false;
             useCartStore.getState().currentCartId = cartId;
             fetchCartItem();
 
-            // Gọi API detail group
+            // 3. Gọi API detail group
             const detailRes = await axiosInstance.get(
                 `/group-order/detail-group/${item.groupOrderId}?language=${language}`,
                 {
@@ -159,24 +190,49 @@ const GroupOrderList: React.FC = () => {
             );
 
             const status = detailRes.data?.crudGroupOrderResponse?.status;
-            const isLeader = detailRes.data?.crudGroupOrderResponse?.isLeader;
+            const isLeader = detailRes.data?.crudGroupOrderResponseList[0]?.isLeader;
 
+            console.log('📦 Detail group status:', status);
+            console.log('👤 Is Leader:', isLeader);
+
+            // 4. Nếu đã CHECKOUT
             if (status === 'CHECKOUT') {
                 if (isLeader) {
-                    navigation.navigate('ChoosePay', { groupOrderId: item.groupOrderId });
+                    // Gọi API lấy link thanh toán
+                    const paymentLinkRes = await axiosInstance.get(
+                        `/group-order/link-payment/${item.groupOrderId}`,
+                        {
+                            headers: { Authorization: `Bearer ${accessToken}` },
+                        }
+                    );
+
+                    const paymentLink = paymentLinkRes.data;
+                    if (paymentLink && typeof paymentLink === 'string' && paymentLink.startsWith('http')) {
+                        console.log('🔗 Mở link thanh toán:', paymentLink);
+                        Linking.openURL(paymentLink);
+                    } else {
+                        console.log('⚠️ Không có link thanh toán, dẫn đến ChoosePay');
+                        navigation.navigate('ChoosePay', { groupOrderId: item.groupOrderId });
+                    }
                 } else {
-                    return
+                    console.warn('⛔ Không phải leader trong trạng thái CHECKOUT');
+                    return;
                 }
-            } else {
+            }
+            else {
+                console.log('➡️ Dẫn hướng đến GroupOrderDetail');
                 navigation.navigate('GroupOrderDetail', { groupOrderId: item.groupOrderId });
             }
         } catch (error) {
-            console.error('Lỗi khi xử lý chọn nhóm:', error);
-           showNotification(t('error'))
+            console.error('❌ Lỗi khi xử lý chọn nhóm:', error);
+            showNotification(t('error'));
         } finally {
             setLoading(false);
         }
     };
+
+
+
 
     const handleLeaveGroup = (item: GroupOrder) => {
         const userId = typeof rawUserId === 'string' ? parseInt(rawUserId, 10) : Number(rawUserId);
