@@ -23,6 +23,7 @@ import { RootStackParamList } from '../navigation/RootStackParamList';
 import axiosInstance from '../utils/axiosInstance';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useCartStore } from '../store/useCartStore';
+import Notification from '../components/Notification';
 
 type EditGroupAddressRouteProp = RouteProp<RootStackParamList, 'EditGroupAddress'>;
 
@@ -49,6 +50,12 @@ const EditGroupAddress = () => {
   const [selectedDistrictName, setSelectedDistrictName] = useState<string | null>(null);
   const [selectedWardName, setSelectedWardName] = useState<string | null>(null);
 
+  const [notification, setNotification] = useState({ message: '', visible: false });
+  const showNotification = (message: string) => {
+    setNotification({ message, visible: true });
+    // Ẩn thông báo sau 3 giây
+    setTimeout(() => setNotification({ ...notification, visible: false }), 4000);
+  };
 
   const fetchProvinces = async () => {
     try {
@@ -70,7 +77,7 @@ const EditGroupAddress = () => {
       }
     } catch (error) {
       console.error('❌ Lỗi khi lấy tỉnh:', error);
-      Alert.alert('Lỗi', 'Không thể tải danh sách tỉnh.');
+      showNotification(t('android.mess.error5'));
     }
   };
 
@@ -97,7 +104,7 @@ const EditGroupAddress = () => {
       }
     } catch (error) {
       console.error('❌ Lỗi khi lấy huyện:', error);
-      Alert.alert('Lỗi', 'Không thể tải danh sách quận/huyện.');
+      showNotification(t('android.mess.error6'))
     }
   };
 
@@ -122,7 +129,7 @@ const EditGroupAddress = () => {
       }
     } catch (error) {
       console.error('❌ Lỗi khi lấy phường:', error);
-      Alert.alert('Lỗi', 'Không thể tải danh sách phường/xã.');
+      showNotification(t('android.mess.error7'))
     }
   };
 
@@ -208,7 +215,7 @@ const EditGroupAddress = () => {
 
   const handleSave = async () => {
     if (!locationDetail || !province || !district || !ward) {
-      Alert.alert('Thiếu thông tin', 'Vui lòng điền đầy đủ địa chỉ.');
+      showNotification(t('android.mess.check6'))
       return;
     }
 
@@ -226,7 +233,7 @@ const EditGroupAddress = () => {
       const leaderId = userId;
 
       if (!groupId || !leaderId) {
-        Alert.alert('Thiếu dữ liệu', 'Không tìm thấy groupId hoặc leaderId.');
+        console.error('Thiếu dữ liệu', 'Không tìm thấy groupId hoặc leaderId.');
         return;
       }
 
@@ -244,13 +251,12 @@ const EditGroupAddress = () => {
           },
         }
       );
-
-      Alert.alert('Thành công', 'Địa chỉ đã được cập nhật.');
+      showNotification(t('adroid.mess.sucess5'));
       fetchCartItem();
       navigation.goBack();
     } catch (error) {
       console.error('❌ Lỗi khi cập nhật địa chỉ:', error);
-      Alert.alert('Lỗi', 'Không thể cập nhật địa chỉ.');
+      showNotification(t('adroid.mess.error8'));
     }
   };
 
@@ -266,6 +272,7 @@ const EditGroupAddress = () => {
         style={{ flex: 1 }}
       >
         <View style={styles.container}>
+          <Notification message={notification.message} visible={notification.visible} onHide={() => setNotification({ ...notification, visible: false })} />
           <NotificationPopup userId={userId ?? 0} />
 
           <View style={styles.header}>

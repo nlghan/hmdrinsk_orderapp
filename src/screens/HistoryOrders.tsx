@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, Text, FlatList, Image, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import axiosInstance from '../utils/axiosInstance';
@@ -11,9 +10,9 @@ import LinearGradient from 'react-native-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from "@react-navigation/stack";
 import { RootStackParamList } from "../navigation/RootStackParamList";
-import { FONTFAMILY } from '../theme/theme';
+import styles from '../styles/orderHistoryStyle'
+
 const HistoryOrders = () => {
-    // Định nghĩa kiểu dữ liệu
     type ProductItem = {
         cartItemId: string;
         proId: string;
@@ -49,16 +48,19 @@ const HistoryOrders = () => {
         listItem: ProductItem[];
     };
 
-    // State chứa danh sách đơn hàng
     const [historyOrders, setHistoryOrders] = useState<Order[]>([]);
-    const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
-    const { t } = useTranslation();
+    const [groupOrders, setGroupOrders] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+    const [selectedTab, setSelectedTab] = useState<'normal' | 'group'>('normal');
+
+    const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
+    const { t } = useTranslation();
     const { language, userId } = useCategoryStore();
 
     useEffect(() => {
         fetchHistoryOrders();
+        fetchGroupOrders();
     }, []);
 
     const fetchHistoryOrders = async () => {
@@ -66,23 +68,18 @@ const HistoryOrders = () => {
         setError('');
         try {
             const token = await AsyncStorage.getItem('access_token');
-
             const response = await axiosInstance.get(`/orders/history/${userId}?language=${language}`, {
                 headers: { Authorization: `Bearer ${token}` },
             });
 
-            console.log("API response:", response.data);
-
             if (response.data.list) {
                 setHistoryOrders(response.data.list.map((item: { order: Order; shipment: Shipment }) => ({
                     ...item.order,
-                    shipment: item.shipment, // Gán shipment vào order
+                    shipment: item.shipment,
                 })));
             } else {
                 setHistoryOrders([]);
             }
-
-
         } catch (err) {
             console.error("Lỗi fetchHistoryOrders:", err);
             setError('Không thể tải danh sách lịch sử đơn hàng.');
@@ -91,6 +88,19 @@ const HistoryOrders = () => {
         }
     };
 
+    const fetchGroupOrders = async () => {
+        try {
+            const token = await AsyncStorage.getItem('access_token');
+            const response = await axiosInstance.get(`/group-order/list-success/${userId}?page=1&size=100`, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            if (response.data?.listGroup) {
+                setGroupOrders(response.data.listGroup);
+            }
+        } catch (err) {
+            console.error("Lỗi fetchGroupOrders:", err);
+        }
+    };
 
     const handleRestoreOrder = (orderId: string) => {
         Alert.alert('Mua lại', `Bạn có chắc chắn muốn mua lại đơn hàng ${orderId} không?`);
@@ -100,12 +110,59 @@ const HistoryOrders = () => {
         Alert.alert('In hóa đơn', `Đang tạo hóa đơn cho đơn hàng ${orderId}`);
     };
 
-    if (loading) return <ActivityIndicator size="large" color="#0000ff" />;
-    if (error) return <Text style={{ color: 'red' }}>{error}</Text>;
-
     const formatPrice = (price: number) => {
         return (price).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
     };
+
+    const renderGroupOrder = (group: any) => {
+        const leaderName = group.crudGroupOrderResponse.nameLeader;
+        const orderDate = group.crudGroupOrderResponse.orderDate;
+        const items = group.crudGroupOrderResponseList.find(
+            (mem: any) => mem.userId === userId
+        )?.crudCartGroupResponse?.listCartItemGroup || [];
+
+        return (
+            <TouchableOpacity
+                onPress={() =>
+                    navigation.navigate('OrderGroupDetail', {
+                        groupOrderId: group.crudGroupOrderResponse.groupOrderId,
+                    })
+                }
+            >
+                <View style={styles.card}>
+                    <Text style={styles.orderId}>
+                        <Text style={styles.boldText}>{t('history.group_order')}</Text> #{group.crudGroupOrderResponse.groupOrderId}
+                    </Text>
+                    {items.map((item: any) => (
+                        <View style={styles.productContainer} key={item.cartItemGroupId}>
+                            <Image
+                                source={{ uri: item.imageUrl.split(',')[0].split(': ')[1] }}
+                                style={styles.image}
+                            />
+                            <View style={styles.info}>
+                                <Text style={styles.title}>{t('history.name')} {item.proName}</Text>
+                                <Text style={styles.size}>{t('history.quantity')} {item.quantity}</Text>
+                                <Text style={styles.price}>{t('history.price')} {formatPrice(item.totalPrice)}đ</Text>
+                            </View>
+                        </View>
+                    ))}
+                    <Text style={styles.totalPrice}>
+                        <Text style={styles.boldText1}>{t('history.total_price')}</Text> {formatPrice(group.total)}đ
+                    </Text>
+                    <Text style={styles.boldText2}>
+                        <Text style={styles.boldText1}>{t('history.order_date')}</Text> {orderDate}
+                    </Text>
+                    <Text style={styles.boldText2}>
+                        <Text style={styles.boldText1}>{t('history.leader')}</Text> {leaderName}
+                    </Text>
+                </View>
+            </TouchableOpacity>
+        );
+    };
+
+
+    if (loading) return <ActivityIndicator size="large" color="#0000ff" />;
+    if (error) return <Text style={{ color: 'red' }}>{error}</Text>;
 
     return (
         <View style={styles.container}>
@@ -118,71 +175,113 @@ const HistoryOrders = () => {
                         <Text style={styles.header}>{t('history.history')}</Text>
                     </View>
 
+
+                    {/* Tab Buttons */}
+                    <View style={styles.tabContainer}>
+                        <TouchableOpacity
+                            style={[styles.tabButton, selectedTab === 'normal' && styles.activeTab]}
+                            onPress={() => {
+                                setSelectedTab('normal');
+                                fetchHistoryOrders();
+                            }}
+                        >
+                            <Text style={[styles.tabText, selectedTab === 'normal' && styles.activeTabText]}>
+                                {t('history.normal_order')}
+                            </Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            style={[styles.tabButton, selectedTab === 'group' && styles.activeTab]}
+                            onPress={() => setSelectedTab('group')}
+                        >
+                            <Text style={[styles.tabText, selectedTab === 'group' && styles.activeTabText]}>
+                                {t('history.group_order')}
+                            </Text>
+                        </TouchableOpacity>
+                    </View>
+                    <View style={styles.separator}>
+
+                    </View>
+
+                    {/* Tab Content */}
                     <View style={styles.body}>
-                        {historyOrders.length === 0 ? (
-                            <EmptyListAnimation title={t('history.empty_list')} />
-                        ) : (
-                            <FlatList
-                                data={historyOrders}
-                                keyExtractor={(item) => item?.orderId?.toString() || `order-${Math.random()}`}
-                                renderItem={({ item }) => (
-                                    <TouchableOpacity
-                                        onPress={() => navigation.navigate('MyOrderDetails', { shipmentId: Number(item?.orderId) })}>
+                        {selectedTab === 'normal' ? (
+                            historyOrders.length === 0 ? (
+                                <EmptyListAnimation title={t('history.empty_list')} />
+                            ) : (
+                                <FlatList
+                                    data={historyOrders}
+                                    keyExtractor={(item) => item?.orderId?.toString() || `order-${Math.random()}`}
+                                    renderItem={({ item }) => (
+                                        <TouchableOpacity
+                                            onPress={() => navigation.navigate('MyOrderDetails', { shipmentId: Number(item?.orderId) })}
+                                        >
+                                            <View style={styles.card}>
+                                                <Text style={styles.orderId}>
+                                                    <Text style={styles.boldText}>{t('history.order_id')}</Text> {item?.orderId}
+                                                </Text>
 
-                                        <View style={styles.card}>
-                                            <Text style={styles.orderId}>
-                                                <Text style={styles.boldText}>{t('history.order_id')}</Text> {item?.orderId}
-                                            </Text>
-
-                                            <FlatList
-                                                data={item?.listItem}
-                                                keyExtractor={(product) => product?.cartItemId?.toString() ?? `product-${Math.random()}`}
-                                                renderItem={({ item: product }) => (
-                                                    <View style={styles.productContainer}>
-                                                        <Image source={{ uri: product.imageUrl }} style={styles.image} />
-                                                        <View style={styles.info}>
-                                                            <Text style={styles.title}>
-                                                                {t('history.name')} {product.proName}
-                                                            </Text>
-                                                            <Text style={styles.size}>
-                                                                {t('history.quantity')} {product.quantity}
-                                                            </Text>
-                                                            <Text style={styles.price}>
-                                                                {t('history.price')} {formatPrice(product.totalPrice)}đ
-                                                            </Text>
+                                                <FlatList
+                                                    data={item?.listItem}
+                                                    keyExtractor={(product) => product?.cartItemId?.toString() ?? `product-${Math.random()}`}
+                                                    renderItem={({ item: product }) => (
+                                                        <View style={styles.productContainer}>
+                                                            <Image source={{ uri: product.imageUrl }} style={styles.image} />
+                                                            <View style={styles.info}>
+                                                                <Text style={styles.title}>
+                                                                    {t('history.name')} {product.proName}
+                                                                </Text>
+                                                                <Text style={styles.size}>
+                                                                    {t('history.quantity')} {product.quantity}
+                                                                </Text>
+                                                                <Text style={styles.price}>
+                                                                    {t('history.price')} {formatPrice(product.totalPrice)}đ
+                                                                </Text>
+                                                            </View>
                                                         </View>
-                                                    </View>
-                                                )}
-                                            />
+                                                    )}
+                                                />
 
-                                            <Text style={styles.totalPrice}>
-                                                <Text style={styles.boldText1}>{t('history.total_price')}</Text> {formatPrice(Math.max(item.totalPrice + item.deliveryFee - item.discountPrice, 0))}đ
-                                            </Text>
-                                            <Text style={styles.boldText2}>
-                                                <Text style={styles.boldText1}>{t('history.order_date')}</Text> {item.dateOders}
-                                            </Text>
-                                            <Text style={styles.boldText2}>
-                                                <Text style={styles.boldText1}>{t('history.shipper')}</Text> {item.shipment?.nameShipper}
-                                            </Text>
-                                            <Text style={styles.boldText2}>
-                                                <Text style={styles.boldText1}>{t('history.delivery_date')}</Text>{' '}
-                                                {item.shipment?.dateShipped ? item.shipment.dateShipped : t('history.delivery_failed')}
-                                            </Text>
-                                            <View style={styles.buttonContainer}>
-                                                <TouchableOpacity onPress={() => navigation.navigate('ChatWithShipper', { shipmentId: Number(item.shipment?.shipmentId) })} style={styles.button}>
-                                                    <Text style={styles.buttonText}>{t('chat.title')}</Text>
-                                                </TouchableOpacity>
-                                                <TouchableOpacity onPress={() => handleRestoreOrder(item.orderId)} style={styles.button}>
-                                                    <Text style={styles.buttonText}>{t('history.reorder')}</Text>
-                                                </TouchableOpacity>
-                                                <TouchableOpacity onPress={() => handlePrint(item.orderId)} style={styles.button}>
-                                                    <Text style={styles.buttonText}>{t('history.print_invoice')}</Text>
-                                                </TouchableOpacity>
+                                                <Text style={styles.totalPrice}>
+                                                    <Text style={styles.boldText1}>{t('history.total_price')}</Text> {formatPrice(Math.max(item.totalPrice + item.deliveryFee - item.discountPrice, 0))}đ
+                                                </Text>
+                                                <Text style={styles.boldText2}>
+                                                    <Text style={styles.boldText1}>{t('history.order_date')}</Text> {item.dateOders}
+                                                </Text>
+                                                <Text style={styles.boldText2}>
+                                                    <Text style={styles.boldText1}>{t('history.shipper')}</Text> {item.shipment?.nameShipper}
+                                                </Text>
+                                                <Text style={styles.boldText2}>
+                                                    <Text style={styles.boldText1}>{t('history.delivery_date')}</Text>{' '}
+                                                    {item.shipment?.dateShipped ? item.shipment.dateShipped : t('history.delivery_failed')}
+                                                </Text>
+                                                <View style={styles.buttonContainer}>
+                                                    <TouchableOpacity onPress={() => navigation.navigate('ChatWithShipper', { shipmentId: Number(item.shipment?.shipmentId) })} style={styles.button}>
+                                                        <Text style={styles.buttonText}>{t('chat.title')}</Text>
+                                                    </TouchableOpacity>
+                                                    <TouchableOpacity onPress={() => handleRestoreOrder(item.orderId)} style={styles.button}>
+                                                        <Text style={styles.buttonText}>{t('history.reorder')}</Text>
+                                                    </TouchableOpacity>
+                                                    <TouchableOpacity onPress={() => handlePrint(item.orderId)} style={styles.button}>
+                                                        <Text style={styles.buttonText}>{t('history.print_invoice')}</Text>
+                                                    </TouchableOpacity>
+                                                </View>
                                             </View>
-                                        </View>
-                                    </TouchableOpacity>
-                                )}
-                            />
+                                        </TouchableOpacity>
+                                    )}
+                                />
+                            )
+                        ) : (
+                            groupOrders.length === 0 ? (
+                                <EmptyListAnimation title={t('history.empty_group_list')} />
+                            ) : (
+                                <FlatList
+                                    data={groupOrders}
+                                    keyExtractor={(item, index) => `group-${item?.crudGroupOrderResponse?.groupOrderId || index}`}
+
+                                    renderItem={({ item }) => renderGroupOrder(item)}
+                                />
+                            )
+
                         )}
                     </View>
                 </View>
@@ -192,124 +291,3 @@ const HistoryOrders = () => {
 };
 
 export default HistoryOrders;
-
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: '#f8f8f8',
-        borderRadius: 10,
-    },
-    flatlistContainer: {
-        backgroundColor: '#FFFFFF',
-        padding: 5,
-        marginHorizontal: 8,
-        borderRadius: 10,
-        marginTop: 10,
-        flex: 1,
-    },
-    headerContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        paddingVertical: 10,
-    },
-    backIcon: {
-        position: "absolute",
-        top: 15,
-        left: 10,
-    },
-    header: {
-        fontSize: 24,
-        fontFamily: FONTFAMILY.lobster_regular,
-        textAlign: 'center',
-    },
-    body: {
-        flex: 1,
-    },
-    card: {
-        backgroundColor: 'white',
-        padding: 12,
-        borderRadius: 10,
-        marginBottom: 10,
-        marginHorizontal: 5,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 3 },
-        shadowOpacity: 0.2,
-        shadowRadius: 5,
-        elevation: 4,
-    },
-    orderId: {
-        fontSize: 30,
-        fontFamily: FONTFAMILY.dongle_bold,
-        marginBottom: 8,
-    },
-    boldText: {
-        fontSize: 30,
-        fontFamily: FONTFAMILY.dongle_bold,
-    },
-    productContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: 10,
-    },
-    image: {
-        width: 80,
-        height: 80,
-        borderRadius: 10,
-        marginRight: 12,
-    },
-    info: {
-        flex: 1,
-        justifyContent: 'center',
-    },
-    title: {
-        fontSize: 28,
-        fontFamily: FONTFAMILY.dongle_regular,
-        color: '#333',
-        marginBottom: 4,
-    },
-    size: {
-        fontSize: 24,
-        fontFamily: FONTFAMILY.dongle_regular,
-        color: 'gray',
-    },
-    price: {
-        fontSize: 26,
-        fontFamily: FONTFAMILY.dongle_regular,
-        color: '#27ae60',
-        marginTop: 4,
-    },
-    totalPrice: {
-        fontFamily: FONTFAMILY.dongle_bold,
-        fontSize: 28,
-        color: '#e74c3c',
-    },
-    buttonContainer: {
-        flexDirection: 'row',
-        marginTop: 10,
-        justifyContent: 'space-around', // Đưa nút về lề phải
-        alignItems: 'center', // Căn giữa theo chiều dọc,
-        gap: 5
-    },
-    button: {
-        backgroundColor: '#ff6347',
-        padding: 8,
-        borderRadius: 5,
-        width: 100
-    },
-    buttonText: {
-        color: 'white',
-        fontSize: 22,
-        fontFamily: FONTFAMILY.dongle_bold,
-        textAlign: 'center'
-    },
-    boldText1: {
-        fontFamily: FONTFAMILY.dongle_regular,
-        fontSize: 24
-    },
-    boldText2: {
-        fontFamily: FONTFAMILY.dongle_light,
-        fontSize: 24
-    }
-}
-)

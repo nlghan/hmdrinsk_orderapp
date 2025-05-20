@@ -7,6 +7,7 @@ import { useCategoryStore } from '../store/store';
 import reviewStyles from '../styles/reviewStyles';
 import Header from '../components/Header';
 import { useTranslation } from 'react-i18next';
+import Notification from '../components/Notification';
 
 type AddReviewRouteProp = RouteProp<RootStackParamList, 'AddReview'>;
 
@@ -16,6 +17,12 @@ const AddReview = () => {
     const navigation = useNavigation();
     const route = useRoute<AddReviewRouteProp>();
     const { productId, reviewToEdit } = route.params || {}; // Lấy thông tin review nếu có
+    const [notification, setNotification] = useState({ message: '', visible: false });
+    const showNotification = (message: string) => {
+    setNotification({ message, visible: true });
+    // Ẩn thông báo sau 3 giây
+    setTimeout(() => setNotification({ ...notification, visible: false }), 3000);
+  };
 
     const { addReviewToProduct, editReview } = useCategoryStore();
 
@@ -40,13 +47,13 @@ const AddReview = () => {
         const isEnglish = language === "EN"; // Kiểm tra nếu là tiếng Anh
 
         if (rating === 0 || !content) {
-            Alert.alert(isEnglish ? "Error" : "Lỗi", isEnglish ? "Please fill in all fields!" : "Vui lòng nhập đầy đủ thông tin!");
+            showNotification(t('android.mess.check6'))
             return;
         }
 
         const userId = useCategoryStore.getState().userId; // Lấy userId từ store
         if (!userId) {
-            Alert.alert(isEnglish ? "Error" : "Lỗi", isEnglish ? "You need to log in to leave a review!" : "Bạn cần đăng nhập để đánh giá!");
+            showNotification(t('products.messLogin'));
             return;
         }
 
@@ -62,10 +69,11 @@ const AddReview = () => {
 
         if (isEditing && reviewToEdit) {
             await editReview(newReview); // Chỉnh sửa review
-            Alert.alert(isEnglish ? "Success" : "Thành công", isEnglish ? "Your review has been updated!" : "Đánh giá của bạn đã được cập nhật!");
+            // Alert.alert(isEnglish ? "Success" : "Thành công", isEnglish ? "Your review has been updated!" : "Đánh giá của bạn đã được cập nhật!");
+            showNotification(t('information.updateSuccess'))
         } else {
             await addReviewToProduct(productId, newReview); // Thêm review mới
-            Alert.alert(isEnglish ? "Success" : "Thành công", isEnglish ? "Your review has been submitted!" : "Đánh giá của bạn đã được gửi!");
+            // Alert.alert(isEnglish ? "Success" : "Thành công", isEnglish ? "Your review has been submitted!" : "Đánh giá của bạn đã được gửi!");
         }
         navigation.goBack();
     };
@@ -87,6 +95,7 @@ const AddReview = () => {
 
     return (
         <View style={reviewStyles.container}>
+            <Notification message={notification.message} visible={notification.visible} onHide={() => setNotification({ ...notification, visible: false })} />
             <Header
                 style={{
                     paddingHorizontal: 14,

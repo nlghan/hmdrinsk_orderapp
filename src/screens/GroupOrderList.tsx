@@ -19,7 +19,8 @@ import { useCartStore } from '../store/useCartStore';
 import { Swipeable } from 'react-native-gesture-handler';
 import Loading from '../components/Loading';
 import EditGroupNameModal from '../components/EditGroupNameModal';
-
+import { useAlertStore } from '../store/alertStore';
+import Notification from '../components/Notification';
 
 
 interface GroupOrder {
@@ -39,6 +40,10 @@ interface GroupOrder {
 
 const GroupOrderList: React.FC = () => {
     const [groupOrders, setGroupOrders] = useState<GroupOrder[]>([]);
+    const [notification, setNotification] = useState({ message: '', visible: false });
+    const showNotification = (message: string) => {
+        setNotification({ message, visible: true });
+    };
     const [loading, setLoading] = useState<boolean>(true);
     const [editingGroup, setEditingGroup] = useState<GroupOrder | null>(null);
     const [newGroupName, setNewGroupName] = useState('');
@@ -47,6 +52,7 @@ const GroupOrderList: React.FC = () => {
     const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
     const { t } = useTranslation();
     const { setGroupCartId, setHasGroupCart, fetchCartItem, groupCartData } = useCartStore.getState();
+    const { language } = useCategoryStore();
 
     const fetchGroupOrders = async () => {
         const accessToken = await AsyncStorage.getItem('access_token');
@@ -57,13 +63,22 @@ const GroupOrderList: React.FC = () => {
             const res = await axiosInstance.get(`/group-order/get-group-activate/${userId}`, {
                 headers: { Authorization: `Bearer ${accessToken}` },
             });
-            setGroupOrders(res.data.list);
+
+            const filteredGroups = res.data.list.filter((group: GroupOrder) => {
+                const status = group.status?.toUpperCase();
+                if (status === 'COMPLETED' || status === 'CANCELED') return false;
+                if (status === 'CHECKOUT' && !group.isLeader) return false; // ẩn với member
+                return true;
+            });
+
+            setGroupOrders(filteredGroups);
         } catch (error) {
             console.error('Lỗi khi tải danh sách nhóm:', error);
         } finally {
             setLoading(false);
         }
     };
+
 
     useEffect(() => {
         fetchGroupOrders();
@@ -104,11 +119,11 @@ const GroupOrderList: React.FC = () => {
                 setEditingGroup(null);
             } else {
                 console.error('Cập nhật tên nhóm không thành công:', data);
-                Alert.alert('Lỗi', 'Không thể cập nhật tên nhóm.');
+                showNotification(t('android.mess.error3'))
             }
         } catch (error: any) {
             console.error('Lỗi API:', error?.response?.data || error.message);
-            Alert.alert('Lỗi', 'Có lỗi xảy ra khi gọi API.');
+           showNotification(t('error'))
         }
     };
 
@@ -137,7 +152,7 @@ const GroupOrderList: React.FC = () => {
 
             // Gọi API detail group
             const detailRes = await axiosInstance.get(
-                `/group-order/detail-group/${item.groupOrderId}?language=EN`,
+                `/group-order/detail-group/${item.groupOrderId}?language=${language}`,
                 {
                     headers: { Authorization: `Bearer ${accessToken}` },
                 }
@@ -157,12 +172,72 @@ const GroupOrderList: React.FC = () => {
             }
         } catch (error) {
             console.error('Lỗi khi xử lý chọn nhóm:', error);
-            Alert.alert('Lỗi', 'Không thể lấy thông tin chi tiết nhóm.');
+           showNotification(t('error'))
         } finally {
             setLoading(false);
         }
     };
 
+    const handleLeaveGroup = (item: GroupOrder) => {
+        const userId = typeof rawUserId === 'string' ? parseInt(rawUserId, 10) : Number(rawUserId);
+
+        if (item.isLeader) {
+            useAlertStore.getState().showAlert(
+                t('android.mess.title5'),
+                t('android.mess.check5'),
+                async () => {
+                    try {
+                        const token = await AsyncStorage.getItem('access_token');
+                        await axiosInstance.delete(
+                            `/group-order/delete/${item.groupOrderId}/${userId}`,
+                            {
+                                headers: {
+                                    Authorization: `Bearer ${token}`,
+                                },
+                            }
+                        );
+
+                        showNotification(t('android.mess.sucess1'));
+                        fetchGroupOrders(); // cập nhật lại danh sách nhóm sau khi xoá
+                    } catch (err) {
+                        console.error('Lỗi khi xoá nhóm:', err);
+                        showNotification(t('android.mess.error1'));
+                    }
+                },
+                () => {
+                    // Hủy bỏ
+                }
+            );
+        } else {
+            useAlertStore.getState().showAlert(
+                t('android.mess.title4'),
+                t('android.mess.check4'),
+                async () => {
+                    try {
+                        const token = await AsyncStorage.getItem('access_token');
+                        await axiosInstance.put(
+                            `/group-order/leave/${item.groupOrderId}/${userId}`,
+                            {},
+                            {
+                                headers: {
+                                    Authorization: `Bearer ${token}`,
+                                },
+                            }
+                        );
+
+                        showNotification(t('android.mess.sucess2'));
+                        fetchGroupOrders(); // cập nhật lại danh sách nhóm
+                    } catch (err) {
+                        console.error('Lỗi khi rời nhóm:', err);
+                        showNotification(t('android.mess.error2'));
+                    }
+                },
+                () => {
+                    // Hủy bỏ
+                }
+            );
+        }
+    };
 
 
 
@@ -171,40 +246,7 @@ const GroupOrderList: React.FC = () => {
             <View style={styles.swipeActions}>
                 <TouchableOpacity
                     style={styles.deleteButton}
-                    onPress={() => {
-                        Alert.alert(
-                            'Xác nhận rời nhóm',
-                            'Bạn có chắc muốn rời khỏi nhóm này?',
-                            [
-                                { text: 'Hủy', style: 'cancel' },
-                                {
-                                    text: 'Rời nhóm',
-                                    style: 'destructive',
-                                    onPress: async () => {
-                                        try {
-                                            const token = await AsyncStorage.getItem('access_token');
-                                            const userId = typeof rawUserId === 'string' ? parseInt(rawUserId, 10) : Number(rawUserId);
-
-                                            await axiosInstance.put(
-                                                `/group-order/leave/${item.groupOrderId}/${userId}`,
-                                                {},
-                                                {
-                                                    headers: {
-                                                        Authorization: `Bearer ${token}`,
-                                                    },
-                                                }
-                                            );
-
-                                            fetchGroupOrders(); // Cập nhật lại danh sách nhóm
-                                        } catch (err) {
-                                            console.error('Lỗi khi rời nhóm:', err);
-                                        }
-                                    },
-                                },
-                            ],
-                            { cancelable: true }
-                        );
-                    }}
+                    onPress={() => handleLeaveGroup(item)}
                 >
                     <Icon name="delete" size={24} color="black" />
                 </TouchableOpacity>
@@ -250,6 +292,7 @@ const GroupOrderList: React.FC = () => {
 
     return (
         <View style={styles.container}>
+            <Notification message={notification.message} visible={notification.visible} onHide={() => setNotification({ ...notification, visible: false })} />
             <View style={styles.header}>
                 <TouchableOpacity style={styles.backIcon} onPress={() => navigation.navigate('Main')}>
                     <Icon name="arrow-back" size={20} color="#FF9800" />

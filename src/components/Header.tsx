@@ -79,8 +79,8 @@ const Header = ({ style }: { style?: object }) => {
             isShowingAlert = true;
             await new Promise<void>((resolve) => {
                 useAlertStore.getState().showAlert(
-                    "Thông báo",
-                    "Bạn sẽ chuyển sang giỏ hàng cá nhân. Có muốn tiếp tục không?",
+                    t('common.noti'),
+                    t('android.mess.check1'),
                     async () => {
                         await ensureActiveCart();
                         setHasRejectedGroupCart(true);

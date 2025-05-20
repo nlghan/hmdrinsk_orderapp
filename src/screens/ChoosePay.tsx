@@ -16,6 +16,8 @@ import { RootStackParamList } from '../navigation/RootStackParamList';
 import styles from '../styles/choosePayStyle';
 import { useCategoryStore } from '../store/store';
 import { useCartStore } from '../store/useCartStore';
+import Notification from '../components/Notification';
+import { useTranslation } from 'react-i18next';
 
 type PaymentMethod = {
     id: string;
@@ -33,6 +35,7 @@ const paymentMethods: PaymentMethod[] = [
 
 const ChoosePay = () => {
     const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
+    const { t } = useTranslation();
     const route = useRoute<RouteProp<RootStackParamList, 'ChoosePay'>>();
     const { groupOrderId } = route.params;
     const { userId, language } = useCategoryStore();
@@ -45,16 +48,23 @@ const ChoosePay = () => {
     const handleSelect = (methodId: string) => {
         setSelectedMethod(methodId);
     };
+    const [notification, setNotification] = useState({ message: '', visible: false });
+    const showNotification = (message: string) => {
+        setNotification({ message, visible: true });
+        // Ẩn thông báo sau 3 giây
+        setTimeout(() => setNotification({ ...notification, visible: false }), 3000);
+    };
 
     const handleConfirmPayment = async () => {
         if (!selectedMethod) {
-            Alert.alert('Vui lòng chọn phương thức thanh toán');
+            showNotification(t('aandroid.mess.checck9'));
             return;
         }
 
         try {
             const accessToken = await AsyncStorage.getItem('access_token');
             const leaderId = typeof rawUserId === 'string' ? parseInt(rawUserId, 10) : Number(rawUserId);
+            console.log('leaderId: ' + leaderId);
             if (!accessToken || isNaN(leaderId)) throw new Error('Token hoặc UserId không hợp lệ');
 
             const headers = { Authorization: `Bearer ${accessToken}` };
@@ -81,14 +91,14 @@ const ChoosePay = () => {
                 { headers }
             );
 
-            // Nếu là CASH thì xử lý như cũ
             if (method.typePayment === 'CASH') {
+                // Xử lý thanh toán tiền mặt
                 await axiosInstance.post(
                     `/payment-group/create/${method.endpoint}`,
                     {
                         groupOrderId,
                         leaderUserId: leaderId,
-                        type: method.typePayment,
+                        type: 'ANDROID',
                         language,
                     },
                     { headers }
@@ -98,14 +108,13 @@ const ChoosePay = () => {
                 setHasRejectedGroupCart(true);
                 navigation.navigate('OrderComplete');
             } else {
-                // Các phương thức thanh toán khác
-                const paymentUrl = `/payment-group/create/${method.endpoint}`;
+                // Các phương thức thanh toán khác (Momo, card, Zalopay, Vnpay)
                 const response = await axiosInstance.post(
-                    paymentUrl,
+                    `/payment-group/create/${method.endpoint}`,
                     {
-                        orderId: groupOrderId,
-                        userId: leaderId,
-                        type: method.typePayment,
+                        groupOrderId,      // Đổi từ orderId thành groupOrderId
+                        leaderUserId: leaderId,  // key đúng như API expects
+                        type: 'ANDROID',    // hoặc 'WEB' nếu phù hợp
                         language,
                     },
                     { headers }
@@ -113,7 +122,6 @@ const ChoosePay = () => {
 
                 if (response.status === 200) {
                     const data = response.data;
-
                     if (data.linkPayment) {
                         Linking.openURL(data.linkPayment);
                     } else {
@@ -130,8 +138,10 @@ const ChoosePay = () => {
         }
     };
 
+
     return (
         <View style={styles.container}>
+            <Notification message={notification.message} visible={notification.visible} onHide={() => setNotification({ ...notification, visible: false })} />
             <Text style={styles.title}>🔰 Chọn phương thức thanh toán</Text>
             <FlatList
                 data={paymentMethods}

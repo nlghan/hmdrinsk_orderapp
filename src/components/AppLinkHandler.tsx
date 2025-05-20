@@ -9,11 +9,15 @@ import { useCategoryStore } from '../store/store';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axiosInstance from '../utils/axiosInstance';
 import 'react-native-url-polyfill/auto';
+import { useAlertStore } from '../store/alertStore';
+import { useTranslation } from 'react-i18next';
+
 
 export default function AppLinkHandler() {
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
   const { setIdOrderPause, setIdCartPause, setGroupCartId, ensureActiveCart } = useCartStore();
   const { fetchUserCoin } = useCategoryStore();
+  const { t } = useTranslation();
 
   const handleDeepLink = async (url: string) => {
     try {
@@ -56,14 +60,18 @@ export default function AppLinkHandler() {
 
       if (!token || !userId) {
         console.warn('❌ Thiếu token hoặc userId');
-        Alert.alert('Lỗi', 'Vui lòng đăng nhập lại.');
         navigation.navigate('OrderFailed');
         return;
       }
 
       if (path === 'open/group-order') {
         if (status === '-1') {
-          Alert.alert('Thông báo', 'Không thể tham gia nhóm.');
+          useAlertStore.getState().showAlert(
+            t('common.noti'),
+            t('android.mess.error4'),
+            () => { }, // không cần xử lý OK
+            () => { }  // không cần xử lý Cancel
+          );
           return;
         }
 
@@ -92,9 +100,17 @@ export default function AppLinkHandler() {
 
             console.log('✅ Tham gia nhóm thành công:', response.data);
 
-            Alert.alert('Thành công', 'Bạn đã tham gia nhóm!');
+            useAlertStore.getState().showAlert(
+              t('common.noti'),
+              t('android.mess.sucess4')
+            );
 
-            navigation.navigate('GroupOrderList');
+            // Tự động đóng alert sau 3 giây và chuyển sang GroupOrderList
+            setTimeout(() => {
+              useAlertStore.getState().hideAlert();
+              navigation.navigate('GroupOrderList');
+            }, 3000);
+
           } catch (err) {
             if (axios.isAxiosError(err)) {
               console.error('❌ Lỗi từ server:', {
@@ -107,15 +123,19 @@ export default function AppLinkHandler() {
               console.error('❌ Lỗi không xác định khi gọi API:', err);
             }
 
-            Alert.alert('Lỗi', 'Không thể tham gia nhóm.');
+            useAlertStore.getState().showAlert(
+              t('common.noti'),
+              t('android.mess.error4'),
+              () => { }, // không cần xử lý OK
+              () => { }  // không cần xử lý Cancel
+            );
 
           }
         } else {
-          Alert.alert('Lỗi', 'Thiếu mã nhóm hoặc trạng thái không hợp lệ.');
-
+          console.log('Lỗi', 'Thiếu mã nhóm hoặc trạng thái không hợp lệ.');
         }
-      } if (path === 'open/order-group-complete') { 
-         console.log('ℹ️ xử lý đơn hàng nhóm');
+      } else if (path === 'open/order-group-complete') {
+        console.log('ℹ️ xử lý đơn hàng nhóm');
 
         if (status === '1') {
           setGroupCartId(null);
@@ -129,11 +149,8 @@ export default function AppLinkHandler() {
           console.log('⚠️ Unknown status value:', status);
           navigation.navigate('OrderFailed');
         }
-
-      }
-      else {
-        console.log('ℹ️ Không phải đường dẫn open/group-order, xử lý status theo giá trị khác.');
-
+      } else {
+        // Các path khác ngoài open/group-order và open/order-group-complete
         if (status === '1') {
           setIdCartPause(null);
           setIdOrderPause(null);
@@ -152,6 +169,7 @@ export default function AppLinkHandler() {
       navigation.navigate('OrderFailed');
     }
   };
+
 
   useEffect(() => {
     const subscription = Linking.addEventListener('url', ({ url }) => {

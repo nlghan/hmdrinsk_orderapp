@@ -6,6 +6,8 @@ import axiosInstance from '../utils/axiosInstance';
 import { useCategoryStore } from './store';
 import { Alert } from 'react-native';
 import { useAlertStore } from './alertStore';
+import { useTranslation } from 'react-i18next';
+import i18n from '../i18n/i18n';
 
 interface CartItem {
   cartItemId: number;
@@ -293,6 +295,7 @@ export const useCartStore = create<CartStore>()(
       },
 
       checkGroupCart: async () => {
+        
         try {
           const { userId } = useCategoryStore.getState();
           if (!userId) throw new Error("User not logged in");
@@ -346,13 +349,15 @@ export const useCartStore = create<CartStore>()(
             groupCartId: groupCartId !== 0 ? groupCartId : null,
             hasGroupCart: true,
           });
+          const message = i18n.t('android.mess.check2');
+          const title = i18n.t('common.noti');
 
           // 3. Nếu là trưởng nhóm, hỏi người dùng có muốn tiếp tục không
           if (groupCartId !== 0) {
             return await new Promise<number | null>((resolve) => {
               useAlertStore.getState().showAlert(
-                'Thông báo',
-                'Bạn là trưởng nhóm một đơn nhóm. \nTiếp tục đơn này?',
+                title,
+                message,
                 () => { // onConfirm
                   console.log("✅ Sử dụng group cart ID:", groupCartId);
                   set({ currentCartId: groupCartId });

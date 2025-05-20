@@ -15,6 +15,7 @@ import { useCartStore } from '../store/useCartStore';
 import EditGroupNameModal from '../components/EditGroupNameModal';
 import { useCategoryStore } from '../store/store';
 import { useTranslation } from 'react-i18next';
+import { useAlertStore } from '../store/alertStore';
 
 type NavigationProp = StackNavigationProp<RootStackParamList, 'GroupOrder'>;
 
@@ -41,7 +42,7 @@ const GroupOrder: React.FC = () => {
     // Hàm tạo nhóm, dùng tên nhóm lưu trong state
     const createGroup = async () => {
         if (!userId) {
-            Alert.alert('Lỗi', 'Không xác định được user.');
+            console.log('không tìm thấy user')
             return;
         }
 
@@ -82,11 +83,24 @@ const GroupOrder: React.FC = () => {
             if (success) {
                 navigation.navigate('GroupOrderList');
             } else {
-                Alert.alert('Lỗi', 'Không thể tạo đơn nhóm. Vui lòng thử lại sau.');
+                useAlertStore.getState().showAlert(
+                    t('android.mes.title8'),
+                    t('android.mess.error9'),
+                    undefined, // Không cần xử lý khi bấm nút xác nhận
+                    undefined, // Không có nút hủy
+
+                );
+
             }
         } catch (error) {
             console.error('Tạo nhóm lỗi:', error);
-            Alert.alert('Lỗi', 'Đã xảy ra lỗi khi tạo nhóm.');
+            useAlertStore.getState().showAlert(
+                t('android.mes.title8'),
+                t('error'),
+                undefined, // Không cần xử lý khi bấm nút xác nhận
+                undefined, // Không có nút hủy
+
+            );
         }
     };
 

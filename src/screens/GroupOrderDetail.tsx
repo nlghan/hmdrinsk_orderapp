@@ -23,6 +23,9 @@ import { Swipeable } from 'react-native-gesture-handler';
 import { FONTFAMILY } from '../theme/theme';
 import Clipboard from '@react-native-clipboard/clipboard';
 import { useTranslation } from 'react-i18next';
+import { useAlertStore } from '../store/alertStore';
+import DotLoading from '../components/DotLoading';
+import DotLoadingMini from '../components/DotLoadingMini';
 
 
 interface GroupOrder {
@@ -69,50 +72,53 @@ const GroupOrderDetail = () => {
     };
 
     const handleKickMember = async (member: any) => {
-        Alert.alert(
-            'Xác nhận xoá thành viên',
-            `Bạn có chắc muốn xoá ${member.name} khỏi nhóm?`,
-            [
-                { text: 'Hủy', style: 'cancel' },
-                {
-                    text: 'Xoá',
-                    style: 'destructive',
-                    onPress: async () => {
-                        try {
-                            const token = await AsyncStorage.getItem('access_token');
-                            const groupOrderId = groupInfo?.groupOrderId;
-                            const memberId = member.userId;
-                            const leaderId = userId;
+        const { groupOrderId } = groupInfo || {};
+        const leaderId = userId;
+        const memberId = member.userId;
+        const token = await AsyncStorage.getItem('access_token');
 
-                            console.log('Gọi API xoá:', { groupOrderId, leaderId, memberId });
+        if (!groupOrderId || !leaderId || !memberId) {
+            useAlertStore.getState().showAlert(
+                t('common.error'),
+                t('group.missingInfoToKick')
+            );
+            return;
+        }
 
-                            if (!groupOrderId || !leaderId || !memberId) {
-                                Alert.alert('Lỗi', 'Thiếu thông tin để xoá thành viên.');
-                                return;
-                            }
+        useAlertStore.getState().showAlert(
+            t('android.mess.title9'),
+            t('android.mess.check10', { name: member.name }),
+            async () => {
+                try {
+                    console.log('Gọi API xoá:', { groupOrderId, leaderId, memberId });
 
-                            await axiosInstance.delete(
-                                `/group-order/delete-member/${groupOrderId}/${leaderId}/${memberId}`,
-                                {
-                                    headers: {
-                                        Authorization: `Bearer ${token}`,
-                                    },
-                                }
-                            );
-
-                            Alert.alert('Thành công', 'Thành viên đã bị xoá khỏi nhóm');
-                            fetchGroupOrders();
-                        } catch (error) {
-                            console.error('Lỗi khi xoá thành viên:', error);
-                            Alert.alert('Lỗi', 'Không thể xoá thành viên. Vui lòng thử lại sau.');
+                    await axiosInstance.delete(
+                        `/group-order/delete-member/${groupOrderId}/${leaderId}/${memberId}`,
+                        {
+                            headers: {
+                                Authorization: `Bearer ${token}`,
+                            },
                         }
-                    },
-                },
-            ],
-            { cancelable: true }
+                    );
+
+                    useAlertStore.getState().showAlert(
+                        t('common.noti'),
+                        t('android.mess.successKick')
+                    );
+
+                    fetchGroupOrders();
+                } catch (error) {
+                    console.error('Lỗi khi xoá thành viên:', error);
+
+                    useAlertStore.getState().showAlert(
+                        t('common.error'),
+                        t('group.kickFailed')
+                    );
+                }
+            },
+            undefined // Không có xử lý cho nút Cancel
         );
     };
-
 
 
     const [groupOrders, setGroupOrders] = useState<GroupOrder[]>([]);
@@ -149,8 +155,7 @@ const GroupOrderDetail = () => {
 
     const quantityInputRef = React.useRef<TextInput>(null); // Khai báo ref cho TextInput số lượng
     const [isFocused, setIsFocused] = useState(false);
-
-
+    const [isLoading, setIsLoading] = useState(false);
 
 
     const handleEditItem = (item: any, userIdMember: number) => {
@@ -165,6 +170,7 @@ const GroupOrderDetail = () => {
 
 
     const handleSaveEdit = async () => {
+        setIsLoading(true);
         setIsFocused(false);
         if (!editItem) return;
 
@@ -286,6 +292,8 @@ const GroupOrderDetail = () => {
             }
 
             Alert.alert('Lỗi', `Không thể cập nhật món. Vui lòng thử lại.`);
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -430,6 +438,28 @@ const GroupOrderDetail = () => {
                     elevation: 5,
                 }}
             />
+            {isLoading && (
+                <Modal
+                    visible={true}
+                    transparent={true}
+                    animationType="none"
+                    onRequestClose={() => { }}
+                >
+                    <View style={{
+                        flex: 1,
+                        backgroundColor: 'rgba(0, 0, 0, 0.3)',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        // zIndex và elevation có thể không cần thiết trong Modal, nhưng thêm cũng không sao
+                        zIndex: 99999,
+                        elevation: 99999,
+                    }}>
+                        <DotLoadingMini title={''} />
+                    </View>
+                </Modal>
+            )}
+
+
             <NotificationPopup userId={userId ?? 0} />
             <ScrollView contentContainerStyle={styles.container}>
                 <ImageBackground
@@ -625,11 +655,11 @@ const GroupOrderDetail = () => {
                                 {isLeader && member.userId !== userId && (
                                     <TouchableOpacity
                                         onPress={() => handleKickMember(member)}
-                                        style={{ alignSelf: 'center', marginTop: 6 }}
+                                        style={{ alignSelf: 'center', marginTop: 6, width:'100%' }}
                                     >
                                         <Text style={{
                                             color: 'red', fontSize: 22,
-                                            fontFamily: FONTFAMILY.dongle_bold,
+                                            fontFamily: FONTFAMILY.dongle_bold, textAlign:'center'
                                         }}>{t('android.deleteBtn')}</Text>
                                     </TouchableOpacity>
                                 )}
