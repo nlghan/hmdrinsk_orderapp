@@ -8,25 +8,28 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar, Platform, View } from 'react-native';
 import AppLinkHandler from './src/components/AppLinkHandler';
+import GlobalAlert from '../hmdrinsk_orderapp/src/screens/GlobalAlert'
 
 const App = () => {
   return (
     <SafeAreaProvider>
       <GestureHandlerRootView style={{ flex: 1 }}>
-        <NotificationProvider>
-          <NavigationContainer>
-          <AppLinkHandler />
-            {/* Ẩn status bar */}
-            <StatusBar hidden={true} />
-            <View
-              style={{
-                flex: 1,
-                backgroundColor: '#ffe7c9',
-              }}>
-              <StackNavigator />
-            </View>
-          </NavigationContainer>
-        </NotificationProvider>
+      
+          <NotificationProvider>
+            <NavigationContainer>
+              <AppLinkHandler />
+              <StatusBar hidden={true} />
+              <View
+                style={{
+                  flex: 1,
+                  backgroundColor: '#ffe7c9',
+                }}>
+                <StackNavigator />
+
+              </View>
+            </NavigationContainer>
+          </NotificationProvider>
+       
       </GestureHandlerRootView>
     </SafeAreaProvider>
   );

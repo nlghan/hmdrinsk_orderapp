@@ -38,6 +38,9 @@ import GroupOrder from '../screens/GroupOrder';
 import GroupOrderDetail from '../screens/GroupOrderDetail';
 import GroupOrderList from '../screens/GroupOrderList';
 import EditGroupAddress from '../screens/EditGroupAddress';
+import Preview from '../screens/Preview';
+import ChoosePay from '../screens/ChoosePay';
+import OrderGroupDetail from '../screens/OrderGroupDetail';
 
 
 
@@ -79,7 +82,9 @@ export type RootStackParamList = {
     groupOrderId: number;
     currentAddress?: string;
   };
-
+  Preview: { groupOrderId: number; currentAddress: string };
+  ChoosePay: { groupOrderId: number }; // ✅ Thêm dòng này
+  OrderGroupDetail: { groupOrderId: number };
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -138,6 +143,9 @@ const StackNavigator = () => {
       <Stack.Screen name="GroupOrderDetail" component={GroupOrderDetail} options={{ headerShown: false, animation: 'slide_from_right' }} />
       <Stack.Screen name="GroupOrderList" component={GroupOrderList} options={{ headerShown: false, animation: 'slide_from_right' }} />
       <Stack.Screen name="EditGroupAddress" component={EditGroupAddress} options={{ headerShown: false, animation: 'slide_from_right' }} />
+      <Stack.Screen name="Preview" component={Preview} options={{ headerShown: false, animation: 'slide_from_right' }} />
+      <Stack.Screen name="ChoosePay" component={ChoosePay} options={{ headerShown: false, animation: 'slide_from_right' }} />
+       <Stack.Screen name="OrderGroupDetail" component={OrderGroupDetail} options={{ headerShown: false, animation: 'slide_from_right' }} />
 
     </Stack.Navigator>
   );

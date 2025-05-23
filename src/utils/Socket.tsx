@@ -7,8 +7,8 @@ import { RootStackParamList } from '../navigation/RootStackParamList';
 
 interface NotificationWS {
     userId: number;
-    shipmentId?: number;       // Có thể undefined nếu là join-group
-    groupOrderId?: number;     // Nếu là join-group
+    shipmentId?: number;
+    groupOrderId?: number;
     message: string;
     time: string;
 }
@@ -18,8 +18,14 @@ const useWebSocket = (userId: number) => {
     const socketRef = useRef<WebSocket | null>(null);
     const reconnectRef = useRef<NodeJS.Timeout | null>(null);
     const heartbeatRef = useRef<NodeJS.Timeout | null>(null);
-    const { fetchCartItem, checkGroupCart } = useCartStore.getState();
+    const fetchCartItem = useCartStore(state => state.fetchCartItem);
     const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
+    const {groupOrderCount} = useCartStore();
+     const setGroupOrderCount = useCartStore((state) => state.setGroupOrderCount);
+
+
+    // Ref giữ debounce timer
+    const fetchCartItemDebounceRef = useRef<NodeJS.Timeout | null>(null);
 
     useEffect(() => {
         if (!userId || socketRef.current) return;
@@ -28,18 +34,18 @@ const useWebSocket = (userId: number) => {
         const connectWebSocket = async () => {
             try {
                 if (socketRef.current) {
-                    console.log('⚠️ Đóng kết nối cũ trước khi tạo mới');
+                    console.log('⚠️ Closing old socket before new connection');
                     socketRef.current.close();
                     socketRef.current = null;
                 }
 
                 const token = await AsyncStorage.getItem('access_token');
                 if (!token) {
-                    console.log('⚠️ Không tìm thấy token, hủy kết nối WebSocket.');
+                    console.log('⚠️ No token found, abort WebSocket connection');
                     return;
                 }
                 const encodedToken = encodeURIComponent(token);
-                const ws = new WebSocket(`ws://192.168.9.196:1010/ws-raw?token=${encodedToken}&userId=${userId}`);
+                const ws = new WebSocket(`ws://172.21.22.183:1010/ws-raw?token=${encodedToken}&userId=${userId}`);
                 socketRef.current = ws;
 
                 ws.onopen = () => {
@@ -56,7 +62,7 @@ const useWebSocket = (userId: number) => {
                     console.log(`⚠️ WebSocket disconnected! Code: ${event.code}, Reason: ${event.reason}`);
                     stopHeartbeat();
                     if (!event.wasClean) {
-                        console.log('🔄 Đang thử kết nối lại sau 5 giây...');
+                        console.log('🔄 Reconnecting in 5 seconds...');
                         // reconnectRef.current = setTimeout(connectWebSocket, 5000);
                     }
                 };
@@ -66,41 +72,46 @@ const useWebSocket = (userId: number) => {
                         const message = JSON.parse(event.data);
                         console.log('📩 Message from server:', message);
 
-                        // 👉 Chỉ thêm vào danh sách notification nếu KHÔNG phải là UPDATE_CART
                         if (
                             ['NEW_NOTIFICATION', 'NEW_GROUP_JOIN', 'MEMBER_LEFT_GROUP', 'MEMBER_KICKED'].includes(message.type)
                         ) {
-                            setNotifications((prev) => {
+                            setNotifications(prev => {
                                 const isDuplicate = prev.some(noti => noti.time === message.time);
                                 if (isDuplicate) return prev;
-
-                                const newNotification: NotificationWS = {
+                                return [...prev, {
                                     userId: message.userId,
                                     shipmentId: message.shipmentId,
                                     groupOrderId: message.groupOrderId,
                                     message: message.message,
                                     time: message.time,
-                                };
-
-                                return [...prev, newNotification];
+                                }];
                             });
                         }
 
-                        // 👉 Luôn fetch lại cart khi có các loại message này
                         if (
-                            ['NEW_GROUP_JOIN', 'MEMBER_LEFT_GROUP', 'MEMBER_KICKED', 'UPDATE_CART'].includes(message.type)
+                            ['NEW_GROUP_JOIN', 'MEMBER_LEFT_GROUP', 'MEMBER_KICKED', 'UPDATE_CART', 'CHECKOUT'].includes(message.type)
                         ) {
-                            try {
-                                fetchCartItem?.();
-                            } catch (error) {
-                                console.error('Lỗi khi fetch cart từ WebSocket:', error);
+                            // debounce gọi fetchCartItem
+                            if (fetchCartItemDebounceRef.current) {
+                                clearTimeout(fetchCartItemDebounceRef.current);
                             }
+                            fetchCartItemDebounceRef.current = setTimeout(() => {
+                                fetchCartItem?.();
+                            }, 500);
                         }
 
-                        // 👉 Navigate nếu bị kick
                         if (message.type === 'MEMBER_KICKED') {
-                            navigation.navigate('GroupOrderList');
+                            setGroupOrderCount(Math.max(0, groupOrderCount - 1));
+                            navigation.goBack();
                         }
+
+                        if (message.type === 'CHECKOUT') {
+                             setGroupOrderCount(Math.max(0, groupOrderCount - 1));
+                            navigation.navigate('Main');
+                        }
+
+
+                      
 
                     } catch (error) {
                         console.log('❌ JSON parse error:', error);
@@ -108,7 +119,7 @@ const useWebSocket = (userId: number) => {
                 };
 
             } catch (error) {
-                console.log('🚨 Lỗi khi lấy token:', error);
+                console.log('🚨 Error getting token:', error);
             }
         };
 
@@ -118,7 +129,7 @@ const useWebSocket = (userId: number) => {
                 if (socketRef.current?.readyState === WebSocket.OPEN) {
                     socketRef.current.send(JSON.stringify({ type: 'PING' }));
                 }
-            }, 10000); // Mỗi 10s
+            }, 10000);
         };
 
         const stopHeartbeat = () => {
@@ -131,7 +142,7 @@ const useWebSocket = (userId: number) => {
         connectWebSocket();
 
         return () => {
-            console.log('🔌 Đóng kết nối WebSocket...');
+            console.log('🔌 Closing WebSocket connection...');
             stopHeartbeat();
             if (socketRef.current) {
                 socketRef.current.close();
@@ -140,8 +151,12 @@ const useWebSocket = (userId: number) => {
                 clearTimeout(reconnectRef.current);
                 reconnectRef.current = null;
             }
+            if (fetchCartItemDebounceRef.current) {
+                clearTimeout(fetchCartItemDebounceRef.current);
+                fetchCartItemDebounceRef.current = null;
+            }
         };
-    }, [userId]);
+    }, [userId, fetchCartItem, navigation]);
 
     return notifications;
 };

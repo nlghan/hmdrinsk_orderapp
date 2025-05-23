@@ -9,11 +9,16 @@ import { useCategoryStore } from '../store/store';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axiosInstance from '../utils/axiosInstance';
 import 'react-native-url-polyfill/auto';
+import { useAlertStore } from '../store/alertStore';
+import { useTranslation } from 'react-i18next';
+
 
 export default function AppLinkHandler() {
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
-  const { setIdOrderPause, setIdCartPause } = useCartStore();
+  const { setIdOrderPause, setIdCartPause, setGroupCartId, ensureActiveCart, groupOrderCount  } = useCartStore();
+  const setGroupOrderCount = useCartStore((state) => state.setGroupOrderCount);
   const { fetchUserCoin } = useCategoryStore();
+  const { t } = useTranslation();
   const [modalVisible, setModalVisible] = useState(false);
 const [modalMessage, setModalMessage] = useState('');
 const { language} = useCategoryStore();
@@ -59,14 +64,18 @@ const { language} = useCategoryStore();
 
       if (!token || !userId) {
         console.warn('❌ Thiếu token hoặc userId');
-        Alert.alert('Lỗi', 'Vui lòng đăng nhập lại.');
         navigation.navigate('OrderFailed');
         return;
       }
 
       if (path === 'open/group-order') {
         if (status === '-1') {
-          Alert.alert('Thông báo', 'Không thể tham gia nhóm.');
+          useAlertStore.getState().showAlert(
+            t('common.noti'),
+            t('android.mess.error4'),
+            () => { }, // không cần xử lý OK
+            () => { }  // không cần xử lý Cancel
+          );
           return;
         }
 
@@ -92,12 +101,28 @@ const { language} = useCategoryStore();
                 },
               }
             );
+            
+            if(groupOrderCount==0){
+              setGroupOrderCount(1);
 
+            }else{
+              setGroupOrderCount(groupOrderCount+1);
+            }
+            
             console.log('✅ Tham gia nhóm thành công:', response.data);
+            
 
-            Alert.alert('Thành công', 'Bạn đã tham gia nhóm!');
-           
-            navigation.navigate('GroupOrderList');
+            useAlertStore.getState().showAlert(
+              t('common.noti'),
+              t('android.mess.sucess4')
+            );
+
+            // Tự động đóng alert sau 3 giây và chuyển sang GroupOrderList
+            setTimeout(() => {
+              useAlertStore.getState().hideAlert();
+              navigation.navigate('GroupOrderList');
+            }, 3000);
+
           } catch (err) {
             if (axios.isAxiosError(err)) {
               console.error('❌ Lỗi từ server:', {
@@ -110,16 +135,34 @@ const { language} = useCategoryStore();
               console.error('❌ Lỗi không xác định khi gọi API:', err);
             }
 
-            Alert.alert('Lỗi', 'Không thể tham gia nhóm.');
-           
+            useAlertStore.getState().showAlert(
+              t('common.noti'),
+              t('android.mess.error4'),
+              () => { }, // không cần xử lý OK
+              () => { }  // không cần xử lý Cancel
+            );
+
           }
         } else {
-          Alert.alert('Lỗi', 'Thiếu mã nhóm hoặc trạng thái không hợp lệ.');
-         
+          console.log('Lỗi', 'Thiếu mã nhóm hoặc trạng thái không hợp lệ.');
+        }
+      } else if (path === 'open/order-group-complete') {
+        console.log('ℹ️ xử lý đơn hàng nhóm');
+
+        if (status === '1') {
+          setGroupCartId(null);
+          ensureActiveCart();
+          fetchUserCoin();
+          navigation.navigate('OrderComplete');
+        } else if (status === '-49') {
+          fetchUserCoin();
+          navigation.navigate('OrderFailed');
+        } else {
+          console.log('⚠️ Unknown status value:', status);
+          navigation.navigate('OrderFailed');
         }
       } else {
-        console.log('ℹ️ Không phải đường dẫn open/group-order, xử lý status theo giá trị khác.');
-
+        // Các path khác ngoài open/group-order và open/order-group-complete
         if (status === '1') {
           setIdCartPause(null);
           setIdOrderPause(null);
@@ -138,6 +181,7 @@ const { language} = useCategoryStore();
       navigation.navigate('OrderFailed');
     }
   };
+
 
   useEffect(() => {
     const subscription = Linking.addEventListener('url', ({ url }) => {

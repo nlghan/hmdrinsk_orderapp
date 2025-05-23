@@ -14,6 +14,9 @@ import { COLORS, FONTFAMILY } from '../theme/theme';
 import FastImage from 'react-native-fast-image';
 import Loading from '../components/DotLoading';
 import GroupOrderButton from '../components/GroupOrderButton';
+import { useAlertStore } from '../store/alertStore';
+import axiosInstance from '../utils/axiosInstance';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 
 
@@ -237,35 +240,34 @@ const ProductDetail = () => {
 
     const handleGroupOrder = async () => {
         const { userId } = useCategoryStore.getState();
-    
         if (!userId) return;
-    
-        // ✅ Nếu đã có group cart → cảnh báo và return
-        if (hasGroupCart) {
-            Alert.alert('Thông báo', 'Bạn đã là trưởng nhóm trong một đơn nhóm. Hãy hoàn thành đơn trước khi tạo đơn nhóm mới.');
-            return;
-        }
-    
-        // ✅ Nếu chưa có, tiếp tục tạo group order
-        const now = new Date();
-        const formattedDate = now.toISOString().slice(0, 19).replace("T", " ");
-        const title = `Nhóm của ${userId} - ${now.toLocaleTimeString()}`;
-    
-        const success = await createGroupOrder(
-            userId,
-            title,
-            true,
-            formattedDate,
-            "PAY_FOR_ALL"
-        );
-    
-        if (success) {
-            navigation.navigate('GroupOrder');
-        } else {
-            Alert.alert('Lỗi', 'Không thể tạo đơn nhóm. Vui lòng thử lại sau.');
+
+        const accessToken = await AsyncStorage.getItem('access_token');
+        const headers = { Authorization: `Bearer ${accessToken}` };
+
+        try {
+            const response = await axiosInstance.get(`/group-order/get-id-group/${userId}`, { headers });
+
+            const data = response.data;
+
+            if (data != 0) {
+                useAlertStore.getState().showAlert(
+                    t('common.noti'),
+                    t('android.mess.check3'),
+                    undefined
+                );
+                return;
+            } else {
+                navigation.navigate('GroupOrder');
+            }
+        } catch (error) {
+            console.error('Failed to check group cart:', error);
+            // Xử lý lỗi hoặc thông báo lỗi cho user
         }
     };
-    
+
+
+
 
     return (
         <KeyboardAvoidingView

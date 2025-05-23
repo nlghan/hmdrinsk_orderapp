@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, Modal, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
-
+import { useTranslation } from 'react-i18next';
+import { FONTFAMILY } from '../theme/theme';
 interface Props {
     visible: boolean;
     initialName: string;
@@ -10,7 +11,7 @@ interface Props {
 
 const EditGroupNameModal: React.FC<Props> = ({ visible, initialName, onCancel, onSave }) => {
     const [newName, setNewName] = useState(initialName);
-
+    const { t } = useTranslation();
     useEffect(() => {
         setNewName(initialName);
     }, [initialName]);
@@ -19,19 +20,19 @@ const EditGroupNameModal: React.FC<Props> = ({ visible, initialName, onCancel, o
         <Modal transparent animationType="fade" visible={visible}>
             <View style={styles.overlay}>
                 <View style={styles.modalContent}>
-                    <Text style={styles.modalTitle}>Đổi tên nhóm</Text>
+                    <Text style={styles.modalTitle}>{t('android.changeGroupName')}</Text>
                     <TextInput
                         style={styles.modalInput}
                         value={newName}
                         onChangeText={setNewName}
-                        placeholder="Nhập tên nhóm mới"
+                        placeholder={t('android.newName')}
                     />
                     <View style={styles.modalActions}>
                         <TouchableOpacity onPress={onCancel} style={[styles.modalButton, styles.cancelButton]}>
-                            <Text style={styles.cancelText}>Hủy</Text>
+                            <Text style={styles.cancelText}>{t('order.orderDetail.cancel')}</Text>
                         </TouchableOpacity>
                         <TouchableOpacity onPress={() => onSave(newName)} style={[styles.modalButton, styles.saveButton]}>
-                            <Text style={styles.saveText}>Lưu</Text>
+                            <Text style={styles.saveText}>{t('updateBtn')}</Text>
                         </TouchableOpacity>
                     </View>
                 </View>
@@ -62,7 +63,7 @@ const styles = StyleSheet.create({
     },
     modalTitle: {
         fontSize: 22,
-        fontWeight: '700',
+        fontFamily:FONTFAMILY.lobster_regular,
         color: '#FF7F3F',
         marginBottom: 20,
         textAlign: 'center',
@@ -74,8 +75,10 @@ const styles = StyleSheet.create({
         padding: 12,
         backgroundColor: '#FFF1E8',
         color: '#333',
-        fontSize: 16,
+        fontSize: 28,
         marginBottom: 20,
+        lineHeight:20,
+        fontFamily:FONTFAMILY.dongle_regular
     },
     modalActions: {
         flexDirection: 'row',
@@ -98,13 +101,17 @@ const styles = StyleSheet.create({
     },
     cancelText: {
         color: '#333',
-        fontWeight: '600',
-        fontSize: 15,
+        fontFamily:FONTFAMILY.dongle_regular,
+        fontSize: 24,
+        lineHeight:21,
+        textAlign:'center'
     },
     saveText: {
         color: '#fff',
-        fontWeight: '600',
-        fontSize: 15,
+        fontFamily:FONTFAMILY.dongle_regular,
+        fontSize: 24,
+        lineHeight:21,
+        textAlign:'center'
     },
     
 });

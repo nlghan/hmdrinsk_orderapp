@@ -12,7 +12,7 @@ import { useCategoryStore } from '../store/store';
 import useWebSocket from '../utils/Socket';
 import axiosInstance from "../utils/axiosInstance";
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import ConfirmModal from './ConfirmModal';
+import { useAlertStore } from "../store/alertStore";
 
 interface Notification {
     id: string;
@@ -72,24 +72,36 @@ const Header = ({ style }: { style?: object }) => {
         }
     }, [socketNotifications]);
 
+    let isShowingAlert = false;
+
     const handleCartPress = async () => {
+        if (isShowingAlert) return;
+
         if (groupCartId && !hasRejectedGroupCart) {
-            setModalVisible(true);
+            isShowingAlert = true;
+            await new Promise<void>((resolve) => {
+                useAlertStore.getState().showAlert(
+                    t('common.noti'),
+                    t('android.mess.check1'),
+                    async () => {
+                        await ensureActiveCart();
+                        setHasRejectedGroupCart(true);
+                        navigation.navigate('Cart');
+                        resolve();
+                        isShowingAlert = false;
+                    },
+                    () => {
+                        resolve();
+                        isShowingAlert = false;
+                    }
+                );
+            });
         } else {
             navigation.navigate('Cart');
         }
     };
 
-    const handleConfirm = async () => {
-        await ensureActiveCart();
-        setHasRejectedGroupCart(true);
-        setModalVisible(false);
-        navigation.navigate('Cart');
-    };
 
-    const handleClose = () => {
-        setModalVisible(false);
-    };
 
     return (
         <View style={[homeStyles.header, style]}>
@@ -119,20 +131,11 @@ const Header = ({ style }: { style?: object }) => {
                         size={15}
                         color={(hasGroupCart && !hasRejectedGroupCart) ? COLORS.primaryGreenHex : 'gray'}
                     />
-                    <View style={homeStyles.notificationCount}>
+                    {/* <View style={homeStyles.notificationCount}>
                         <Text style={homeStyles.notificationText}>{groupOrderCount}</Text>
-                    </View>
+                    </View> */}
                 </TouchableOpacity>
-                <ConfirmModal
-                    visible={isModalVisible}
-                    message={
-                        language === 'EN'
-                            ? 'You will be redirected to the personal cart. Do you want to continue?'
-                            : 'Bạn sẽ chuyển sang giỏ hàng cá nhân. Có muốn tiếp tục không?'
-                    }
-                    onClose={handleClose}
-                    onConfirm={handleConfirm}
-                />
+                
 
                 <TouchableOpacity
                     style={[

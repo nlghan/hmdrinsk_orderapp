@@ -28,6 +28,7 @@ import Notification from '../components/Notification';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axiosInstance from '../utils/axiosInstance';
 import Loading from '../components/DotLoading';
+import { useAlertStore } from '../store/alertStore';
 LogBox.ignoreLogs(['new NativeEventEmitter']); // Ignore log notification by message
 LogBox.ignoreAllLogs();
 
@@ -159,26 +160,19 @@ const Cart = () => {
                 errorMessage = error.message;
             }
 
-            Alert.alert(
-                'Lỗi cập nhật',
+            useAlertStore.getState().showAlert(
+                t('android.mess.title7'),
                 errorMessage,
-                [
-                    {
-                        text: 'OK',
-                        onPress: () => {
-                            // Revert lại giá trị cũ
-                            setInputValues((prev) => ({
-                                ...prev,
-                                [cartItemId]: previousQuantity,
-                            }));
-
-                            // Focus lại vào TextInput sau một chút delay
-                            setTimeout(() => {
-                                inputRefs.current[cartItemId]?.focus();
-                            }, 100); // Delay nhẹ để tránh race condition khi Alert đóng
-                        },
-                    },
-                ]
+                () => {
+                    setInputValues((prev) => ({
+                        ...prev,
+                        [cartItemId]: previousQuantity,
+                    }));
+                    setTimeout(() => {
+                        inputRefs.current[cartItemId]?.focus();
+                    }, 100);
+                },
+                () => { } // Không làm gì khi hủy (nếu không có nút hủy, bạn có thể bỏ qua hoặc để trống)
             );
 
         }
@@ -279,27 +273,19 @@ const Cart = () => {
                                 <TouchableOpacity
                                     style={styles.selectButton}
                                     onPress={() => {
-                                        Alert.alert(
-                                            'Xác nhận xóa',
-                                            'Bạn có chắc muốn xóa sản phẩm này khỏi giỏ hàng?',
-                                            [
-                                                {
-                                                    text: 'Hủy',
-                                                    style: 'cancel',
-                                                },
-                                                {
-                                                    text: 'Xóa',
-                                                    style: 'destructive',
-                                                    onPress: async () => {
-                                                        sizeItem.selected = !sizeItem.selected;
-                                                        if (sizeItem.selected) {
-                                                            await useCartStore.getState().deleteCartItem(sizeItem.cartItemId);
-                                                        }
-                                                    },
-                                                },
-                                            ],
-                                            { cancelable: true }
+                                        useAlertStore.getState().showAlert(
+                                            t('cart.deletedOne'),
+                                            t('android.mess.check8'),
+                                            () => {
+                                                sizeItem.selected = !sizeItem.selected;
+
+                                                if (sizeItem.selected) {
+                                                    void useCartStore.getState().deleteCartItem(sizeItem.cartItemId);
+                                                }
+                                            },
+                                            undefined, // Không xử lý gì nếu hủy
                                         );
+
                                     }}
                                 >
                                     <Text style={styles.buttonText}>

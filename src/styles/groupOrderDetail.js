@@ -13,82 +13,7 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         color: '#D32F2F',
     },
-    linkText: {
-        color: '#1976D2',
-    },
-    statusLabel: {
-        color: '#388E3C',
-        fontWeight: '500',
-        marginBottom: 8,
-    },
-    orderItem: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingVertical: 10,
-        borderBottomWidth: 1,
-        borderBottomColor: '#eee',
-    },
-    editIcon: {
-        width: 30,
-        alignItems: 'center',
-    },
-    itemText: {
-        flex: 1,
-        fontSize: 15,
-        fontWeight: '600',
-        marginLeft: 15,
-        color: '#333',
-    },
-    priceContainer: {
-        width: 80,
-        alignItems: 'flex-end',
-    },
-    itemPrice: {
-        fontSize: 15,
-        fontWeight: '600',
-        color: '#000',
-        textAlign: 'right',
-    },
-    itemsContainer: {
-        backgroundColor: '#fff',
-        padding: 15,
-        borderRadius: 10,
-        marginBottom: 12,
-    },
-    quantity: {
-        fontWeight: 'bold',
-        marginTop: 4,
-        color: '#555',
-    },
-    orderDetail: {
-        flex: 1,
-    },
-    price: {
-        fontWeight: 'bold',
-        marginLeft: 8,
-        fontSize: 18,
-        color: '#000',
-    },
-    totalRow: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        marginVertical: 12,
-        marginHorizontal: 16,
-    },
-    nextButton: {
-        backgroundColor: '#FF9800',
-        padding: 14,
-        borderRadius: 10,
-        marginHorizontal: 16,
-        alignItems: 'center',
-        marginTop: 12,
-        marginBottom: 20,
-    },
-    nextText: {
-        color: '#fff',
-        fontWeight: 'bold',
-        fontSize: 16,
-    },
+
     modalBackdrop: {
         flex: 1,
         backgroundColor: 'rgba(0,0,0,0.4)',
@@ -128,13 +53,13 @@ const styles = StyleSheet.create({
     },
     sectionTitle1: {
         fontSize: 16,
-        fontWeight: 'bold',
-        marginBottom: 8,
-        color: '#388E3C',
+     
+        color: '#2da780',
+        fontFamily: FONTFAMILY.lobster_regular,
     },
     nextButton1: {
         backgroundColor: '#f2f2f2',
-        paddingVertical: 16,
+        paddingVertical: 12,
         paddingHorizontal: 24,
         borderRadius: 12,
         marginHorizontal: 16,
@@ -144,9 +69,10 @@ const styles = StyleSheet.create({
         marginBottom: 85
     },
     nextText1: {
-        color: '',
-        fontWeight: 'bold',
-        fontSize: 16,
+        color: '#555',
+        fontSize: 28,
+        fontFamily: FONTFAMILY.dongle_bold,
+
     },
     memberCard: {
         backgroundColor: '#FFFFFF',
@@ -195,14 +121,30 @@ const styles = StyleSheet.create({
     title: { fontSize: 20, fontWeight: 'bold', color: '#000' },
     optionRow: { flexDirection: 'row', justifyContent: 'space-around', marginTop: -30, marginBottom: 16, marginHorizontal: 16 },
     optionBox: { backgroundColor: '#fff', borderRadius: 12, padding: 12, width: '45%', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', elevation: 3 },
-    optionText: { fontSize: 14 },
+    optionText: {
+        color: '#333',
+        fontFamily: FONTFAMILY.dongle_regular,
+        fontSize: 22,
+        textAlign: 'center'
+    },
     noticeBox: { backgroundColor: '#fff', marginHorizontal: 24, padding: 16, borderRadius: 12, elevation: 2 },
-    noticeText: { fontWeight: 'bold' },
-    noticeSubText: { marginTop: 4, color: '#555' },
+    noticeText: {
+        color: 'black',
+        fontFamily: FONTFAMILY.dongle_bold,
+        fontSize: 24,
+        lineHeight: 21,
+    },
+    noticeSubText: {
+        marginTop: 4,
+        color: '#555',
+        fontFamily: FONTFAMILY.dongle_regular,
+        fontSize: 24,
+        lineHeight: 21,
+    },
     section: { marginTop: 16, paddingHorizontal: 24 },
-    sectionTitle: { fontSize: 16, fontWeight: 'bold', marginBottom: 8 },
-    detailRow: { flexDirection: 'column',  backgroundColor: '#fff', padding: 12, borderRadius: 10, justifyContent: 'space-between', elevation: 2 },
-    detailText: { flex: 1, marginLeft: 8 },
+    sectionTitle: { fontSize: 20, fontFamily: FONTFAMILY.lobster_regular, marginBottom: 8 },
+    detailRow: { flexDirection: 'column', backgroundColor: '#fff', padding: 12, borderRadius: 10, justifyContent: 'space-between', elevation: 2, },
+    detailText: { flex: 1, marginLeft: 8, fontFamily: FONTFAMILY.dongle_regular, fontSize: 22, lineHeight: 20, color: '#555' },
     rowBetween: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginVertical: 8 },
     boldText: {
         fontSize: 24,
@@ -226,6 +168,7 @@ const styles = StyleSheet.create({
         fontSize: 24,
         fontFamily: FONTFAMILY.dongle_bold,
         marginLeft: 15,
+        color: '#555'
     },
     priceContainer: {
         width: 80,
@@ -234,7 +177,7 @@ const styles = StyleSheet.create({
     itemPrice: {
         fontSize: 24,
         fontFamily: FONTFAMILY.dongle_bold,
-        color: 'black',
+        color: '#555',
         textAlign: 'right',
     },
     itemsContainer: {
@@ -250,10 +193,20 @@ const styles = StyleSheet.create({
     },
     quantity: { fontWeight: 'bold', marginTop: 4 },
     orderDetail: { flex: 1 },
-    price: { fontWeight: 'bold', marginLeft: 8, fontSize: 20 },
+    price: {
+        marginLeft: 8, fontSize: 30,
+        fontFamily: FONTFAMILY.dongle_bold,
+        lineHeight: 20,
+        color: 'black',
+    },
     totalRow: { flexDirection: 'row', justifyContent: 'space-between', marginVertical: 12, marginHorizontal: 16 },
-    nextButton: { backgroundColor: '#FF9800', padding: 16, borderRadius: 10, marginHorizontal: 16, alignItems: 'center', marginBottom: 20, width: '90%' },
-    nextText: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
+    nextButton: {  backgroundColor: '#FF9800', padding: 12, borderRadius: 10, alignItems: 'center', marginBottom: '5%', width: '100%', marginTop:'4%' },
+    nextText: {
+        fontSize: 28,
+        fontFamily: FONTFAMILY.dongle_bold,
+        color: '#fff',
+
+    },
     modalBackdrop: {
         flex: 1,
         backgroundColor: 'rgba(0,0,0,0.5)',
@@ -359,11 +312,11 @@ const styles = StyleSheet.create({
         paddingVertical: 8,
         borderRadius: 6,
     },
-    subUser:{
-        display:'flex',
-        flexDirection:'row',
-        justifyContent:'space-between',
-        alignItems:'center'
+    subUser: {
+        display: 'flex',
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center'
     },
 
     detailRow1: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', padding: 12, borderRadius: 10, justifyContent: 'space-between' },

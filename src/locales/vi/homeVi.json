@@ -28,7 +28,10 @@
         "payment": "Thanh toán",
         "print_invoice": "In hóa đơn",
         "payment_method": "Phương thức thanh toán",
-        "refunded_status": "Trạng thái hoàn tiền"
+        "refunded_status": "Trạng thái hoàn tiền",
+        "normal_order": "Cá nhân",
+        "group_order": "Nhóm",
+        "otherItems": "sản phẩm khác"
     },
     "favourite": {
         "title": "Yêu thích",
@@ -423,10 +426,9 @@
         "chooseLanguage": "Chọn ngôn ngữ",
         "listComment": "Tất cả đánh giá",
         "addCmt": "Thêm đánh giá",
-        "editCmt":"Chỉnh sửa đánh giá",
-        "confirmDelete":"Xóa đánh giá",
-        "areYouSure":"Bạn chắn chắn muốn xóa đánh giá này?"
-      
+        "editCmt": "Chỉnh sửa đánh giá",
+        "confirmDelete": "Xóa đánh giá",
+        "areYouSure": "Bạn chắn chắn muốn xóa đánh giá này?"
     },
     "productContent": {
         "page": "Trang",
@@ -557,9 +559,76 @@
             "title": "Giao hàng tận nơi",
             "product": "Sản phẩm đã chọn"
         },
-        "suggest":"Gợi ý tìm kiếm",
-        "groupOrder":"Đặt đơn nhóm",
-        "groupOrderList": "Nhóm đặt hàng"
+        "suggest": "Gợi ý tìm kiếm",
+        "groupOrder": "Đặt đơn nhóm",
+        "groupOrderList": "Nhóm đặt hàng",
+        "status_label": {
+            "SHOPPING": "Đang hoạt động",
+            "CREATED": "Đã tạo",
+            "FINISHED": "Đã hoàn thành",
+            "leader": "Trưởng nhóm",
+            "member": "Thành viên",
+            "joinDate": "Ngày tham gia"
+        },
+        "newName": "Nhập tên nhóm mới",
+        "saveBtn": "Lưu",
+        "changeGroupName": "Đổi tên nhóm",
+        "groupOrderNote": {
+            "notice_pending_members": "Còn {{count}} người chưa thêm món",
+            "notice_discount_unlock": "Sau khi họ thêm món, chúng tôi sẽ mở khóa ",
+            "notice_discount_unlock2": " mức giảm giá {{discount}}",
+            "discount_title": "Được giảm giá đến 10%, không cần mức chi tiêu tối thiểu!",
+            "discount_subtitle": "Mời thêm thành viên để hưởng mức giảm giá hấp dẫn hơn."
+        },
+        "leader_pays": "Trưởng nhóm thanh toán cho mọi người",
+        "add": "Thêm món",
+        "no_items_added": "Chưa thêm món nào.",
+        "leave_group_order": "Rời khỏi đơn hàng nhóm",
+        "delete_group_order": "Xóa đơn hàng nhóm",
+        "next": "Tiếp theo",
+        "editProduct": "Chỉnh sửa món",
+        "link_copied": "✅ Đã sao chép liên kết: ",
+        "share_invite_tip": "Gửi mã này mời bạn bè tham gia nhé!",
+        "deleteBtn": "Xóa",
+        "anytime": "Không giới hạn",
+        "noAddress": "Chưa cập nhật địa chỉ giao hàng",
+        "mess": {
+            "check1": "Bạn sẽ chuyển sang giỏ hàng cá nhân. Có muốn tiếp tục không?",
+            "check2": "Bạn là trưởng nhóm một đơn nhóm. \nTiếp tục đơn này?",
+            "check3": "Bạn cần hoàn tất đơn nhóm hiện tại trước khi tạo đơn mới.",
+            "title4": "Xác nhận rời nhóm",
+            "check4": "Bạn có chắc muốn rời khỏi nhóm?",
+            "title5": "Xác nhận xóa nhóm",
+            "check5": "Bạn có chắc muốn xóa nhóm?",
+            "sucess1": "Xóa nhóm thành công",
+            "error1": "Không thể xóa nhóm",
+            "sucess2": "Rời nhóm thành công",
+            "error2": "Không thể rời nhóm",
+            "error3": "Không thể cập nhật tên nhóm",
+            "error4": "Không thể tham gia nhóm",
+            "sucess4": "Tham gia nhóm thành công",
+            "check6": "Vui lòng không để trống thông tin nào",
+            "title7": "Lỗi cập nhật",
+            "check8": "Bạn có chắc muốn xóa sản phẩm này?",
+            "check9": "Vui lòng chọn phương thức thanh toán",
+            "error5": "Không thể lấy danh sách tỉnh/thành phố",
+            "error6": "Không thể lấy danh sách quận/huyện",
+            "error7": "Không thể lấy danh sách xã/phường",
+            "sucess5": "Cập nhật địa chỉ thành công",
+            "error8": "Không thể cập nhật địa chỉ",
+            "title8": "Lỗi",
+            "error9": "Không thể tạo đơn nhóm",
+            "title9": "Xác nhận xoá thành viên",
+            "check10": "Bạn có chắc muốn xoá {{name}} khỏi nhóm?",
+            "successKick": "Xóa thành viên thành công"
+        },
+        "detail": {
+            "infoGroup": "Thông tin nhóm đặt hàng",
+            "nameGroup": "Tên nhóm",
+            "typeGroup": "Loại thanh toán",
+            "create":"Tạo đơn nhóm"
+
+        }
     },
     "chat": {
         "title": "Liên hệ",

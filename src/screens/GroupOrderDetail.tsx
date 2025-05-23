@@ -20,8 +20,12 @@ import { TextInput } from 'react-native'; // mới thêm
 import { Picker } from '@react-native-picker/picker';
 import DropDownPicker from 'react-native-dropdown-picker';
 import { Swipeable } from 'react-native-gesture-handler';
-
-
+import { FONTFAMILY } from '../theme/theme';
+import Clipboard from '@react-native-clipboard/clipboard';
+import { useTranslation } from 'react-i18next';
+import { useAlertStore } from '../store/alertStore';
+import DotLoading from '../components/DotLoading';
+import DotLoadingMini from '../components/DotLoadingMini';
 
 
 interface GroupOrder {
@@ -37,10 +41,14 @@ interface GroupOrder {
     status: string;
     typePayment: string;
     dateCreated: string;
+    link: string
 }
 const GroupOrderDetail = () => {
     const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
-    const { groupCartData, fetchCartItem, checkGroupCart } = useCartStore();
+    const { t } = useTranslation();
+    const { groupCartData, fetchCartItem, checkGroupCart, groupOrderCount  } = useCartStore();
+     const setGroupOrderCount = useCartStore((state) => state.setGroupOrderCount);
+
     const groupInfo = groupCartData?.crudGroupOrderResponse;
     const members = groupCartData?.crudGroupOrderResponseList || [];
     const { userId } = useCategoryStore();
@@ -66,50 +74,53 @@ const GroupOrderDetail = () => {
     };
 
     const handleKickMember = async (member: any) => {
-        Alert.alert(
-            'Xác nhận xoá thành viên',
-            `Bạn có chắc muốn xoá ${member.name} khỏi nhóm?`,
-            [
-                { text: 'Hủy', style: 'cancel' },
-                {
-                    text: 'Xoá',
-                    style: 'destructive',
-                    onPress: async () => {
-                        try {
-                            const token = await AsyncStorage.getItem('access_token');
-                            const groupOrderId = groupInfo?.groupOrderId;
-                            const memberId = member.userId;
-                            const leaderId = userId;
+        const { groupOrderId } = groupInfo || {};
+        const leaderId = userId;
+        const memberId = member.userId;
+        const token = await AsyncStorage.getItem('access_token');
 
-                            console.log('Gọi API xoá:', { groupOrderId, leaderId, memberId });
+        if (!groupOrderId || !leaderId || !memberId) {
+            useAlertStore.getState().showAlert(
+                t('common.error'),
+                t('group.missingInfoToKick')
+            );
+            return;
+        }
 
-                            if (!groupOrderId || !leaderId || !memberId) {
-                                Alert.alert('Lỗi', 'Thiếu thông tin để xoá thành viên.');
-                                return;
-                            }
+        useAlertStore.getState().showAlert(
+            t('android.mess.title9'),
+            t('android.mess.check10', { name: member.name }),
+            async () => {
+                try {
+                    console.log('Gọi API xoá:', { groupOrderId, leaderId, memberId });
 
-                            await axiosInstance.delete(
-                                `/group-order/delete-member/${groupOrderId}/${leaderId}/${memberId}`,
-                                {
-                                    headers: {
-                                        Authorization: `Bearer ${token}`,
-                                    },
-                                }
-                            );
-
-                            Alert.alert('Thành công', 'Thành viên đã bị xoá khỏi nhóm');
-                            fetchGroupOrders();
-                        } catch (error) {
-                            console.error('Lỗi khi xoá thành viên:', error);
-                            Alert.alert('Lỗi', 'Không thể xoá thành viên. Vui lòng thử lại sau.');
+                    await axiosInstance.delete(
+                        `/group-order/delete-member/${groupOrderId}/${leaderId}/${memberId}`,
+                        {
+                            headers: {
+                                Authorization: `Bearer ${token}`,
+                            },
                         }
-                    },
-                },
-            ],
-            { cancelable: true }
+                    );
+
+                    useAlertStore.getState().showAlert(
+                        t('common.noti'),
+                        t('android.mess.successKick')
+                    );
+
+                    fetchGroupOrders();
+                } catch (error) {
+                    console.error('Lỗi khi xoá thành viên:', error);
+
+                    useAlertStore.getState().showAlert(
+                        t('common.error'),
+                        t('group.kickFailed')
+                    );
+                }
+            },
+            undefined // Không có xử lý cho nút Cancel
         );
     };
-
 
 
     const [groupOrders, setGroupOrders] = useState<GroupOrder[]>([]);
@@ -146,8 +157,7 @@ const GroupOrderDetail = () => {
 
     const quantityInputRef = React.useRef<TextInput>(null); // Khai báo ref cho TextInput số lượng
     const [isFocused, setIsFocused] = useState(false);
-
-
+    const [isLoading, setIsLoading] = useState(false);
 
 
     const handleEditItem = (item: any, userIdMember: number) => {
@@ -162,6 +172,7 @@ const GroupOrderDetail = () => {
 
 
     const handleSaveEdit = async () => {
+        setIsLoading(true);
         setIsFocused(false);
         if (!editItem) return;
 
@@ -277,12 +288,14 @@ const GroupOrderDetail = () => {
             const responseData = error?.response?.data;
 
             if (typeof responseData === 'string' && responseData === 'Quantity is greater than stock') {
-                Alert.alert('Lỗi', 'Số lượng vượt quá tồn kho. Vui lòng nhập lại.');
+                Alert.alert('Hết hàng', 'Số lượng vượt quá tồn kho. Vui lòng nhập lại.');
                 quantityInputRef.current?.focus();
                 return;
             }
 
-            Alert.alert('Lỗi', `Không thể cập nhật món. Vui lòng thử lại.`);
+            Alert.alert('Hết hàng', `Hết sản phẩm kích thước này. Vui lòng chọn lại`);
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -397,6 +410,18 @@ const GroupOrderDetail = () => {
         </TouchableOpacity>
     );
 
+    const [showCopiedModal, setShowCopiedModal] = useState(false);
+    const link = groupCartData?.crudGroupOrderResponse?.link ?? '';
+
+    const handleInvite = () => {
+        Clipboard.setString(link);
+        setShowCopiedModal(true);
+
+        setTimeout(() => {
+            setShowCopiedModal(false);
+
+        }, 2500);
+    };
 
 
 
@@ -415,6 +440,28 @@ const GroupOrderDetail = () => {
                     elevation: 5,
                 }}
             />
+            {isLoading && (
+                <Modal
+                    visible={true}
+                    transparent={true}
+                    animationType="none"
+                    onRequestClose={() => { }}
+                >
+                    <View style={{
+                        flex: 1,
+                        backgroundColor: 'rgba(0, 0, 0, 0.3)',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        // zIndex và elevation có thể không cần thiết trong Modal, nhưng thêm cũng không sao
+                        zIndex: 99999,
+                        elevation: 99999,
+                    }}>
+                        <DotLoadingMini title={''} />
+                    </View>
+                </Modal>
+            )}
+
+
             <NotificationPopup userId={userId ?? 0} />
             <ScrollView contentContainerStyle={styles.container}>
                 <ImageBackground
@@ -458,12 +505,12 @@ const GroupOrderDetail = () => {
                     <TouchableOpacity style={styles.optionBox} onPress={() => setShowOptionModal(true)} activeOpacity={0.7}>
                         <Icon name="access-time" size={20} color="black" />
                         <Text style={styles.optionText}>
-                            {selectedTime ? selectedTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Bất cứ lúc'}
+                            {selectedTime ? selectedTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : t('android.anytime')}
                         </Text>
                         <Icon name="edit" size={20} color="black" />
                     </TouchableOpacity>
 
-                    <TouchableOpacity style={styles.optionBox}>
+                    <TouchableOpacity style={styles.optionBox} onPress={handleInvite} >
                         <Icon name="group" size={20} color="black" />
                         <Text style={styles.optionText}>{members.length}</Text>
                         <Icon name="add" size={20} color="black" />
@@ -472,15 +519,18 @@ const GroupOrderDetail = () => {
 
                 {/* Thông báo chưa thêm món */}
                 <View style={styles.noticeBox}>
-                    <Text style={styles.noticeText}>Còn {members.length} người chưa thêm món</Text>
+                    <Text style={styles.noticeText}>
+                        {t('android.groupOrderNote.notice_pending_members', { count: members.length })}
+                    </Text>
+
                     <Text style={styles.noticeSubText}>
-                        Sau khi họ thêm món, chúng tôi sẽ <Text style={{ color: '#FF5722' }}>mở khóa mức giảm giá 2%</Text>
+                        {t('android.groupOrderNote.notice_discount_unlock')} <Text style={{ color: '#FF5722' }}>{t('android.groupOrderNote.notice_discount_unlock2', { discount: '2%' })}</Text>
                     </Text>
                 </View>
 
                 {/* Chi tiết */}
                 <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Chi tiết</Text>
+                    <Text style={styles.sectionTitle}>{t('detail')}</Text>
                     <View style={styles.detailRow}>
 
                         <TouchableOpacity
@@ -503,16 +553,21 @@ const GroupOrderDetail = () => {
                         >
 
                             <View style={styles.detailRows}>
-                                <Icon name="pin-drop" size={20} color="black" />
-                                <Text style={styles.detailText}>{groupCartData?.crudGroupOrderResponse.address}</Text>
+                                <Icon name="pin-drop" size={20} color="green" />
+                                <Text style={styles.detailText}>
+                                    {groupCartData?.crudGroupOrderResponse.address?.trim()
+                                        ? groupCartData.crudGroupOrderResponse.address
+                                        : t('android.noAddress')}
+                                </Text>
                                 <Icon name="chevron-right" size={20} />
                             </View>
+
 
                         </TouchableOpacity>
                         <TouchableOpacity style={styles.detailRow1} >
                             <View style={styles.detailRows}>
                                 <Icon name="receipt" size={20} color="black" />
-                                <Text style={styles.detailText}>Bạn thanh toán cho mọi người</Text>
+                                <Text style={styles.detailText}>{t('android.leader_pays')}</Text>
                                 <Icon name="chevron-right" size={20} />
                             </View>
 
@@ -526,14 +581,14 @@ const GroupOrderDetail = () => {
                 {/* Danh sách thành viên */}
                 <View style={styles.section}>
                     <View style={styles.subSection}>
-                        <Text style={styles.sectionTitle}>Thành viên</Text>
+                        <Text style={styles.sectionTitle}>{t('android.status_label.member')}</Text>
                         <TouchableOpacity onPress={() => {
                             navigation.navigate('Order', {
                                 state: { cateId: 0 } // Truyền cateId qua state
                             }
                             )
                         }}>
-                            <Text style={styles.sectionTitle1}>Thêm món</Text>
+                            <Text style={styles.sectionTitle1}>{t('android.add')}</Text>
                         </TouchableOpacity>
 
                     </View>
@@ -556,7 +611,7 @@ const GroupOrderDetail = () => {
                             >
                                 <View style={styles.subUser}>
                                     <Text style={[styles.boldText, { marginBottom: 4 }]}>
-                                        {member.name} {member.isLeader && '(Trưởng nhóm)'}
+                                        {member.name}{member.isLeader ? ` (${t('android.status_label.leader')})` : ''}
                                     </Text>
 
                                     {hasItems &&
@@ -596,15 +651,18 @@ const GroupOrderDetail = () => {
                                         </Swipeable>
                                     ))
                                 ) : (
-                                    <Text style={{ color: '#666', marginBottom: 4 }}>Chưa thêm món nào.</Text>
+                                    <Text style={{ color: '#666', marginBottom: 4 }}>{t('android.no_items_added')}</Text>
                                 )}
 
                                 {isLeader && member.userId !== userId && (
                                     <TouchableOpacity
                                         onPress={() => handleKickMember(member)}
-                                        style={{ alignSelf: 'center', marginTop: 6 }}
+                                        style={{ alignSelf: 'center', marginTop: 6, width:'100%' }}
                                     >
-                                        <Text style={{ color: 'red', fontWeight: 'bold' }}>Xóa</Text>
+                                        <Text style={{
+                                            color: 'red', fontSize: 22,
+                                            fontFamily: FONTFAMILY.dongle_bold, textAlign:'center'
+                                        }}>{t('android.deleteBtn')}</Text>
                                     </TouchableOpacity>
                                 )}
                             </View>
@@ -615,7 +673,7 @@ const GroupOrderDetail = () => {
 
                 {/* Tổng cộng */}
                 <View style={styles.totalRow}>
-                    <Text style={styles.sectionTitle}>Tổng tạm tính</Text>
+                    <Text style={styles.price}>{t('products.subTotal')}</Text>
                     <Text style={styles.price}>{formatPrice(groupInfo?.totalPrice || 0)}đ</Text>
                 </View>
                 <TouchableOpacity
@@ -681,6 +739,7 @@ const GroupOrderDetail = () => {
                                                 );
 
                                                 fetchGroupOrders();
+                                                setGroupOrderCount(Math.max(0, groupOrderCount - 1));
                                                 navigation.navigate('GroupOrderList');
                                             } catch (err) {
                                                 console.error('Lỗi khi rời nhóm:', err);
@@ -696,7 +755,7 @@ const GroupOrderDetail = () => {
                     }}
                 >
                     <Text style={[styles.nextText1, isLeader && { color: 'red' }]}>
-                        {isLeader ? 'Xóa đơn hàng nhóm' : 'Rời khỏi đơn hàng nhóm'}
+                        {isLeader ? t('android.delete_group_order') : t('android.leave_group_order')}
                     </Text>
                 </TouchableOpacity>
 
@@ -704,12 +763,58 @@ const GroupOrderDetail = () => {
 
 
             </ScrollView>
-            <View style={styles.actions} >
-                <TouchableOpacity style={styles.nextButton}>
-                    <Text style={styles.nextText}>Tiếp theo</Text>
-                </TouchableOpacity>
+            {isLeader && groupCartData?.crudGroupOrderResponse.totalPrice != 0 &&
+                <View style={styles.actions} >
+                    <TouchableOpacity
+                        style={styles.nextButton}
+                        onPress={() => {
+                            const address = groupCartData?.crudGroupOrderResponse.address || '';
+                            const groupOrderId = groupCartData?.crudGroupOrderResponse.groupOrderId ?? 0;
 
-            </View>
+                            if (!address.trim()) {
+                                Alert.alert('❗ Thiếu địa chỉ', 'Vui lòng cập nhật địa chỉ giao hàng trước khi tiếp tục.');
+                                return;
+                            }
+
+                            const hasEmptyMember = members.some(
+                                member => !member.crudCartGroupResponse?.listCartItemGroup?.length
+                            );
+
+                            if (hasEmptyMember) {
+                                Alert.alert(
+                                    'Thành viên chưa đặt món',
+                                    'Một số thành viên chưa thêm đồ uống. Bạn có muốn tiếp tục thanh toán không?',
+                                    [
+                                        { text: 'Huỷ', style: 'cancel' },
+                                        {
+                                            text: 'Tiếp tục',
+                                            style: 'default',
+                                            onPress: () => {
+                                                navigation.navigate('Preview', {
+                                                    groupOrderId,
+                                                    currentAddress: address,
+                                                });
+                                            },
+                                        },
+                                    ],
+                                    { cancelable: true }
+                                );
+                            } else {
+                                navigation.navigate('Preview', {
+                                    groupOrderId,
+                                    currentAddress: address,
+                                });
+                            }
+                        }}
+                    >
+                        <Text style={styles.nextText}>{t('android.next')}</Text>
+                    </TouchableOpacity>
+
+
+
+
+                </View>}
+
 
             <Modal
                 visible={editModalVisible}
@@ -725,23 +830,44 @@ const GroupOrderDetail = () => {
                 }}>
                     <View style={{
                         width: '85%',
-                        backgroundColor: '#fff',
-                        borderRadius: 8,
-                        padding: 16,
+                        backgroundColor: '#FFF6EE', //  Trắng ngả cam
+                        padding: 20,
+                        borderRadius: 12,
+                        shadowColor: '#000',
+                        shadowOffset: { width: 0, height: 4 },
+                        shadowOpacity: 0.2,
+                        shadowRadius: 6,
+                        elevation: 8, // Bóng đổ cho Android
                     }}>
-                        <Text style={{ fontWeight: 'bold', fontSize: 16, marginBottom: 12 }}>
-                            Chỉnh sửa món
+                        <Text style={{
+                            fontSize: 22,
+                            fontFamily: FONTFAMILY.lobster_regular,
+                            color: '#FF7F3F',
+                            textAlign: 'center',
+                        }}>
+                            {t('android.editProduct')}
                         </Text>
 
-                        <Text style={{ marginBottom: 4 }}>Số lượng</Text>
+                        <Text style={{
+                            fontSize: 24,
+                            fontFamily: FONTFAMILY.dongle_regular,
+                        }}>{t('quantity')}</Text>
                         <TextInput
                             ref={quantityInputRef}  // Gắn ref vào TextInput
                             style={{
-                                borderWidth: 1,
-                                borderColor: isFocused ? 'red' : '#ccc', // Đổi màu viền khi focus
-                                borderRadius: 4,
-                                padding: 8,
                                 marginBottom: 12,
+                                marginVertical: 6,
+                                width: '100%',
+                                borderWidth: 1.5,
+                                borderColor: isFocused ? '#FFB482' : '#FFB482',
+                                borderRadius: 12,
+                                padding: 12,
+                                backgroundColor: '#FFF1E8',
+                                color: '#333',
+                                fontSize: 28,
+                                lineHeight: 20,
+                                fontFamily: FONTFAMILY.dongle_regular
+
                             }}
                             keyboardType="numeric"
                             value={newQuantity}
@@ -751,7 +877,10 @@ const GroupOrderDetail = () => {
                         />
 
 
-                        <Text style={{ marginBottom: 4 }}>Size</Text>
+                        <Text style={{
+                            marginBottom: 4, fontSize: 24,
+                            fontFamily: FONTFAMILY.dongle_regular,
+                        }}>{t('size')}</Text>
                         <DropDownPicker
                             open={open}
                             value={newSize}
@@ -762,40 +891,80 @@ const GroupOrderDetail = () => {
                             placeholder="Chọn size"
                             containerStyle={{ marginBottom: 20 }}
                             style={{
-                                borderColor: '#ccc',
-                                borderRadius: 4,
+                                borderColor: '#FFB482',
+                                backgroundColor: 'rgba(255, 232, 218, 0.87)',
+                                borderRadius: 12,
+                                borderWidth: 1.5,
+
                             }}
                             dropDownContainerStyle={{
-                                borderColor: '#ccc',
+                                padding: 12,
+                                marginVertical: 6,
+                                backgroundColor: 'rgb(255, 232, 218)', //  Cam nhạt đẹp mắt
+                                borderRadius: 12,
+                                borderWidth: 1.5,
+                                width: '100%',
+                                borderColor: '#FFB482',
                             }}
                         />
 
 
-                        <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                        <View style={{
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            gap: 6,
+                            paddingVertical: 10,
+
+                        }}>
                             <TouchableOpacity
                                 style={{
-                                    backgroundColor: '#eee',
+                                    backgroundColor: '#FFE1D0',
                                     padding: 10,
-                                    borderRadius: 4,
                                     flex: 1,
                                     marginRight: 8,
+                                    borderRadius: 12,
                                 }}
                                 onPress={() => setEditModalVisible(false)}
                             >
-                                <Text style={{ textAlign: 'center' }}>Hủy</Text>
+                                <Text style={{
+                                    color: '#333',
+                                    fontFamily: FONTFAMILY.dongle_regular,
+                                    fontSize: 24,
+                                    lineHeight: 21,
+                                    textAlign: 'center'
+                                }}>{t('order.orderDetail.cancel')}</Text>
                             </TouchableOpacity>
                             <TouchableOpacity
                                 style={{
-                                    backgroundColor: '#28a745',
+                                    backgroundColor: '#FF8C42',
                                     padding: 10,
-                                    borderRadius: 4,
+                                    borderRadius: 12,
                                     flex: 1,
+
                                 }}
                                 onPress={handleSaveEdit}
                             >
-                                <Text style={{ color: 'white', textAlign: 'center' }}>Lưu</Text>
+                                <Text style={{
+                                    color: '#fff',
+                                    fontFamily: FONTFAMILY.dongle_regular,
+                                    fontSize: 24,
+                                    lineHeight: 21,
+                                    textAlign: 'center'
+                                }}>{t('android.saveBtn')}</Text>
                             </TouchableOpacity>
                         </View>
+                    </View>
+                </View>
+            </Modal>
+
+            {/* Modal: Đã sao chép mã */}
+            <Modal visible={showCopiedModal} transparent animationType="fade">
+                <View style={styles.modalBackdrop}>
+                    <View style={[styles.modalContent, { alignItems: 'center' }]}>
+                        <Text style={styles.modalText}>{t('android.link_copied')} {link}</Text>
+                        <Text style={[styles.modalText, { fontSize: 12, marginTop: 6 }]}>
+                            {t('android.share_invite_tip')}
+                        </Text>
                     </View>
                 </View>
             </Modal>

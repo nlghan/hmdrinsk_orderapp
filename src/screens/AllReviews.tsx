@@ -8,6 +8,7 @@ import reviewStyles from '../styles/reviewStyles';
 import Header from '../components/Header';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { useTranslation } from 'react-i18next';
+import { useAlertStore } from '../store/alertStore';
 
 type AllReviewsRouteProp = RouteProp<RootStackParamList, 'AllReviews'>;
 export type ProductReview = {
@@ -17,7 +18,7 @@ export type ProductReview = {
     content: string;
     ratingStart: number;
     dateCreated: string;
-  };
+};
 
 const AllReviews = () => {
     const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
@@ -78,7 +79,7 @@ const AllReviews = () => {
 
     const handleEditReview = (reviewId: number) => {
         const reviewToEdit = reviews.find(review => review.reviewId === reviewId);
-        
+
         if (reviewToEdit) {
             setReviewToEdit(reviewToEdit);
             setActiveReviewId(null);
@@ -89,24 +90,15 @@ const AllReviews = () => {
         }
     };
     const handleDeleteReview = (reviewId: number) => {
-        Alert.alert(
-          t('common.confirmDelete'),
-          t('common.areYouSure'),
-          [
-            { 
-              text: t('order.orderDetail.confirm'), 
-              onPress: () => {
-                // Gọi hàm deleteReview từ store để xóa review
-                deleteReview(reviewId);
-              } 
+        useAlertStore.getState().showAlert(
+            t('common.confirmDelete'),    // tiêu đề
+            t('common.areYouSure'),       // nội dung
+            () => {
+                deleteReview(reviewId);   // xử lý khi xác nhận
             },
-            { 
-              text: t('order.orderDetail.cancel'), 
-              style: 'cancel' 
-            },
-          ]
+            () => { }                      // xử lý khi hủy (có thể bỏ qua nếu không cần)
         );
-      };      
+    };
 
     return (
         <TouchableWithoutFeedback onPress={() => { setActiveReviewId(null); Keyboard.dismiss(); }}>
@@ -114,7 +106,7 @@ const AllReviews = () => {
                 <Header
                     style={{
                         paddingHorizontal: 14,
-                        paddingVertical:10,
+                        paddingVertical: 10,
                         marginBottom: 10,
                         backgroundColor: 'white',
                         shadowColor: '#000',
