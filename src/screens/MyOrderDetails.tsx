@@ -255,7 +255,7 @@ const MyOrderDetails = () => {
                 <View style={styles.section}>
                     <Text style={styles.sectionTitle}>{t('order.orderDetail.info')}</Text>
                     <View style={styles.detailRow}>
-                        <Text style={styles.label}>{t('order.customer')}:</Text>                        
+                        <Text style={styles.label}>{t('order.customer')}:</Text>
                     </View>
                     <View style={styles.detailRow}>
                         <Text style={styles.value}>{customerName}</Text>
@@ -329,7 +329,7 @@ const MyOrderDetails = () => {
                         <Text style={styles.value}>{shipment?.nameShipper || 'Không có'}</Text>
                     </View>
                     <View style={styles.detailRow}>
-                        <Text style={styles.label}>{t('history.delivery_date')}</Text>                        
+                        <Text style={styles.label}>{t('history.delivery_date')}</Text>
                     </View>
                     <View style={styles.detailRow}>
                         <Text style={styles.value}>{shipment?.dateDeliver || 'Không có'}</Text>

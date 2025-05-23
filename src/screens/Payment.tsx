@@ -417,7 +417,7 @@ const Payment = () => {
                         <Text style={styles.paymentText}>{t('order.orderDetail.method.method2')}</Text>
                     </TouchableOpacity>
 
-                    <TouchableOpacity
+                    {/* <TouchableOpacity
                         style={[styles.paymentOption, paymentMethod === 'credit/momo' && styles.selectedPayment]}
                         onPress={() => setPaymentMethod('credit/momo')}>
                         <Image
@@ -431,7 +431,7 @@ const Payment = () => {
                         />
 
                         <Text style={styles.paymentText}>{t('order.orderDetail.method.method3')}</Text>
-                    </TouchableOpacity>
+                    </TouchableOpacity> */}
 
                     <TouchableOpacity
                         style={[styles.paymentOption, paymentMethod === 'credit/zaloPay' && styles.selectedPayment]}

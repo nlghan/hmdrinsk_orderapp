@@ -133,19 +133,31 @@ const HistoryOrders = () => {
                     <Text style={styles.orderId}>
                         <Text style={styles.boldText}>{t('history.group_order')}</Text> #{group.crudGroupOrderResponse.groupOrderId}
                     </Text>
-                    {items.map((item: any) => (
-                        <View style={styles.productContainer} key={item.cartItemGroupId}>
+                    {items.length > 0 && (
+                        <View style={styles.productContainer} key={items[0].cartItemGroupId}>
                             <Image
-                                source={{ uri: item.imageUrl.split(',')[0].split(': ')[1] }}
+                                source={{ uri: items[0].imageUrl.split(',')[0].split(': ')[1] }}
                                 style={styles.image}
                             />
                             <View style={styles.info}>
-                                <Text style={styles.title}>{t('history.name')} {item.proName}</Text>
-                                <Text style={styles.size}>{t('history.quantity')} {item.quantity}</Text>
-                                <Text style={styles.price}>{t('history.price')} {formatPrice(item.totalPrice)}đ</Text>
+                                <Text style={styles.title}>
+                                    {t('history.name')} {items[0].proName}
+                                </Text>
+                                <Text style={styles.size}>
+                                    {t('history.quantity')} {items[0].quantity}
+                                </Text>
+                                <Text style={styles.price}>
+                                    {t('history.price')} {formatPrice(items[0].totalPrice)}đ
+                                </Text>
+
+                                {items.length > 1 && (
+                                    <Text style={styles.moreText}>+ {items.length - 1} {t('history.otherItems')}</Text>
+                                )}
                             </View>
                         </View>
-                    ))}
+                    )}
+
+
                     <Text style={styles.totalPrice}>
                         <Text style={styles.boldText1}>{t('history.total_price')}</Text> {formatPrice(group.total)}đ
                     </Text>
@@ -220,26 +232,30 @@ const HistoryOrders = () => {
                                                     <Text style={styles.boldText}>{t('history.order_id')}</Text> {item?.orderId}
                                                 </Text>
 
-                                                <FlatList
-                                                    data={item?.listItem}
-                                                    keyExtractor={(product) => product?.cartItemId?.toString() ?? `product-${Math.random()}`}
-                                                    renderItem={({ item: product }) => (
-                                                        <View style={styles.productContainer}>
-                                                            <Image source={{ uri: product.imageUrl }} style={styles.image} />
-                                                            <View style={styles.info}>
-                                                                <Text style={styles.title}>
-                                                                    {t('history.name')} {product.proName}
-                                                                </Text>
-                                                                <Text style={styles.size}>
-                                                                    {t('history.quantity')} {product.quantity}
-                                                                </Text>
-                                                                <Text style={styles.price}>
-                                                                    {t('history.price')} {formatPrice(product.totalPrice)}đ
-                                                                </Text>
-                                                            </View>
+                                                {item?.listItem?.length > 0 && (
+                                                    <View style={styles.productContainer}>
+                                                        <Image
+                                                            source={{ uri: item.listItem[0].imageUrl }}
+                                                            style={styles.image}
+                                                        />
+                                                        <View style={styles.info}>
+                                                            <Text style={styles.title}>
+                                                                {t('history.name')} {item.listItem[0].proName}
+                                                            </Text>
+                                                            <Text style={styles.size}>
+                                                                {t('history.quantity')} {item.listItem[0].quantity}
+                                                            </Text>
+                                                            <Text style={styles.price}>
+                                                                {t('history.price')} {formatPrice(item.listItem[0].totalPrice)}đ
+                                                            </Text>
+
+                                                            {item.listItem.length > 1 && (
+                                                                <Text style={styles.moreText}>+ {item.listItem.length - 1} {t('history.otherItems')}</Text>
+                                                            )}
                                                         </View>
-                                                    )}
-                                                />
+                                                    </View>
+                                                )}
+
 
                                                 <Text style={styles.totalPrice}>
                                                     <Text style={styles.boldText1}>{t('history.total_price')}</Text> {formatPrice(Math.max(item.totalPrice + item.deliveryFee - item.discountPrice, 0))}đ

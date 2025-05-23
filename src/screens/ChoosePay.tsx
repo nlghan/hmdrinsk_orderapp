@@ -28,7 +28,7 @@ type PaymentMethod = {
 const paymentMethods: PaymentMethod[] = [
     { id: 'cash', label: 'Tiền mặt', image: require('../assets/app_images/tien.jpg') },
     { id: 'card', label: 'Thẻ ngân hàng', image: require('../assets/app_images/bidv.png') },
-    { id: 'momo', label: 'Momo', image: require('../assets/app_images/momo.png') },
+    // { id: 'momo', label: 'Momo', image: require('../assets/app_images/momo.png') },
     { id: 'zalopay', label: 'ZaloPay', image: require('../assets/app_images/zalopay.png') },
     { id: 'vnpay', label: 'VNPay', image: require('../assets/app_images/vnpay.png') },
 ];

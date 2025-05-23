@@ -1,20 +1,21 @@
-
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, StyleSheet, TouchableOpacity, ActivityIndicator, Alert, Image } from 'react-native';
+import {
+    View, Text, FlatList, StyleSheet, TouchableOpacity,
+    ActivityIndicator, Alert, Image
+} from 'react-native';
 import axiosInstance from '../utils/axiosInstance';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useCategoryStore } from "../store/store";
 import { useTranslation } from 'react-i18next';
 import Icon from "react-native-vector-icons/MaterialIcons";
 import EmptyListAnimation from '../components/EmptyListAnimation';
-import LinearGradient from 'react-native-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from "@react-navigation/stack";
-import { FONTFAMILY } from '../theme/theme';
 import { RootStackParamList } from "../navigation/RootStackParamList";
+import styles from '../styles/PendingStyle';
+import LinearGradient from 'react-native-linear-gradient';
 
 const PendingOrder = () => {
-    // Định nghĩa kiểu dữ liệu
     type ProductItem = {
         cartItemId: string;
         proId: string;
@@ -56,256 +57,230 @@ const PendingOrder = () => {
             };
         };
     };
-    const [waitingOrders, setWaitingOrders] = useState<Order[]>([]);
-    const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
-    const { t } = useTranslation();
+
+    const [individualOrders, setIndividualOrders] = useState<Order[]>([]);
+    const [groupOrders, setGroupOrders] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+    const [selectedTab, setSelectedTab] = useState<'individual' | 'group'>('individual');
+
+    const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
+    const { t } = useTranslation();
     const { language, userId } = useCategoryStore();
 
     useEffect(() => {
-        fetchWaitingList();
-    }, []);
+        if (selectedTab === 'individual') {
+            fetchIndividualOrders();
+        } else {
+            fetchGroupOrders();
+        }
+    }, [selectedTab]);
 
-    const fetchWaitingList = async () => {
+    const fetchIndividualOrders = async () => {
         setLoading(true);
         setError('');
-        const token = await AsyncStorage.getItem('access_token');
         try {
+            const token = await AsyncStorage.getItem('access_token');
             const response = await axiosInstance.get(`/shipment/view/list-waiting/${userId}`, {
                 headers: {
                     Authorization: `Bearer ${token}`,
-                    Accept: 'application/json',
-                    'Content-Type': 'application/json'
                 },
             });
-            console.log("check", response.data);
 
             const listOrders = response.data.listShipment || [];
-
-            const promises = listOrders.map(async (order: Order) => {
+            const listWithPaymentInfo = await Promise.all(listOrders.map(async (order: Order) => {
                 try {
-                    const responsePayment = await axiosInstance.get(`/orders/info-payment-language?orderId=${order.orderId}&language=${language}`, {
-                        headers: {
-                            Authorization: `Bearer ${token}`,
-                            Accept: 'application/json',
-                            'Content-Type': 'application/json'
-                        },
+                    const paymentRes = await axiosInstance.get(`/orders/info-payment-language?orderId=${order.orderId}&language=${language}`, {
+                        headers: { Authorization: `Bearer ${token}` },
                     });
-                    console.log("responsePayment", responsePayment.data);
-                    return { ...order, payment: responsePayment.data, cartItems: responsePayment.data.cartItems || [], };
-
-                } catch (error) {
-                    console.error(`Lỗi khi lấy payment cho orderId ${order.orderId}:`, error);
+                    return { ...order, payment: paymentRes.data, cartItems: paymentRes.data.cartItems || [] };
+                } catch (e) {
+                    console.error(`Payment error for ${order.orderId}`, e);
                     return { ...order, payment: null };
                 }
-            });
-            const listWithPaymentInfo = await Promise.all(promises);
-            setWaitingOrders(listWithPaymentInfo);
-            console.log("listWithPaymentInfo", listWithPaymentInfo);
-        } catch (error) {
-            console.error('Lỗi fetchWaitingList:', error);
-            setError(language === 'EN' ? 'Unable to load the waiting list data.' : 'Không thể tải dữ liệu danh sách chờ.');
+            }));
+            setIndividualOrders(listWithPaymentInfo);
+        } catch (e) {
+            console.error('fetchIndividualOrders error:', e);
+            setError(t('history.fetch_error'));
         } finally {
             setLoading(false);
         }
     };
-    const formatPrice = (price: number) => {
-        return (price).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-    };
-    const getFirstImageUrl = (imageUrl: string): string => {
-        if (!imageUrl) {
-            return 'https://via.placeholder.com/60'; // Hình mặc định nếu rỗng
+
+    const fetchGroupOrders = async () => {
+        setLoading(true);
+        setError('');
+        try {
+            const token = await AsyncStorage.getItem('access_token');
+            const res = await axiosInstance.get(`/shipment-group/view/list-waiting/${userId}`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+
+            const listShipments = res.data?.listShipment || [];
+            setGroupOrders(listShipments);
+        } catch (e) {
+            console.error("fetchGroupOrders error:", e);
+            setError(t('history.fetch_error'));
+        } finally {
+            setLoading(false);
         }
-
-        // Tách chuỗi thành mảng các URL
-        const urls = imageUrl.split(',').map((url) => url.trim());
-
-        // Lấy phần tử đầu tiên và trích xuất URL sau "1: "
-        const firstUrlMatch = urls[0].match(/1:\s*(https?:\/\/[^\s]+)/);
-
-        return firstUrlMatch ? firstUrlMatch[1] : 'https://via.placeholder.com/60';
     };
 
 
-    if (loading) return <ActivityIndicator size="large" color="#0000ff" />;
-    if (error) return <Text style={{ color: 'red' }}>{error}</Text>;
+    const getFirstImageUrl = (imageUrl: string): string => {
+        if (!imageUrl) return 'https://via.placeholder.com/60';
+        const match = imageUrl.split(',')[0].match(/1:\s*(https?:\/\/[^\s]+)/);
+        return match ? match[1] : 'https://via.placeholder.com/60';
+    };
+
+    const formatPrice = (price: number) =>
+        price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+
+    const renderIndividualOrder = ({ item }: { item: Order }) => (
+        <TouchableOpacity onPress={() => navigation.navigate('MyOrderDetails', { shipmentId: Number(item.orderId) })}>
+            <View style={styles.card}>
+                <Text style={styles.orderId}>{t('history.order_id')} {item.orderId}</Text>
+                <FlatList
+                    data={item.cartItems}
+                    keyExtractor={(p) => p.cartItemId}
+                    renderItem={({ item: product }) => (
+                        <View style={styles.productContainer}>
+                            <Image source={{ uri: getFirstImageUrl(product.imageUrl) }} style={styles.image} />
+                            <View style={styles.info}>
+                                <Text>{t('history.name')} {product.proName}</Text>
+                                <Text>{t('history.quantity')} {product.quantity}</Text>
+                                <Text>{t('history.price')} {formatPrice(product.totalPrice)}đ</Text>
+                            </View>
+                        </View>
+                    )}
+                />
+                <Text style={styles.totalPrice}>{t('history.total_price')} {formatPrice(item.payment?.infoPaymentResponse?.amount || 0)} đ</Text>
+                <Text>{t('history.order_date')} {item.dateCreated}</Text>
+            </View>
+        </TouchableOpacity>
+    );
+
+    const renderGroupOrder = ({ item }: { item: any }) => {
+        return (
+            <TouchableOpacity
+                onPress={() => navigation.navigate('OrderGroupDetail', { groupOrderId: item.orderId })}
+                style={{ marginBottom: 12 }}
+            >
+                <View style={{
+                    backgroundColor: '#fff',
+                    padding: 16,
+                    borderRadius: 12,
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: 2 },
+                    shadowOpacity: 0.1,
+                    shadowRadius: 4,
+                    elevation: 3,
+                    borderWidth: 1,
+                    borderColor: '#e0e0e0',
+                }}>
+                    <Text style={{ fontWeight: 'bold', fontSize: 16, marginBottom: 8 }}>
+                        {t('history.group_order')} #{item.shipmentId}
+                    </Text>
+                    <Text style={styles.infoText}>
+                        {t('history.shipper')} <Text style={styles.bold}>{item.nameShipper}</Text>
+                    </Text>
+                    <Text style={styles.infoText}>
+                        {t('order.customer')}: <Text style={styles.bold}>{item.customerName}</Text>
+                    </Text>
+                    <Text style={styles.infoText}>
+                        {t('address')}: <Text style={styles.bold}>{item.address}</Text>
+                    </Text>
+                    <Text style={styles.infoText}>
+                        {t('phone')}: <Text style={styles.bold}>{item.phoneNumber}</Text>
+                    </Text>
+                    <Text style={styles.infoText}>
+                        {t('history.order_date')} <Text style={styles.bold}>{item.dateCreated}</Text>
+                    </Text>
+                   
+                </View>
+            </TouchableOpacity>
+        );
+    };
+
 
     return (
         <View style={styles.container}>
-            {/* <LinearGradient colors={['#f7eee9de', '#f3ebe0']} style={styles.container}> */}
-            <View style={styles.headerContainer}>
-                <TouchableOpacity style={styles.backIcon} onPress={() => navigation.goBack()}>
-                    <Icon name="arrow-back" size={22} color="#FF9800" />
-                </TouchableOpacity>
-                <Text style={styles.header}>{t('orderPending')}</Text>
-            </View>
+            <LinearGradient colors={['#f7eee9de', '#f3ebe0']} style={styles.container}>
+                <View style={styles.flatlistContainer}>
+                    {/* Header */}
+                    <View style={styles.headerContainer}>
+                        <TouchableOpacity style={styles.backIcon} onPress={() => navigation.goBack()}>
+                            <Icon name="arrow-back" size={22} color="#FF9800" />
+                        </TouchableOpacity>
+                        <Text style={styles.header}>{t('orderPending')}</Text>
+                    </View>
 
-            <View style={styles.body}>
-                {waitingOrders.length === 0 ? (
-                    <EmptyListAnimation title={t('history.empty_list')} />
-                ) : (
-                    <FlatList
-                        data={waitingOrders}
-                        keyExtractor={(item) => item?.orderId?.toString() || `order-${Math.random()}`}
-                        renderItem={({ item }) => (
-                            <View style={styles.card}>
-                                <TouchableOpacity
-                                    onPress={() => navigation.navigate('MyOrderDetails', { shipmentId: Number(item?.orderId) })}>
-                                    <Text style={styles.orderId}>{t('history.order_id')} {item?.orderId}</Text>
-                                    <FlatList
-                                        data={item?.cartItems}
-                                        keyExtractor={(product) => product?.cartItemId?.toString() || `product-${Math.random()}`}
-                                        renderItem={({ item: product }: { item: ProductItem }) => (
-                                            <View style={styles.productContainer}>
-                                                <Image
-                                                    source={{ uri: getFirstImageUrl(product.imageUrl) }}
-                                                    style={styles.image}
-                                                    onError={(e) => console.log('Lỗi tải hình:', e.nativeEvent.error)}
-                                                />
-                                                <View style={styles.info}>
-                                                    <Text style={styles.title}>{t('history.name')} {product.proName}</Text>
-                                                    <Text style={styles.size}>{t('history.quantity')} {product.quantity}</Text>
-                                                    <Text style={styles.price}>{t('history.price')} {formatPrice(product.totalPrice)}đ</Text>
-                                                </View>
-                                            </View>
-                                        )}
-                                    />
-                                    {/* <Text style={styles.boldText}>{t('address')}: {item.address}</Text> */}
+                    {/* Tabs */}
+                    <View style={styles.tabContainer}>
+                        <TouchableOpacity
+                            style={[styles.tabButton, selectedTab === 'individual' && styles.activeTab]}
+                            onPress={() => {
+                                setSelectedTab('individual');
+                                fetchIndividualOrders();
+                            }}
+                        >
+                            <Text style={[styles.tabText, selectedTab === 'individual' && styles.activeTabText]}>
+                                {t('history.normal_order')}
+                            </Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            style={[styles.tabButton, selectedTab === 'group' && styles.activeTab]}
+                            onPress={() => {
+                                setSelectedTab('group');
+                                fetchGroupOrders();
+                            }}
+                        >
+                            <Text style={[styles.tabText, selectedTab === 'group' && styles.activeTabText]}>
+                                {t('history.group_order')}
+                            </Text>
+                        </TouchableOpacity>
+                    </View>
 
-                                    <Text style={styles.boldText2}><Text style={styles.boldText}>{t('phone')}:</Text> {item.phoneNumber} </Text>
+                    <View style={styles.separator} />
 
-                                    <Text style={styles.boldText2}><Text style={styles.boldText}>{t('order.discount')}:</Text> {item.payment?.discountPrice} VND</Text>
-                                    <Text style={styles.boldText2}><Text style={styles.boldText}>{t('order.shipFee')}:</Text> {item.payment?.deliveryFee} VND</Text>
-                                    <Text style={styles.totalPrice}>
-                                        <Text style={styles.boldText}>{t('history.total_price')}</Text> {item.payment?.infoPaymentResponse.amount} đ
-                                    </Text>
-                                    <Text>
-                                        <Text style={styles.boldText}>{t('history.order_date')}</Text> {item.dateCreated}
-                                    </Text>
-                                </TouchableOpacity>
-
-                            </View>
+                    {/* Body */}
+                    <View style={styles.body}>
+                        {loading ? (
+                            <ActivityIndicator size="large" color="#0000ff" />
+                        ) : error ? (
+                            <Text style={{ color: 'red' }}>{error}</Text>
+                        ) : selectedTab === 'individual' ? (
+                            individualOrders.length === 0 ? (
+                                <EmptyListAnimation title={t('history.empty_list')} />
+                            ) : (
+                                <FlatList
+                                    data={individualOrders}
+                                    keyExtractor={(item) => item.orderId}
+                                    renderItem={renderIndividualOrder}
+                                    showsVerticalScrollIndicator={false}
+                                />
+                            )
+                        ) : groupOrders.length === 0 ? (
+                            <EmptyListAnimation title={t('history.empty_group_list')} />
+                        ) : (
+                            <FlatList
+                                data={groupOrders}
+                                keyExtractor={(item, index) => `group-${item?.crudGroupOrderResponse?.groupOrderId || index}`}
+                                renderItem={renderGroupOrder}
+                                showsVerticalScrollIndicator={false}
+                            />
                         )}
-                    />
-                )}
-            </View>
-            {/* </LinearGradient> */}
+                    </View>
+                </View>
+            </LinearGradient>
         </View>
     );
+
 };
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: '#f8f8f8',
-        borderRadius: 10,
-    },
-    flatlistContainer: {
-        backgroundColor: '#fff',
-        padding: 5,
-        marginHorizontal: 8,
-        borderRadius: 10,
-        marginTop: 10,
-        flex: 1,
-    },
-    headerContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        paddingVertical: 10,
-    },
-    backIcon: {
-        position: "absolute",
-        top: 15,
-        left: 10,
-    },
-    header: {
-        fontSize: 22,
-        fontWeight: 'bold',
-        color: '#333',
-        textAlign: 'center',
-        fontFamily: FONTFAMILY.lobster_regular,
-    },
-    body: {
-        flex: 1,
-    },
-    card: {
-        backgroundColor: 'white',
-        padding: 12,
-        borderRadius: 10,
-        marginBottom: 10,
-        marginHorizontal: 5,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 3 },
-        shadowOpacity: 0.2,
-        shadowRadius: 5,
-        elevation: 4,
-    },
-    orderId: {
-        marginBottom: 8,
-        fontSize: 30,
-        fontFamily: FONTFAMILY.dongle_bold,
-    },
-    boldText: {
-        fontFamily: FONTFAMILY.dongle_regular,
-        fontSize: 26,
-    },
-        boldText2: {
-        fontFamily: FONTFAMILY.dongle_light,
-        fontSize: 24
-    },
-    productContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: 10,
-    },
-    image: {
-        width: 70,
-        height: 70,
-        borderRadius: 10,
-        marginRight: 12,
-    },
-    info: {
-        flex: 1,
-        justifyContent: 'center',
-    },
-    title: {
-        fontSize: 26,
-        color: '#333',
-        marginBottom: 4,
-        fontFamily: FONTFAMILY.dongle_regular,
-    },
-    size: {
-        fontSize: 24,
-        color: 'gray',
-        fontFamily: FONTFAMILY.dongle_regular,
-    },
-    price: {
-        fontSize: 26,
-        color: '#27ae60',
-        marginTop: 4,
-        fontFamily: FONTFAMILY.dongle_regular,
-    },
-    totalPrice: {
-        fontSize: 26,
-        fontFamily: FONTFAMILY.dongle_regular,
-        color: '#e74c3c',
-        marginTop: 6,
-    },
-    buttonContainer: {
-        flexDirection: 'row',
-        marginTop: 10,
-    },
-    button: {
-        backgroundColor: '#ff6347',
-        padding: 10,
-        borderRadius: 5,
-        marginRight: 10,
-    },
-    buttonText: {
-        color: 'white',
-        fontWeight: 'bold',
-    },
-});
+
+
 
 export default PendingOrder;

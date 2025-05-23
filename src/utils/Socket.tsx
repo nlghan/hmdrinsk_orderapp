@@ -20,6 +20,9 @@ const useWebSocket = (userId: number) => {
     const heartbeatRef = useRef<NodeJS.Timeout | null>(null);
     const fetchCartItem = useCartStore(state => state.fetchCartItem);
     const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
+    const {groupOrderCount} = useCartStore();
+     const setGroupOrderCount = useCartStore((state) => state.setGroupOrderCount);
+
 
     // Ref giữ debounce timer
     const fetchCartItemDebounceRef = useRef<NodeJS.Timeout | null>(null);
@@ -42,7 +45,7 @@ const useWebSocket = (userId: number) => {
                     return;
                 }
                 const encodedToken = encodeURIComponent(token);
-                const ws = new WebSocket(`ws://192.168.1.15:1010/ws-raw?token=${encodedToken}&userId=${userId}`);
+                const ws = new WebSocket(`ws://172.21.22.183:1010/ws-raw?token=${encodedToken}&userId=${userId}`);
                 socketRef.current = ws;
 
                 ws.onopen = () => {
@@ -86,7 +89,7 @@ const useWebSocket = (userId: number) => {
                         }
 
                         if (
-                            ['NEW_GROUP_JOIN', 'MEMBER_LEFT_GROUP', 'MEMBER_KICKED', 'UPDATE_CART'].includes(message.type)
+                            ['NEW_GROUP_JOIN', 'MEMBER_LEFT_GROUP', 'MEMBER_KICKED', 'UPDATE_CART', 'CHECKOUT'].includes(message.type)
                         ) {
                             // debounce gọi fetchCartItem
                             if (fetchCartItemDebounceRef.current) {
@@ -98,8 +101,17 @@ const useWebSocket = (userId: number) => {
                         }
 
                         if (message.type === 'MEMBER_KICKED') {
-                            navigation.navigate('GroupOrderList');
+                            setGroupOrderCount(Math.max(0, groupOrderCount - 1));
+                            navigation.goBack();
                         }
+
+                        if (message.type === 'CHECKOUT') {
+                             setGroupOrderCount(Math.max(0, groupOrderCount - 1));
+                            navigation.navigate('Main');
+                        }
+
+
+                      
 
                     } catch (error) {
                         console.log('❌ JSON parse error:', error);

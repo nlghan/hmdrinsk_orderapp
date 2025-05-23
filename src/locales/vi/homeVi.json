@@ -28,7 +28,10 @@
         "payment": "Thanh toán",
         "print_invoice": "In hóa đơn",
         "payment_method": "Phương thức thanh toán",
-        "refunded_status": "Trạng thái hoàn tiền"
+        "refunded_status": "Trạng thái hoàn tiền",
+        "normal_order": "Cá nhân",
+        "group_order": "Nhóm",
+        "otherItems": "sản phẩm khác"
     },
     "favourite": {
         "title": "Yêu thích",
@@ -617,7 +620,14 @@
             "error9": "Không thể tạo đơn nhóm",
             "title9": "Xác nhận xoá thành viên",
             "check10": "Bạn có chắc muốn xoá {{name}} khỏi nhóm?",
-            "successKick":"Xóa thành viên thành công"
+            "successKick": "Xóa thành viên thành công"
+        },
+        "detail": {
+            "infoGroup": "Thông tin nhóm đặt hàng",
+            "nameGroup": "Tên nhóm",
+            "typeGroup": "Loại thanh toán",
+            "create":"Tạo đơn nhóm"
+
         }
     },
     "chat": {

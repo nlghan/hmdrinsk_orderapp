@@ -46,7 +46,9 @@ interface GroupOrder {
 const GroupOrderDetail = () => {
     const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
     const { t } = useTranslation();
-    const { groupCartData, fetchCartItem, checkGroupCart } = useCartStore();
+    const { groupCartData, fetchCartItem, checkGroupCart, groupOrderCount  } = useCartStore();
+     const setGroupOrderCount = useCartStore((state) => state.setGroupOrderCount);
+
     const groupInfo = groupCartData?.crudGroupOrderResponse;
     const members = groupCartData?.crudGroupOrderResponseList || [];
     const { userId } = useCategoryStore();
@@ -286,12 +288,12 @@ const GroupOrderDetail = () => {
             const responseData = error?.response?.data;
 
             if (typeof responseData === 'string' && responseData === 'Quantity is greater than stock') {
-                Alert.alert('Lỗi', 'Số lượng vượt quá tồn kho. Vui lòng nhập lại.');
+                Alert.alert('Hết hàng', 'Số lượng vượt quá tồn kho. Vui lòng nhập lại.');
                 quantityInputRef.current?.focus();
                 return;
             }
 
-            Alert.alert('Lỗi', `Không thể cập nhật món. Vui lòng thử lại.`);
+            Alert.alert('Hết hàng', `Hết sản phẩm kích thước này. Vui lòng chọn lại`);
         } finally {
             setIsLoading(false);
         }
@@ -737,6 +739,7 @@ const GroupOrderDetail = () => {
                                                 );
 
                                                 fetchGroupOrders();
+                                                setGroupOrderCount(Math.max(0, groupOrderCount - 1));
                                                 navigation.navigate('GroupOrderList');
                                             } catch (err) {
                                                 console.error('Lỗi khi rời nhóm:', err);

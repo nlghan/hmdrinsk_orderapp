@@ -2,6 +2,115 @@ import { StyleSheet } from 'react-native';
 import { FONTFAMILY } from '../theme/theme';
 
 const styles = StyleSheet.create({
+
+    container: {
+        flex: 1,
+        padding: 12,
+        backgroundColor: '#f8f8f8',
+        borderRadius: 10,
+    },
+    backIcon: {
+        position: "absolute",
+        top: 15,
+        left: 10,
+    },
+    headerContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: 10,
+    },
+    header: {
+        fontSize: 24,
+        fontFamily: FONTFAMILY.lobster_regular,
+        textAlign: 'center',
+    },
+    title: {
+        fontSize: 28,
+        fontFamily: FONTFAMILY.dongle_regular,
+        color: '#333',
+    },
+    size: {
+        fontSize: 24,
+        fontFamily: FONTFAMILY.dongle_regular,
+        color: 'gray',
+    },
+    price: {
+        fontSize: 26,
+        fontFamily: FONTFAMILY.dongle_regular,
+        color: '#27ae60',
+    },
+    card: {
+        backgroundColor: 'white',
+        padding: 12,
+        borderRadius: 10,
+        marginBottom: 10,
+        marginHorizontal: 5,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 3 },
+        shadowOpacity: 0.2,
+        shadowRadius: 5,
+        elevation: 4,
+    },
+    boldText: {
+        fontSize: 30,
+        fontFamily: FONTFAMILY.dongle_bold,
+    },
+    orderId: {
+        marginBottom: 8,
+        fontSize: 30,
+        fontFamily: FONTFAMILY.dongle_bold,
+    },
+    productContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 10,
+    },
+    image: {
+        width: 80,
+        height: 80,
+        borderRadius: 10,
+        marginRight: 12,
+    },
+    info: {
+        flex: 1,
+        justifyContent: 'center',
+    },
+    totalPrice: {
+        fontFamily: FONTFAMILY.dongle_bold,
+        fontSize: 28,
+        color: '#e74c3c',
+    },
+    boldText1: {
+        fontFamily: FONTFAMILY.dongle_regular,
+        fontSize: 24
+    },
+    boldText2: {
+        fontFamily: FONTFAMILY.dongle_light,
+        fontSize: 24
+    },
+    buttonContainer: {
+        flexDirection: 'row',
+        fontFamily: FONTFAMILY.dongle_bold,
+        fontSize: 28,
+        color: '#e74c3c',
+    },
+    button: {
+        backgroundColor: '#ff6347',
+        padding: 8,
+        borderRadius: 5,
+        width: 100
+    },
+    buttonText: {
+        color: 'white',
+        fontSize: 22,
+        fontFamily: FONTFAMILY.dongle_bold,
+        textAlign: 'center',
+        justifyContent: 'flex-end', // Đưa nút về lề phải
+        alignItems: 'center', // Căn giữa theo chiều dọc,
+        gap: 5
+    },
+
     container: {
         flex: 1,
         backgroundColor: '#f8f8f8',

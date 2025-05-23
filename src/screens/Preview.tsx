@@ -110,7 +110,7 @@ const Preview = () => {
 
     const subtotal = items.reduce((sum: number, item: any) => sum + item.totalPrice, 0);
     const discount3 = subtotal >= 40000 ? Math.floor(subtotal * 0.05) : 0;
-    const finalTotal = subtotal + deliveryFee - groupMemberDiscount - discount3;
+    const finalTotal = subtotal + deliveryFee - groupMemberDiscount ;
 
     return (
         <View style={styles.container}>
@@ -182,7 +182,7 @@ const Preview = () => {
                     </View>
 
                     <Text style={styles.savedText}>
-                        🎉 Bạn tiết kiệm được {(subtotal + deliveryFee - finalTotal).toLocaleString()}đ!
+                        🎉 Bạn tiết kiệm được {groupMemberDiscount.toLocaleString()}đ!
                     </Text>
                 </View>
             </ScrollView>

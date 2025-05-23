@@ -84,7 +84,7 @@ const GroupOrder: React.FC = () => {
                 navigation.navigate('GroupOrderList');
             } else {
                 useAlertStore.getState().showAlert(
-                    t('android.mes.title8'),
+                    t('android.mess.title8'),
                     t('android.mess.error9'),
                     undefined, // Không cần xử lý khi bấm nút xác nhận
                     undefined, // Không có nút hủy
@@ -190,7 +190,7 @@ const GroupOrder: React.FC = () => {
                     <View style={styles.infoLayout}>
                         <View style={styles.infoIcon}><Icon name="group" size={24} color="#FF9800" /></View>
                         <View style={styles.infoSubTitle}>
-                            <Text style={styles.label}>Tên nhóm</Text>
+                            <Text style={styles.label}>{t('android.detail.nameGroup')}</Text>
                             <Text style={styles.value}>{groupName || 'Chưa có tên nhóm'}</Text>
                         </View>
                         <TouchableOpacity onPress={() => setIsEditModalVisible(true)} style={styles.infoEditIcon}>
@@ -206,8 +206,6 @@ const GroupOrder: React.FC = () => {
                                 <Text style={styles.value}>
                                     {selectedTime
                                         ? formatTime(selectedTime)
-                                        : groupCartData?.crudGroupOrderResponse?.deadlinePayment
-                                            ? formatTime(new Date(groupCartData.crudGroupOrderResponse.deadlinePayment))
                                             : 'Không đặt thời hạn'}
                                 </Text>
                             </View>

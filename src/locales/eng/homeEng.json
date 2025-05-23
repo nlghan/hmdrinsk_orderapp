@@ -24,7 +24,10 @@
     "delivery_failed": "Delivery Failed!",
     "reorder": "Reorder",
     "payment": "Payment",
-    "print_invoice": "Print Invoice"
+    "print_invoice": "Print Invoice",
+    "normal_order": "Mine",
+    "group_order": "Group",
+    "otherItems": "other products"
   },
   "login": "Login",
   "signUp": "Sign Up",
@@ -615,7 +618,13 @@
       "error9": "Unable to create group order",
       "title9": "Confirm member deletion",
       "check10": "Are you sure you want to delete {{name}} from the group?",
-      "successKick":"Deleted member successfully"
+      "successKick": "Deleted member successfully"
+    },
+    "detail": {
+      "infoGroup": "Order group information",
+      "nameGroup": "Group name",
+      "typeGroup": "Payment type",
+      "create":"Create group order"
     }
   },
   "chat": {

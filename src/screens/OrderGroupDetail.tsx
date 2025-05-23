@@ -7,6 +7,7 @@ import {
   StyleSheet,
   Image,
   TouchableOpacity,
+  Linking,
 } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import axiosInstance from '../utils/axiosInstance';
@@ -46,6 +47,10 @@ interface GroupOrder {
   code: string;
   status: string;
   link: string;
+  note: string;
+  orderDate: string
+  deadlinePayment: string
+  typeGroupOrder: string
 }
 
 const OrderGroupDetail = () => {
@@ -59,9 +64,15 @@ const OrderGroupDetail = () => {
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [shipmentDetail, setShipmentDetail] = useState<any>(null);
+  const [paymentDetail, setPaymentDetail] = useState<any>(null);
 
-  const formatPrice = (price: number) =>
-    price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.') + 'đ';
+
+  const formatPrice = (price: number | null | undefined) => {
+    if (typeof price !== 'number' || isNaN(price)) return '0đ';
+    return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.') + 'đ';
+  };
+
 
   const statusMapVN: Record<string, string> = {
     COMPLETED: 'Hoàn tất',
@@ -74,13 +85,14 @@ const OrderGroupDetail = () => {
       try {
         const token = await AsyncStorage.getItem('access_token');
         const response = await axiosInstance.get(
-          `/group-order/detail-group/${groupOrderId}?language=${language}`,
+          `/group-order/fetch-all/${groupOrderId}?language=${language}`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
         );
+
         const data = response.data;
-        const mainInfo = data.crudGroupOrderResponse;
+        const mainInfo = data.groupOrderDetail;
 
         setGroupOrder({
           groupOrderId: mainInfo.groupOrderId,
@@ -91,9 +103,17 @@ const OrderGroupDetail = () => {
           code: mainInfo.code,
           status: mainInfo.status,
           link: mainInfo.link,
+          note: mainInfo.note,
+          orderDate: mainInfo.orderDate,
+          deadlinePayment: mainInfo.deadlinePayment,
+          typeGroupOrder: mainInfo.typeGroupOrder
         });
 
-        const memberList = data.crudGroupOrderResponseList.map((member: any) => ({
+        setShipmentDetail(data.shipmentGroupDetail);
+        setPaymentDetail(data.paymentDetail);
+
+
+        const memberList = data.listMemberDetail.map((member: any) => ({
           memberId: member.memberId,
           name: member.name,
           amount: member.amount,
@@ -103,6 +123,7 @@ const OrderGroupDetail = () => {
           typePayment: member.typePayment,
           cartItems: member.crudCartGroupResponse?.listCartItemGroup || [],
         }));
+
         setMembers(memberList);
       } catch (err) {
         console.error('Error fetching group order details:', err);
@@ -115,48 +136,115 @@ const OrderGroupDetail = () => {
     fetchGroupOrderDetails();
   }, [groupOrderId]);
 
+
   if (loading) return <ActivityIndicator size="large" color="#FF9800" />;
   if (error) return <Text style={{ color: 'red', textAlign: 'center' }}>{error}</Text>;
 
   return (
     <ScrollView style={styles.container}>
-      <View style={styles.headerBox}>
+      <View style={styles.headerContainer}>
         <TouchableOpacity style={styles.backIcon} onPress={() => navigation.goBack()}>
-          <IconM name="arrow-back" size={24} color="#FF9800" />
+          <IconM name="arrow-back" size={20} color="#FF9800" />
         </TouchableOpacity>
-        <Text style={styles.header}>{t('orderDetail')}</Text>
+        <View style={styles.headerCenter}>
+          <Text style={styles.headerTitle}>{t('orderDetail')}</Text>
+        </View>
+      </View>
+
+
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>{t('android.detail.infoGroup')}</Text>
+        <View style={styles.detailRow}>
+          <Text style={styles.label}>{t('android.detail.nameGroup')}:</Text>
+          <Text style={styles.value}>{groupOrder?.nameGroup}</Text>
+        </View>
+        <View style={styles.detailRow}>
+          <Text style={styles.label}>{t('android.status_label.leader')}:</Text>
+          <Text style={styles.value}>{groupOrder?.nameLeader}</Text>
+        </View>
+        <View style={styles.detailRow}>
+          <Text style={styles.label}>{t('phone')}:</Text>
+          <Text style={styles.value}>{shipmentDetail?.phoneNumber}</Text>
+        </View>
+        <View style={styles.detailRow}>
+          <Text style={styles.label}>{t('android.detail.typeGroup')}:</Text>
+          <Text style={styles.value}>{groupOrder?.typeGroupOrder}</Text>
+        </View>
+        <View style={styles.detailRow}>
+          <Text style={styles.label}>{t('common.status')}:</Text>
+          <Text style={styles.value}>{language === 'VN' ? statusMapVN[groupOrder?.status || ''] || groupOrder?.status : groupOrder?.status}</Text>
+        </View>
+        <View style={styles.detailRow}>
+          <Text style={styles.label}>{t('address')}:</Text>
+
+        </View>
+        <View style={styles.detailRow}>
+          <Text style={styles.value}>{groupOrder?.address}</Text>
+        </View>
+
+      </View>
+
+
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>{t('orderContent.deliveryInfo')}</Text>
+        <View style={styles.detailRow}>
+          <Text style={styles.label}>{t('history.shipper')}</Text>
+          <Text style={styles.value}>{shipmentDetail?.nameShipper}</Text>
+        </View>
+
+        <View style={styles.detailRow}>
+          <Text style={styles.label}>{t('history.delivery_date')}</Text>
+          <Text style={styles.value}>{shipmentDetail?.dateShipped}</Text>
+        </View>
+        <View style={styles.detailRow}>
+          <Text style={styles.label}>{t('common.status')}:</Text>
+          <Text style={styles.value}>{shipmentDetail?.status}</Text>
+        </View>
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.title}>{t('groupOrder.nameGroup')}: {groupOrder?.nameGroup}</Text>
-        <Text style={styles.text}>{t('groupOrder.code')}: {groupOrder?.code}</Text>
-        <Text style={styles.text}>{t('groupOrder.leader')}: {groupOrder?.nameLeader}</Text>
-        <Text style={styles.text}>{t('address')}: {groupOrder?.address}</Text>
-        <Text style={styles.text}>{t('orderContent.price')}: {formatPrice(groupOrder?.totalPrice ?? 0)}</Text>
-        <Text style={styles.text}>
-          {t('common.status')}: {language === 'VN' ? statusMapVN[groupOrder?.status || ''] || groupOrder?.status : groupOrder?.status}
-        </Text>
+        <Text style={styles.sectionTitle}>{t('infoPayment')}</Text>
+        <View style={styles.detailRow}>
+          <Text style={styles.label}>{t('history.total_price')}</Text>
+          <Text style={styles.value}>{formatPrice(paymentDetail?.amount)}</Text>
+        </View>
+        <View style={styles.detailRow}>
+          <Text style={styles.label}>{t('paymentMethod')}:</Text>
+          <Text style={styles.value}>{paymentDetail?.paymentMethod}</Text>
+        </View>
+        <View style={styles.detailRow}>
+          <Text style={styles.label}>{t('common.status')}:</Text>
+          <Text style={styles.value}>{paymentDetail?.statusPayment}</Text>
+        </View>
+
       </View>
 
-      {members.map((member) => (
-        <View key={member.memberId} style={styles.section}>
-          <Text style={styles.subTitle}>{member.name} {member.isLeader ? `(${t('groupOrder.leader')})` : ''}</Text>
-          <Text style={styles.text}>{t('orderContent.price')}: {formatPrice(member.amount)}</Text>
-          <Text style={styles.text}>{t('paymentMethod')}: {member.typePayment}</Text>
-          <Text style={styles.text}>{t('common.status')}: {language === 'VN' ? statusMapVN[member.status] || member.status : member.status}</Text>
-          {member.cartItems.map((item) => (
-            <View key={item.cartItemGroupId} style={styles.itemBox}>
-              <Image source={{ uri: item.imageUrl }} style={styles.image} />
-              <View style={styles.itemInfo}>
-                <Text style={styles.itemName}>{item.proName}</Text>
-                <Text style={styles.itemDetail}>{t('quantity')}: {item.quantity}</Text>
-                <Text style={styles.itemDetail}>{t('size')}: {item.size}</Text>
-                <Text style={styles.itemPrice}>{formatPrice(item.totalPrice)}</Text>
+      <View style={styles.section}>
+         <Text style={styles.sectionTitle}>{t('common.proList')}</Text>
+        {members.map((member) => (
+          <View key={member.memberId} style={styles.section}>
+            <Text style={styles.subTitle}>{member.name} {member.isLeader ? `(${t('android.status_label.leader')})` : ''}</Text>
+            <Text style={styles.text}>{t('orderContent.price')}: {formatPrice(member.amount)}</Text>
+            {/* <Text style={styles.text}>{t('paymentMethod')}: {member.typePayment}</Text>
+            <Text style={styles.text}>{t('common.status')}: {language === 'VN' ? statusMapVN[member.status] || member.status : member.status}</Text> */}
+            {member.cartItems.map((item) => (
+              <View key={item.cartItemGroupId} style={styles.itemBox}>
+                <Image source={{ uri: item.imageUrl }} style={styles.image} />
+                <View style={styles.itemInfo}>
+                  <Text style={styles.itemName}>{item.proName}</Text>
+                  <Text style={styles.itemDetail}>{t('quantity')}: {item.quantity}</Text>
+                  <Text style={styles.itemDetail}>{t('size')}: {item.size}</Text>
+                  <Text style={styles.itemPrice}>{formatPrice(item.totalPrice)}</Text>
+                </View>
               </View>
-            </View>
-          ))}
-        </View>
-      ))}
+            ))}
+          </View>
+        ))}
+
+      </View>
+
+
+
     </ScrollView>
   );
 };
@@ -168,14 +256,18 @@ const styles = StyleSheet.create({
     backgroundColor: '#f8f8f8',
   },
   headerBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
+    fontSize: 24,
+    fontFamily: FONTFAMILY.lobster_regular,
+    textAlign: 'center',
+    marginBottom: 8,
+    color: '#333',
   },
   backIcon: {
     marginRight: 10,
   },
   header: {
+    display: 'flex',
+    flexDirection: 'row',
     fontSize: 24,
     fontFamily: FONTFAMILY.lobster_regular,
     color: '#333',
@@ -198,14 +290,14 @@ const styles = StyleSheet.create({
     color: '#0275d8',
   },
   subTitle: {
-    fontSize: 20,
+    fontSize: 24,
     fontFamily: FONTFAMILY.dongle_bold,
     color: '#5cb85c',
     marginBottom: 4,
   },
   text: {
-    fontSize: 18,
-    fontFamily: FONTFAMILY.dongle_light,
+    fontSize: 24,
+    fontFamily: FONTFAMILY.dongle_regular,
     color: '#555',
     marginBottom: 2,
   },
@@ -231,12 +323,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   itemName: {
-    fontSize: 20,
+    fontSize: 22,
     fontFamily: FONTFAMILY.dongle_bold,
     color: '#333',
   },
   itemDetail: {
-    fontSize: 18,
+    fontSize: 20,
     fontFamily: FONTFAMILY.dongle_light,
     color: '#666',
   },
@@ -245,6 +337,59 @@ const styles = StyleSheet.create({
     fontFamily: FONTFAMILY.dongle_bold,
     color: '#d9534f',
   },
+  headerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    height: 50,
+    marginBottom: 16,
+    position: 'relative',
+  },
+
+  headerCenter: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  headerTitle: {
+    fontSize: 24,
+    fontFamily: FONTFAMILY.lobster_regular,
+    color: '#333',
+  },
+  detailRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  label: {
+    fontFamily: FONTFAMILY.dongle_regular,
+    fontSize: 26,
+    lineHeight: 18,
+    color: '#444',
+  },
+  value: {
+    fontFamily: FONTFAMILY.dongle_light,
+    fontSize: 26,
+    lineHeight: 18,
+    color: '#666',
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontFamily: FONTFAMILY.lobster_regular,
+    marginBottom: 5,
+    color: '#0275d8',
+  },
+   subHeader: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        marginTop: 16,
+        marginBottom: 8,
+        color: '#5cb85c',
+    },
+
 });
 
 export default OrderGroupDetail;

@@ -142,7 +142,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: 16,
         borderRadius: 20,
         backgroundColor: '#f0f0f0',
-        width: 150
+        width:150
     },
     activeTab: {
         backgroundColor: '#FF9800',
@@ -150,19 +150,34 @@ const styles = StyleSheet.create({
     tabText: {
         fontSize: 14,
         color: '#333',
-        textAlign: 'center'
+        textAlign:'center'
     },
     activeTabText: {
         color: '#fff',
         fontWeight: 'bold',
     },
-    moreText: {
-        fontSize: 16,
-        color: '#888',
-        marginTop: 4,
-        fontStyle: 'italic',
+    card: {
+        backgroundColor: '#fff',
+        padding: 16,
+        borderRadius: 12,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 3,
+        borderWidth: 1,
+        borderColor: '#e0e0e0',
+        marginBottom: 12,
     },
-
+    infoText: {
+        fontSize: 14,
+        color: '#333',
+        marginBottom: 4,
+    },
+    bold: {
+        fontWeight: '600',
+        color: '#000',
+    },
 
 
 }

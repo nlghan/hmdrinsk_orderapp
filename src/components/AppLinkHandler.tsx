@@ -15,7 +15,8 @@ import { useTranslation } from 'react-i18next';
 
 export default function AppLinkHandler() {
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
-  const { setIdOrderPause, setIdCartPause, setGroupCartId, ensureActiveCart } = useCartStore();
+  const { setIdOrderPause, setIdCartPause, setGroupCartId, ensureActiveCart, groupOrderCount  } = useCartStore();
+  const setGroupOrderCount = useCartStore((state) => state.setGroupOrderCount);
   const { fetchUserCoin } = useCategoryStore();
   const { t } = useTranslation();
   const [modalVisible, setModalVisible] = useState(false);
@@ -100,8 +101,16 @@ const { language} = useCategoryStore();
                 },
               }
             );
+            
+            if(groupOrderCount==0){
+              setGroupOrderCount(1);
 
+            }else{
+              setGroupOrderCount(groupOrderCount+1);
+            }
+            
             console.log('✅ Tham gia nhóm thành công:', response.data);
+            
 
             useAlertStore.getState().showAlert(
               t('common.noti'),

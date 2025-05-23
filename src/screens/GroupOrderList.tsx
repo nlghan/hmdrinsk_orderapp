@@ -52,8 +52,9 @@ const GroupOrderList: React.FC = () => {
     const rawUserId = useCategoryStore.getState().userId;
     const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
     const { t } = useTranslation();
-    const { setGroupCartId, setHasGroupCart, fetchCartItem, groupCartData } = useCartStore.getState();
+    const { setGroupCartId, setHasGroupCart, fetchCartItem, groupCartData, groupOrderCount } = useCartStore.getState();
     const { language } = useCategoryStore();
+    const setGroupOrderCount = useCartStore((state) => state.setGroupOrderCount);
 
     const fetchGroupOrders = async () => {
         const accessToken = await AsyncStorage.getItem('access_token');
@@ -132,48 +133,38 @@ const GroupOrderList: React.FC = () => {
     const handlePress = async (item: GroupOrder) => {
         try {
             setLoading(true);
-            console.log('🔍 Bắt đầu handlePress với groupOrderId:', item.groupOrderId);
-
             const accessToken = await AsyncStorage.getItem('access_token');
             const userId = typeof rawUserId === 'string' ? parseInt(rawUserId, 10) : Number(rawUserId);
-            if (isNaN(userId)) {
-                console.warn('⚠️ userId không hợp lệ:', rawUserId);
-                return;
-            }
+            if (isNaN(userId)) return;
 
-            // 1. Gọi API kiểm tra thời gian còn lại
+            // 1. Check thời gian trước
             const timeRes = await axiosInstance.get(
                 `/group-order/${item.groupOrderId}/time-remaining`,
-                {
-                    headers: { Authorization: `Bearer ${accessToken}` },
-                }
+                { headers: { Authorization: `Bearer ${accessToken}` } }
             );
             const remainingTime = timeRes.data;
-            console.log('⏰ Thời gian còn lại:', remainingTime);
-
             if (remainingTime === "00:00:00") {
                 useAlertStore.getState().showAlert(
                     t('common.noti'),
                     'Nhóm đã hết hạn. Vui lòng xác nhận để hủy nhóm',
-                    () => {
-                        console.log('🗑️ Hủy nhóm');
-                        useAlertStore.getState().hideAlert();
-                        // TODO: Gọi API hủy nhóm nếu cần
-                    },
-                    undefined
+                    () => useAlertStore.getState().hideAlert()
                 );
                 return;
             }
 
-            // 2. Lấy cartId
-            const cartRes = await axiosInstance.get(
-                `/group-order/get-id-cart-group/${userId}?groupOrderId=${item.groupOrderId}`,
-                {
+            // 2. Gọi đồng thời cart + detail
+            const [cartRes, detailRes] = await Promise.all([
+                axiosInstance.get(`/group-order/get-id-cart-group/${userId}?groupOrderId=${item.groupOrderId}`, {
                     headers: { Authorization: `Bearer ${accessToken}` },
-                }
-            );
+                }),
+                axiosInstance.get(`/group-order/detail-group/${item.groupOrderId}?language=${language}`, {
+                    headers: { Authorization: `Bearer ${accessToken}` },
+                }),
+            ]);
+
             const cartId = cartRes.data;
-            console.log('✅ Lấy được cartId:', cartId);
+            const status = detailRes.data?.crudGroupOrderResponse?.status;
+            const isLeader = detailRes.data?.crudGroupOrderResponseList[0]?.isLeader;
 
             setGroupCartId(item.groupOrderId);
             setHasGroupCart(true);
@@ -181,46 +172,20 @@ const GroupOrderList: React.FC = () => {
             useCartStore.getState().currentCartId = cartId;
             fetchCartItem();
 
-            // 3. Gọi API detail group
-            const detailRes = await axiosInstance.get(
-                `/group-order/detail-group/${item.groupOrderId}?language=${language}`,
-                {
-                    headers: { Authorization: `Bearer ${accessToken}` },
-                }
-            );
-
-            const status = detailRes.data?.crudGroupOrderResponse?.status;
-            const isLeader = detailRes.data?.crudGroupOrderResponseList[0]?.isLeader;
-
-            console.log('📦 Detail group status:', status);
-            console.log('👤 Is Leader:', isLeader);
-
-            // 4. Nếu đã CHECKOUT
             if (status === 'CHECKOUT') {
                 if (isLeader) {
-                    // Gọi API lấy link thanh toán
                     const paymentLinkRes = await axiosInstance.get(
                         `/group-order/link-payment/${item.groupOrderId}`,
-                        {
-                            headers: { Authorization: `Bearer ${accessToken}` },
-                        }
+                        { headers: { Authorization: `Bearer ${accessToken}` } }
                     );
-
                     const paymentLink = paymentLinkRes.data;
-                    if (paymentLink && typeof paymentLink === 'string' && paymentLink.startsWith('http')) {
-                        console.log('🔗 Mở link thanh toán:', paymentLink);
+                    if (typeof paymentLink === 'string' && paymentLink.startsWith('http')) {
                         Linking.openURL(paymentLink);
                     } else {
-                        console.log('⚠️ Không có link thanh toán, dẫn đến ChoosePay');
                         navigation.navigate('ChoosePay', { groupOrderId: item.groupOrderId });
                     }
-                } else {
-                    console.warn('⛔ Không phải leader trong trạng thái CHECKOUT');
-                    return;
                 }
-            }
-            else {
-                console.log('➡️ Dẫn hướng đến GroupOrderDetail');
+            } else {
                 navigation.navigate('GroupOrderDetail', { groupOrderId: item.groupOrderId });
             }
         } catch (error) {
@@ -230,7 +195,6 @@ const GroupOrderList: React.FC = () => {
             setLoading(false);
         }
     };
-
 
 
 
@@ -252,6 +216,8 @@ const GroupOrderList: React.FC = () => {
                                 },
                             }
                         );
+
+                        setGroupOrderCount(Math.max(0, groupOrderCount - 1));
 
                         showNotification(t('android.mess.sucess1'));
                         fetchGroupOrders(); // cập nhật lại danh sách nhóm sau khi xoá
@@ -282,6 +248,7 @@ const GroupOrderList: React.FC = () => {
                         );
 
                         showNotification(t('android.mess.sucess2'));
+                        setGroupOrderCount(Math.max(0, groupOrderCount - 1));
                         fetchGroupOrders(); // cập nhật lại danh sách nhóm
                     } catch (err) {
                         console.error('Lỗi khi rời nhóm:', err);

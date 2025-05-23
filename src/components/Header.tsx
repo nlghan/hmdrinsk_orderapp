@@ -131,9 +131,9 @@ const Header = ({ style }: { style?: object }) => {
                         size={15}
                         color={(hasGroupCart && !hasRejectedGroupCart) ? COLORS.primaryGreenHex : 'gray'}
                     />
-                    <View style={homeStyles.notificationCount}>
+                    {/* <View style={homeStyles.notificationCount}>
                         <Text style={homeStyles.notificationText}>{groupOrderCount}</Text>
-                    </View>
+                    </View> */}
                 </TouchableOpacity>
                 
 
