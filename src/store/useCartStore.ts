@@ -78,6 +78,11 @@ interface CrudGroupOrderResponse {
   dateUpdated: string;
   dateDeleted: string | null;
 }
+type CreateOrderResult =
+  | { orderId: string; errorCode: null; errorData: null }
+  | { orderId: null; errorCode: string; errorData: any };
+
+
 
 interface CrudGroupOrderResponseListItem {
   memberId: number;
@@ -208,7 +213,7 @@ interface CartStore {
   changeSize: (cartItemId: number, size: string) => Promise<void>;
   setCoin: (coinAmount: number) => void;  // New function to update the coin state
   updateCartTotal: () => void;
-  createOrder: (note: string) => Promise<string>;  // New function to update the coin state
+  createOrder: (note: string) => Promise<CreateOrderResult>;  // New function to update the coin state
   setOrderId: (orderId: number) => void;
   idCartPause: number | null; // 🆕 thêm
   setIdCartPause: (id: number | null) => void; // 🆕 thêm
@@ -295,7 +300,7 @@ export const useCartStore = create<CartStore>()(
       },
 
       checkGroupCart: async () => {
-        
+
         try {
           const { userId } = useCategoryStore.getState();
           if (!userId) throw new Error("User not logged in");
@@ -965,46 +970,100 @@ export const useCartStore = create<CartStore>()(
         }
       },
 
-      createOrder: async (note: string): Promise<string> => {
+
+      createOrder: async (note: string): Promise<CreateOrderResult> => {
         try {
           const { currentCartId, selectedVoucher, coin } = get();
           const { userId, language } = useCategoryStore.getState();
 
-          if (!userId || !currentCartId) throw new Error("❌ Missing user or cart");
+          if (!userId || !currentCartId) {
+            return { orderId: null, errorCode: 'MISSING_USER_OR_CART', errorData: null };
+          }
 
           const accessToken = await AsyncStorage.getItem('access_token');
-          if (!accessToken) throw new Error("Access token missing");
+          if (!accessToken) {
+            return { orderId: null, errorCode: 'MISSING_TOKEN', errorData: null };
+          }
 
           const voucherId = selectedVoucher.selectedVoucherId || "string";
           const pointCoinUse = coin || 0;
+
+          console.log("🧾 userId:", userId);
+          console.log("🛒 currentCartId:", currentCartId);
 
           const response = await axiosInstance.post(
             '/orders/create',
             { userId, cartId: currentCartId, voucherId, pointCoinUse, note, language },
             { headers: { Authorization: `Bearer ${accessToken}` } }
           );
+          console.log("📦 API response data:", response.data);
+          console.log("📦 API response body type:", typeof response.data.body);
 
-          const order = response.data.body;
+
+          const body = response.data.body;
+
+          // ❗ Nếu body là string (lỗi), thì ném về catch
+          if (typeof body === 'string') {
+            throw { response: { status: 400, data: body } };
+          }
+
+          const order = body;
           const orderId = order?.orderId;
-          if (!orderId) throw new Error("Invalid orderId");
+          if (!orderId) {
+            return { orderId: null, errorCode: 'INVALID_ORDER_ID', errorData: null };
+          }
+
 
           set({
             order,
             orderId,
             cart: [],
             cartTotal: 0,
-            selectedVoucher: { selectedVoucherId: null, selectedVoucherKey: null, selectedVoucherDiscountAmount: 0 },
+            selectedVoucher: {
+              selectedVoucherId: null,
+              selectedVoucherKey: null,
+              selectedVoucherDiscountAmount: 0,
+            },
             coin: 0,
             currentCartId: null
           });
 
-          return String(orderId);
+          return { orderId: String(orderId), errorCode: null, errorData: null };
 
-        } catch (error) {
+        } catch (error: any) {
           console.error("❌ createOrder error:", error);
-          throw error;
+
+          if (error?.response?.status === 400) {
+            const message = error.response.data;
+
+            // 📌 Lỗi hết hàng
+            const stockRegex = /Not enough product for (.+), size (.+)\. Requested quantity: (\d+), Available: (\d+)/;
+            if (typeof message === 'string' && stockRegex.test(message)) {
+              const matches = message.match(stockRegex);
+              return {
+                orderId: null,
+                errorCode: 'STOCK_ERROR',
+                errorData: {
+                  product: matches?.[1],
+                  size: matches?.[2],
+                  requested: matches?.[3],
+                  available: matches?.[4],
+                }
+              };
+            }
+
+            // 📌 Các lỗi khác
+            return { orderId: null, errorCode: message, errorData: null };
+          }
+
+          if (error?.response?.status === 404 && error.response.data === "Outside of working hours.") {
+            return { orderId: null, errorCode: 'OUTSIDE_WORKING_HOURS', errorData: null };
+          }
+
+          return { orderId: null, errorCode: 'UNKNOWN', errorData: null };
         }
       },
+
 
       addToCart: async (proId: number, size: string, quantity: number, language: string) => {
         try {

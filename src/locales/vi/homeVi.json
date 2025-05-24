@@ -237,7 +237,7 @@
     "shippingStatus": "Trạng thái giao hàng",
     "note": "Ghi chú",
     "takeNote": "Nhập ghi chú...",
-    "getVoucher": "Nhập mã khuyễn mãi",
+    "getVoucher": "Nhập mã khuyến mãi",
     "infoPayment": "Thông Tin Thanh Toán",
     "statusPayment": "Trạng thái thanh toán",
     "product": "Sản phẩm",
@@ -326,8 +326,20 @@
         "apply": "Sử dụng",
         "label": "Hmdrinks xu",
         "coinErr": "Số xu không hợp lệ",
+        "enterCoins": "Nhập số xu",
         "messCoinErr": "Số xu nhập vào không được vượt quá số xu tích lũy",
-        "voucher": "Mã giảm giá"
+        "voucher": "Mã giảm giá",
+        "notEnoughProduct": "Sản phẩm {{product}} (kích cỡ {{size}}) không đủ. Bạn yêu cầu {{requested}}, nhưng chỉ còn {{available}}",
+        "distanceExceeded": "Vượt quá khoảng cách. Vui lòng cập nhật địa chỉ.",
+        "userCoinExceed": "Số xu của bạn vượt quá giới hạn.",
+        "voucherInUse": "Voucher này đã được sử dụng.",
+        "voucherExpired": "Voucher đã hết hạn.",
+        "oucherDeleted": "Voucher này đã bị xóa.",
+        "noPointCoin": "Vui lòng không nhập điểm xu.",
+        "negativeCoin": "Vui lòng không nhập số xu âm.",
+        "outsideWorkingHours": "Ngoài giờ hoạt động. Vui lòng quay lại sau.",
+        "unknownError": "Lỗi không xác định.",
+        "generalError": "Đã xảy ra lỗi. Vui lòng thử lại."
     },
     "products": {
         "header1": "Hình ảnh",
@@ -626,8 +638,7 @@
             "infoGroup": "Thông tin nhóm đặt hàng",
             "nameGroup": "Tên nhóm",
             "typeGroup": "Loại thanh toán",
-            "create":"Tạo đơn nhóm"
-
+            "create": "Tạo đơn nhóm"
         }
     },
     "chat": {

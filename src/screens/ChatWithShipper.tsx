@@ -244,7 +244,7 @@ const ChatWithShipper = () => {
             if (socketRef.current) return;
             const token = await AsyncStorage.getItem('access_token');
             if (!token) return;
-            const ws = new WebSocket(`ws://172.21.22.183:1010/ws-raw?token=${encodeURIComponent(token)}&userId=${userId}`);
+            const ws = new WebSocket(`ws://192.168.9.196:1010/ws-raw?token=${encodeURIComponent(token)}&userId=${userId}`);
             socketRef.current = ws;
             ws.onmessage = (event) => {
                 try {

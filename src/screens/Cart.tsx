@@ -80,7 +80,7 @@ const Cart = () => {
     const showNotification = (message: string) => {
         setNotification({ message, visible: true });
         // Ẩn thông báo sau 3 giây
-        setTimeout(() => setNotification({ ...notification, visible: false }), 4000);
+        setTimeout(() => setNotification({ ...notification, visible: false }), 3000);
     };
 
 
@@ -192,7 +192,7 @@ const Cart = () => {
             setInputCoin(value);  // Cập nhật giá trị xu nhập vào nếu hợp lệ
         } else if (numericValue > halfShopeeXuAmount) {
             setInputCoin('');  // Đặt lại giá trị khi nhập vượt quá giới hạn
-            showNotification(`Số xu bạn nhập vượt quá 50% số xu tích lũy`);
+            showNotification(t('cart.userCoinExceed'));
         }
     };
 
@@ -385,16 +385,54 @@ const Cart = () => {
                 navigation.navigate('Payment', { orderId: idOrderPause });
                 return;
             }
+            const result = await createOrder(note);
+            console.log("📦 createOrder result:", result);
 
-            // Tạo đơn hàng mới
-            const orderId = await createOrder(note);
-            const orderIdNumber = Number(orderId);
 
-            if (!orderId || isNaN(orderIdNumber)) {
-                throw new Error("❌ orderId không hợp lệ.");
+            if (!result.orderId) {
+                const { errorCode, errorData } = result;
+
+                switch (errorCode) {
+                    case 'STOCK_ERROR':
+                        showNotification(String(t('cart.notEnoughProduct', errorData)));
+                        break;
+                    case 'Distance exceeded, please update address':
+                        showNotification(t('cart.distanceExceeded'));
+                        navigation.navigate('Info');
+                        break;
+                    case 'User coin exceed':
+                        showNotification(t('cart.userCoinExceed'));
+                        break;
+                    case 'Voucher already in use':
+                        showNotification(t('cart.voucherInUse'));
+                        break;
+                    case 'Voucher expired':
+                        showNotification(t('cart.voucherExpired'));
+                        break;
+                    case 'Voucher is deleted':
+                        showNotification(t('cart.voucherDeleted'));
+                        break;
+                    case 'Please no enter point coin':
+                        showNotification(t('cart.noPointCoin'));
+                        break;
+                    case 'Please do not enter a coin amount less than 0. ':
+                        showNotification(t('cart.negativeCoin'));
+                        break;
+                    case 'OUTSIDE_WORKING_HOURS':
+                        showNotification(t('cart.outsideWorkingHours'));
+                        break;
+                    case 'MISSING_USER_OR_CART':
+                    case 'MISSING_TOKEN':
+                    case 'INVALID_ORDER_ID':
+                    default:
+                        showNotification(t('cart.generalError'));
+                }
+
+                return;
             }
 
-            console.log("✅ Created order:", orderIdNumber);
+            // Thành công
+            const orderIdNumber = Number(result.orderId);
             fetchUserCoin();
             navigation.navigate('Payment', { orderId: orderIdNumber });
 
@@ -529,8 +567,9 @@ const Cart = () => {
                                 <TextInput
                                     style={styles.coinInput}
                                     keyboardType="numeric"
-                                    placeholder={halfShopeeXuAmount ? halfShopeeXuAmount.toString() : 'Nhập số xu'} // Chuyển số thành chuỗi hoặc sử dụng giá trị mặc định
+                                    placeholder={halfShopeeXuAmount ? halfShopeeXuAmount.toString() : t('cart.enterCoins')} // Chuyển số thành chuỗi hoặc sử dụng giá trị mặc định
                                     value={inputCoin}
+                                    placeholderTextColor={'#999'}
                                     onChangeText={handleInputShopeeXu}
                                     onSubmitEditing={handleSubmitCoin}
                                     returnKeyType="done"
@@ -543,6 +582,7 @@ const Cart = () => {
                                 <TextInput
                                     style={styles.noteInput}
                                     placeholder={t('takeNote')}
+                                    placeholderTextColor={'#999'}
                                     value={note}
                                     onChangeText={setNote}
                                 />

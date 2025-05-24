@@ -397,6 +397,7 @@ const MyOrderDetails = () => {
                                             { label: t('cancel.reason10'), value: 'OTHER_REASON' },
                                         ]}
                                         placeholder={t('cancel.title')}
+                                        placeholderStyle={{ color: '#999' }}
                                         onChangeValue={(value: any) => {
                                             setCancelReason(value);
                                             setIsReasonSelected(!!value);

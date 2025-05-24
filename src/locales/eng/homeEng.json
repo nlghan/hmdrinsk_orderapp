@@ -321,11 +321,23 @@
     "coin": "Coin discount",
     "coinname": "coins",
     "enterCoin": "You have",
+    "enterCoins" : "Enter the number of coins",
     "apply": "Use",
     "label": "Hmdrinks coins",
     "coinErr": "Invalid amount of coins",
     "messCoinErr": "The entered amount of coins cannot exceed the accumulated coins",
-    "voucher": "Vouchers"
+    "voucher": "Vouchers",
+    "notEnoughProduct": "Not enough {{product}}, size {{size}}. Requested: {{requested}}, Available: {{available}}",
+    "distanceExceeded": "Distance exceeded. Please update your address.",
+    "userCoinExceed": "Your coin amount exceeds the limit.",
+    "voucherInUse": "This voucher has already been used.",
+    "voucherExpired": "This voucher has expired.",
+    "voucherDeleted": "This voucher has been deleted.",
+    "noPointCoin": "Please do not enter coin points.",
+    "negativeCoin": "Please do not enter a negative coin amount.",
+    "outsideWorkingHours": "Sorry, we're outside working hours.",
+    "unknownError": "An unknown error occurred.",
+    "generalError": "Something went wrong. Please try again."
   },
   "products": {
     "header1": "Image",
@@ -624,7 +636,7 @@
       "infoGroup": "Order group information",
       "nameGroup": "Group name",
       "typeGroup": "Payment type",
-      "create":"Create group order"
+      "create": "Create group order"
     }
   },
   "chat": {

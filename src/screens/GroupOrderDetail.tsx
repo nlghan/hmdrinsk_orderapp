@@ -888,7 +888,12 @@ const GroupOrderDetail = () => {
                             setOpen={setOpen}
                             setValue={setNewSize}
                             setItems={setSizeOptions}
-                            placeholder="Chọn size"
+                            placeholder={t('chooseSize')}
+                            placeholderStyle={{
+                                color: '#999',
+                                fontFamily: FONTFAMILY.dongle_regular,
+                                fontSize: 20,
+                            }}
                             containerStyle={{ marginBottom: 20 }}
                             style={{
                                 borderColor: '#FFB482',

@@ -333,6 +333,7 @@ const EditGroupAddress = () => {
           <Text style={styles.label}>{t('information.detailAddress')}</Text>
           <TextInput
             placeholder={t('information.detailAddress')}
+            placeholderTextColor="#999"
             style={styles.input}
             value={locationDetail}
             onChangeText={setLocationDetail}

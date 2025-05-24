@@ -167,6 +167,7 @@ const ListVoucher = () => {
           defaultValue={voucherName}
           onChangeText={handleSearch}
           placeholder={t('getVoucher')}
+          placeholderTextColor={'#999'}
           flatListProps={{
             keyExtractor: (item) => item.voucherId.toString(),
             renderItem: ({ item }) => (

@@ -26,6 +26,7 @@ const EditGroupNameModal: React.FC<Props> = ({ visible, initialName, onCancel, o
                         value={newName}
                         onChangeText={setNewName}
                         placeholder={t('android.newName')}
+                        placeholderTextColor={'#999'}
                     />
                     <View style={styles.modalActions}>
                         <TouchableOpacity onPress={onCancel} style={[styles.modalButton, styles.cancelButton]}>
