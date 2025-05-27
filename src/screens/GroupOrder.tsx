@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
     View, Text, TouchableOpacity, ImageBackground,
     ScrollView, Modal, Pressable, Alert
@@ -16,6 +16,7 @@ import EditGroupNameModal from '../components/EditGroupNameModal';
 import { useCategoryStore } from '../store/store';
 import { useTranslation } from 'react-i18next';
 import { useAlertStore } from '../store/alertStore';
+import { getRandomGroupName } from '../utils/randomGroupName';
 
 type NavigationProp = StackNavigationProp<RootStackParamList, 'GroupOrder'>;
 
@@ -34,7 +35,9 @@ const GroupOrder: React.FC = () => {
     const { groupCartData, createGroupOrder } = useCartStore();
     const { userId } = useCategoryStore.getState();
 
-    const [groupName, setGroupName] = useState('Nhóm mới');
+    const initialGroupNameRef = useRef(getRandomGroupName());
+    const [groupName, setGroupName] = useState(initialGroupNameRef.current);
+
 
     const inviteCode = groupCartData?.crudGroupOrderResponse?.code ?? '';
     const link = groupCartData?.crudGroupOrderResponse?.link ?? '';
@@ -206,7 +209,7 @@ const GroupOrder: React.FC = () => {
                                 <Text style={styles.value}>
                                     {selectedTime
                                         ? formatTime(selectedTime)
-                                            : 'Không đặt thời hạn'}
+                                        : 'Không đặt thời hạn'}
                                 </Text>
                             </View>
                             <View style={styles.infoEditIcon}><Icon name="edit" size={24} color="black" /></View>

@@ -440,7 +440,9 @@
         "addCmt": "Thêm đánh giá",
         "editCmt": "Chỉnh sửa đánh giá",
         "confirmDelete": "Xóa đánh giá",
-        "areYouSure": "Bạn chắn chắn muốn xóa đánh giá này?"
+        "areYouSure": "Bạn chắn chắn muốn xóa đánh giá này?",
+        "confirmBlock":"Chặn thành viên",
+        "confirm":"Xác nhận"
     },
     "productContent": {
         "page": "Trang",
@@ -639,6 +641,20 @@
             "nameGroup": "Tên nhóm",
             "typeGroup": "Loại thanh toán",
             "create": "Tạo đơn nhóm"
+        },
+        "group": {
+            "confirmRestoreBlock": "Bạn có chắc muốn bỏ chặn {{name}} không?",
+            "restoreBlacklistSuccess": "Đã bỏ chặn thành viên.",
+            "restoreBlacklistFailed": "Bỏ chặn thất bại.",
+            "missingInfoToUnblock": "Thiếu thông tin để bỏ chặn thành viên.",
+            "missingInfoToKick": "Thiếu thông tin để xoá thành viên.",
+            "kickFailed": "Xoá thành viên thất bại.",
+            "askBlockMember": "Bạn có muốn chặn {{name}} sau khi xoá?",
+            "blacklistActivated": "Đã chặn thành viên.",
+            "blockFailed": "Chặn thành viên thất bại.",
+            "blacklist":"Danh sách chặn",
+            "blockAt":"Bị chặn lúc",
+            "unblock":"Bỏ chặn"
         }
     },
     "chat": {

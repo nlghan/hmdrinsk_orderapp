@@ -41,6 +41,7 @@ export type RootStackParamList = {
   };
   Preview: { groupOrderId: number; currentAddress: string };
   ChoosePay: { groupOrderId: number }; // ✅ Thêm dòng này
-   OrderGroupDetail: { groupOrderId: number };
+  OrderGroupDetail: { groupOrderId: number };
+  BlackList: { groupOrderId: number };
 
 };

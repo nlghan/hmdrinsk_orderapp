@@ -46,8 +46,8 @@ interface GroupOrder {
 const GroupOrderDetail = () => {
     const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
     const { t } = useTranslation();
-    const { groupCartData, fetchCartItem, checkGroupCart, groupOrderCount  } = useCartStore();
-     const setGroupOrderCount = useCartStore((state) => state.setGroupOrderCount);
+    const { groupCartData, fetchCartItem, checkGroupCart, groupOrderCount } = useCartStore();
+    const setGroupOrderCount = useCartStore((state) => state.setGroupOrderCount);
 
     const groupInfo = groupCartData?.crudGroupOrderResponse;
     const members = groupCartData?.crudGroupOrderResponseList || [];
@@ -79,10 +79,10 @@ const GroupOrderDetail = () => {
         const memberId = member.userId;
         const token = await AsyncStorage.getItem('access_token');
 
-        if (!groupOrderId || !leaderId || !memberId) {
+        if (!groupOrderId || !leaderId || !memberId || !token) {
             useAlertStore.getState().showAlert(
                 t('common.error'),
-                t('group.missingInfoToKick')
+                t('android.group.missingInfoToKick')
             );
             return;
         }
@@ -90,37 +90,91 @@ const GroupOrderDetail = () => {
         useAlertStore.getState().showAlert(
             t('android.mess.title9'),
             t('android.mess.check10', { name: member.name }),
-            async () => {
-                try {
-                    console.log('Gọi API xoá:', { groupOrderId, leaderId, memberId });
-
-                    await axiosInstance.delete(
-                        `/group-order/delete-member/${groupOrderId}/${leaderId}/${memberId}`,
-                        {
-                            headers: {
-                                Authorization: `Bearer ${token}`,
-                            },
-                        }
-                    );
-
-                    useAlertStore.getState().showAlert(
-                        t('common.noti'),
-                        t('android.mess.successKick')
-                    );
-
-                    fetchGroupOrders();
-                } catch (error) {
-                    console.error('Lỗi khi xoá thành viên:', error);
-
-                    useAlertStore.getState().showAlert(
-                        t('common.error'),
-                        t('group.kickFailed')
-                    );
-                }
+            () => {
+                void handleDeleteAndAskBlock(memberId, leaderId, groupOrderId, token, member.name);
             },
-            undefined // Không có xử lý cho nút Cancel
+            () => { }
         );
     };
+
+    // Hàm xử lý xóa rồi hỏi chặn
+    const handleDeleteAndAskBlock = async (
+        memberId: number,
+        leaderId: number,
+        groupOrderId: number,
+        token: string,
+        memberName: string
+    ) => {
+        try {
+            // Gọi API xóa thành viên
+            await axiosInstance.delete(
+                `/group-order/delete-member/${groupOrderId}/${leaderId}/${memberId}`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
+
+            // Hỏi có muốn chặn thành viên sau khi xoá
+            useAlertStore.getState().showAlert(
+                t('common.confirm'),
+                t('android.group.askBlockMember', { name: memberName }),
+                () => {
+                    void handleBlacklistMember(memberId, leaderId, groupOrderId, token);
+                },
+                () => { } // Không làm gì nếu hủy
+            );
+
+            fetchGroupOrders();
+        } catch (error) {
+            console.error('Lỗi khi xoá thành viên:', error);
+            useAlertStore.getState().showAlert(
+                t('common.error'),
+                t('android.group.kickFailed')
+            );
+        }
+    };
+
+    // Hàm xử lý chặn thành viên
+    const handleBlacklistMember = async (
+        memberId: number,
+        leaderId: number,
+        groupOrderId: number,
+        token: string
+    ) => {
+        try {
+            await axiosInstance.put(
+                `/group-order/activate-blacklist`,
+                {
+                    groupOrderId,
+                    leaderId,
+                    userId: memberId,
+                },
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        'Content-Type': 'application/json',
+                    },
+                }
+            );
+
+            useAlertStore.getState().showAlert(
+                t('common.noti'),
+                t('android.group.blacklistActivated')
+            );
+
+            fetchGroupOrders();
+        } catch (error) {
+            console.error('Lỗi khi chặn thành viên:', error);
+            useAlertStore.getState().showAlert(
+                t('common.error'),
+                t('android.group.blockFailed')
+            );
+        }
+    };
+
+
 
 
     const [groupOrders, setGroupOrders] = useState<GroupOrder[]>([]);
@@ -475,6 +529,21 @@ const GroupOrderDetail = () => {
                     >
                         <Icon name="arrow-back" size={24} color="black" />
                     </TouchableOpacity>
+
+                    {isLeader &&
+                        <TouchableOpacity
+                            onPress={() =>
+                                navigation.navigate('BlackList', {
+                                    groupOrderId: groupCartData!.crudGroupOrderResponse.groupOrderId!,
+                                })
+
+                            }
+                            style={styles.backButton1}
+                        >
+                            <Icon name="menu" size={24} color="black" />
+                        </TouchableOpacity>}
+
+
                 </ImageBackground>
 
                 <Modal visible={showOptionModal} transparent animationType="fade" onRequestClose={() => setShowOptionModal(false)}>
@@ -657,11 +726,11 @@ const GroupOrderDetail = () => {
                                 {isLeader && member.userId !== userId && (
                                     <TouchableOpacity
                                         onPress={() => handleKickMember(member)}
-                                        style={{ alignSelf: 'center', marginTop: 6, width:'100%' }}
+                                        style={{ alignSelf: 'center', marginTop: 6, width: '100%' }}
                                     >
                                         <Text style={{
                                             color: 'red', fontSize: 22,
-                                            fontFamily: FONTFAMILY.dongle_bold, textAlign:'center'
+                                            fontFamily: FONTFAMILY.dongle_bold, textAlign: 'center'
                                         }}>{t('android.deleteBtn')}</Text>
                                     </TouchableOpacity>
                                 )}
