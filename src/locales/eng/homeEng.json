@@ -440,7 +440,8 @@
     "confirmDelete": "Delete reviews",
     "areYouSure": "Are you sure you want to delete this review?",
     "confirmBlock": "Block member",
-    "confirm": "Confirmation"
+    "confirm": "Confirmation",
+    "success":"Success"
   },
   "productContent": {
     "page": "Page",
@@ -632,7 +633,11 @@
       "error9": "Unable to create group order",
       "title9": "Confirm member deletion",
       "check10": "Are you sure you want to delete {{name}} from the group?",
-      "successKick": "Deleted member successfully"
+      "successKick": "Deleted member successfully",
+      "error10": "Cannot delete item",
+      "error11": "Could not find cart",
+      "error12": "Group not found",
+      "title10": "Missing address"
     },
     "detail": {
       "infoGroup": "Order group information",
@@ -652,7 +657,16 @@
       "blockFailed": "Failed to block member.",
       "blacklist": "Blacklist",
       "blockAt": "Blocked at",
-      "unblock": "Unblock"
+      "unblock": "Unblock",
+      "confirmDeleteGroupTitle": "Confirm group deletion",
+      "confirmDeleteGroupMessage": "Are you sure you want to delete this group order?",
+      "deleteGroupSuccess": "Group has been deleted.",
+      "deleteGroupFailed": "Failed to delete the group.",
+      "confirmLeaveGroupTitle": "Confirm leaving group",
+      "confirmLeaveGroupMessage": "Are you sure you want to leave this group?",
+      "leaveGroupSuccess": "You have left the group.",
+      "leaveGroupFailed": "Failed to leave the group.",
+      "unorderedMembersMessage": "Some members haven't added their drinks. Do you want to continue to checkout?"
     }
   },
   "chat": {

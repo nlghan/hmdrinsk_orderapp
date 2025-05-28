@@ -441,8 +441,9 @@
         "editCmt": "Chỉnh sửa đánh giá",
         "confirmDelete": "Xóa đánh giá",
         "areYouSure": "Bạn chắn chắn muốn xóa đánh giá này?",
-        "confirmBlock":"Chặn thành viên",
-        "confirm":"Xác nhận"
+        "confirmBlock": "Chặn thành viên",
+        "confirm": "Xác nhận",
+        "success":"Thành công"
     },
     "productContent": {
         "page": "Trang",
@@ -634,7 +635,12 @@
             "error9": "Không thể tạo đơn nhóm",
             "title9": "Xác nhận xoá thành viên",
             "check10": "Bạn có chắc muốn xoá {{name}} khỏi nhóm?",
-            "successKick": "Xóa thành viên thành công"
+            "successKick": "Xóa thành viên thành công",
+            "error10": "Không thể xóa món",
+            "error11": "Không thể tìm thấy giỏ hàng",
+            "error12": "Không tìm thấy nhóm",
+            "title10": "Thiếu địa chỉ",
+            "mess10": "Vui lòng cập nhật địa chỉ giao hàng trước khi tiếp tục."
         },
         "detail": {
             "infoGroup": "Thông tin nhóm đặt hàng",
@@ -652,9 +658,18 @@
             "askBlockMember": "Bạn có muốn chặn {{name}} sau khi xoá?",
             "blacklistActivated": "Đã chặn thành viên.",
             "blockFailed": "Chặn thành viên thất bại.",
-            "blacklist":"Danh sách chặn",
-            "blockAt":"Bị chặn lúc",
-            "unblock":"Bỏ chặn"
+            "blacklist": "Danh sách chặn",
+            "blockAt": "Bị chặn lúc",
+            "unblock": "Bỏ chặn",
+            "confirmDeleteGroupTitle": "Xác nhận xoá nhóm",
+            "confirmDeleteGroupMessage": "Bạn có chắc muốn xoá đơn hàng nhóm này không?",
+            "deleteGroupSuccess": "Nhóm đã được xoá.",
+            "deleteGroupFailed": "Xoá nhóm thất bại.",
+            "confirmLeaveGroupTitle": "Xác nhận rời nhóm",
+            "confirmLeaveGroupMessage": "Bạn có chắc muốn rời khỏi nhóm này?",
+            "leaveGroupSuccess": "Bạn đã rời khỏi nhóm.",
+            "leaveGroupFailed": "Rời nhóm thất bại.",
+            "unorderedMembersMessage": "Một số thành viên chưa thêm đồ uống. Bạn có muốn tiếp tục thanh toán không?"
         }
     },
     "chat": {

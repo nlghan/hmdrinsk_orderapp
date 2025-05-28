@@ -24,70 +24,74 @@ interface NotificationPopupProps {
     const isModalOpen = useRef(false);
     const lastNotificationTime = useRef<number | null>(null);
 
-useEffect(() => {
-    if (socketNotifications.length === 0) return;
+    useEffect(() => {
+        if (socketNotifications.length === 0) return;
 
-    const newNotification = socketNotifications[socketNotifications.length - 1];
-    const newNotificationTime = Number(newNotification.time);
+        const newNotification = socketNotifications[socketNotifications.length - 1];
+        const newNotificationTime = Number(newNotification.time);
 
-    // 🔹 Chỉ thêm thông báo mới nếu chưa hiển thị
-    if (
-        lastNotificationTime.current !== newNotificationTime &&
-        !notifications.some(noti => Number(noti.time) === newNotificationTime)
-    ) {
-        lastNotificationTime.current = newNotificationTime;
-        const updatedNotifications = [...notifications, newNotification];
-        setNotifications(updatedNotifications);
-        setSocketNotifications(updatedNotifications); // Cập nhật store
-        triggerRefresh();
+        if (
+            lastNotificationTime.current !== newNotificationTime &&
+            !notifications.some(noti => Number(noti.time) === newNotificationTime)
+        ) {
+            lastNotificationTime.current = newNotificationTime;
+            const updatedNotifications = [...notifications, newNotification];
+            setNotifications(updatedNotifications);
+            setSocketNotifications(updatedNotifications);
+            triggerRefresh();
 
-        // 🔹 Đảm bảo modal chỉ mở một lần
-        if (!isModalOpen.current) {
-            setModalVisible(true);
-            isModalOpen.current = true;
+            // 🔹 Mở modal và tự tắt sau 3s
+            if (!isModalOpen.current) {
+                setModalVisible(true);
+                isModalOpen.current = true;
+
+                setTimeout(() => {
+                    setModalVisible(false);
+                    isModalOpen.current = false;
+                }, 3000); // 3 giây
+            }
         }
-    }
-}, [socketNotifications, setSocketNotifications]);
+    }, [socketNotifications, setSocketNotifications]);
 
-const closeModal = () => {
-    setModalVisible(false);
-    isModalOpen.current = false;
-};
+    const closeModal = () => {
+        setModalVisible(false);
+        isModalOpen.current = false;
+    };
 
-return (
-    <View>
-        <Modal
-            animationType="fade"
-            transparent={true}
-            visible={modalVisible}
-            onRequestClose={closeModal}
-        >
-            <View style={styles.modalContainer}>
-                <View style={styles.modalContent}>
-                    <Text style={styles.title}>{t('common.noti')}</Text>
-                    <FlatList
-                        data={notifications}
-                        keyExtractor={(item, index) => index.toString()}
-                        renderItem={({ item }) => (
-                            <View style={styles.notificationItem}>
-                                <Text style={styles.message}>{item.message}</Text>
-                                {/* <Text style={styles.time}>{item.time}</Text>                                     */}
-                            </View>
-                        )}
-                    />
-                    <TouchableOpacity
-                        style={styles.closeButton}
-                        onPress={() => setModalVisible(false)}
-                    >
-                        <Text style={styles.closeButtonText}>Đóng</Text>
-                    </TouchableOpacity>
+    return (
+        <View>
+            <Modal
+                animationType="fade"
+                transparent={true}
+                visible={modalVisible}
+                onRequestClose={closeModal}
+            >
+                <View style={styles.modalContainer}>
+                    <View style={styles.modalContent}>
+                        <Text style={styles.title}>{t('common.noti')}</Text>
+                        <FlatList
+                            data={notifications}
+                            keyExtractor={(item, index) => index.toString()}
+                            renderItem={({ item }) => (
+                                <View style={styles.notificationItem}>
+                                    <Text style={styles.message}>{item.message}</Text>
+                                    {/* <Text style={styles.time}>{item.time}</Text>                                     */}
+                                </View>
+                            )}
+                        />
+                        <TouchableOpacity
+                            style={styles.closeButton}
+                            onPress={() => setModalVisible(false)}
+                        >
+                            <Text style={styles.closeButtonText}>Đóng</Text>
+                        </TouchableOpacity>
+                    </View>
                 </View>
-            </View>
-        </Modal>
-    </View>
-);
+            </Modal>
+        </View>
+    );
 
-};const styles = StyleSheet.create({
+}; const styles = StyleSheet.create({
     modalContainer: {
         flex: 1,
         justifyContent: 'center',
@@ -146,5 +150,5 @@ return (
         fontSize: 16,
         fontWeight: 'bold',
     },
-});export default NotificationPopup;
+}); export default NotificationPopup;
 
