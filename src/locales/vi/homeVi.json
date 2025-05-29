@@ -31,7 +31,9 @@
         "refunded_status": "Trạng thái hoàn tiền",
         "normal_order": "Cá nhân",
         "group_order": "Nhóm",
-        "otherItems": "sản phẩm khác"
+        "otherItems": "sản phẩm khác",
+        "confirm_reorder": "Bạn có chắc chắn muốn mua lại đơn hàng này không?",
+        "confirm_invoice": "bạn muốn nhận hóa đơn của đơn hàng này?"
     },
     "favourite": {
         "title": "Yêu thích",
@@ -229,7 +231,15 @@
             "success": "Thanh toán thành công",
             "error": "Thanh toán thất bại"
         },
-        "noNote": "Không có ghi chú"
+        "noNote": "Không có ghi chú",
+        "cancel_title": "Xác nhận hủy đơn",
+        "cancel_message": "Bạn có chắc chắn muốn hủy đơn hàng này không?",
+        "cancel_reason_required": "Vui lòng chọn lý do hủy đơn.",
+        "token_missing": "Vui lòng đăng nhập lại.",
+        "user_missing": "Không thể xác định UserId.",
+        "cancel_success_log": "Hủy đơn hàng thành công:",
+        "cancel_error_log": "Lỗi khi hủy đơn hàng:",
+        "cancel_once_only": "Chỉ được gửi yêu cầu hủy đơn một lần."
     },
     "pay": "Thanh toán",
     "paymentMethod": "Phương thức thanh toán",
@@ -443,7 +453,7 @@
         "areYouSure": "Bạn chắn chắn muốn xóa đánh giá này?",
         "confirmBlock": "Chặn thành viên",
         "confirm": "Xác nhận",
-        "success":"Thành công"
+        "success": "Thành công"
     },
     "productContent": {
         "page": "Trang",
@@ -640,7 +650,8 @@
             "error11": "Không thể tìm thấy giỏ hàng",
             "error12": "Không tìm thấy nhóm",
             "title10": "Thiếu địa chỉ",
-            "mess10": "Vui lòng cập nhật địa chỉ giao hàng trước khi tiếp tục."
+            "mess10": "Vui lòng cập nhật địa chỉ giao hàng trước khi tiếp tục.",
+            "notFound": "Không tìm thấy thông tin đơn hàng"
         },
         "detail": {
             "infoGroup": "Thông tin nhóm đặt hàng",
@@ -678,5 +689,8 @@
         "withShipper": "Liên hệ với nhân viên",
         "input": "Nhập tin nhắn...",
         "disable": "Chỉ liên hệ khi đơn hàng đang trong quá trình giao"
+    },
+    "pause": {
+        "confirm_message": "Bạn có chắc chắn muốn tạm dừng thanh toán không?"
     }
 }
