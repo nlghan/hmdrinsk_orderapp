@@ -5,7 +5,6 @@ import {
     TouchableOpacity,
     FlatList,
     Image,
-    Alert,
     Linking,
 } from 'react-native';
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';

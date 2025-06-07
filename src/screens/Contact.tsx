@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ActivityIndicator, Modal, StyleSheet, Alert, ScrollView } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ActivityIndicator, Modal, StyleSheet, ScrollView } from 'react-native';
 import axiosInstance from '../utils/axiosInstance';
 import { useCategoryStore } from "../store/store";
 import IconM from "react-native-vector-icons/MaterialIcons";

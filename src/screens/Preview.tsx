@@ -19,13 +19,15 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import { FONTFAMILY } from '../theme/theme';
 import styles from '../styles/previewStyles'
 import { RootStackParamList } from '../navigation/RootStackParamList';
-
+import { useAlertStore } from '../store/alertStore';
+import { useTranslation } from 'react-i18next';
 
 type PreviewRouteProp = RouteProp<RootStackParamList, 'Preview'>;
 
 const Preview = () => {
     const route = useRoute<PreviewRouteProp>();
     const { groupOrderId, currentAddress } = route.params;
+    const { t } = useTranslation();
 
     const { language, userId } = useCategoryStore();
     const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
@@ -84,7 +86,10 @@ const Preview = () => {
             )
         } catch (error) {
             console.error('Failed to confirm order:', error);
-            alert('Đặt đơn thất bại, vui lòng thử lại.');
+            useAlertStore.getState().showAlert(
+                t('android.mess.title8'),
+                t('error')
+            );
         } finally {
             setProcessing(false);
         }
@@ -110,7 +115,7 @@ const Preview = () => {
 
     const subtotal = items.reduce((sum: number, item: any) => sum + item.totalPrice, 0);
     const discount3 = subtotal >= 40000 ? Math.floor(subtotal * 0.05) : 0;
-    const finalTotal = subtotal + deliveryFee - groupMemberDiscount ;
+    const finalTotal = subtotal + deliveryFee - groupMemberDiscount;
 
     return (
         <View style={styles.container}>
@@ -130,7 +135,7 @@ const Preview = () => {
                     <Text style={styles.sectionTitleBig}>Địa chỉ giao hàng</Text>
                     <View style={styles.detailRows}>
                         <Icon name="pin-drop" size={20} color="green" />
-                        <Text style={{ fontSize: 15, color: '#333', marginRight:5  }}>{currentAddress || 'Không có địa chỉ'}</Text>
+                        <Text style={{ fontSize: 15, color: '#333', marginRight: 5 }}>{currentAddress || 'Không có địa chỉ'}</Text>
 
                     </View>
 

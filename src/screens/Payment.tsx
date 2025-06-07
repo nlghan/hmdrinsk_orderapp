@@ -11,6 +11,7 @@ import { RootStackParamList } from '../navigation/RootStackParamList';
 import { useTranslation } from 'react-i18next';
 import { COLORS, FONTFAMILY } from '../theme/theme';
 import Loading from '../components/DotLoading';
+import { useAlertStore } from '../store/alertStore';
 
 type PaymentScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Payment'>;
 type PaymentScreenRouteProp = RouteProp<RootStackParamList, 'Payment'>;
@@ -43,19 +44,19 @@ const Payment = () => {
                     setError('Không tìm thấy token đăng nhập, vui lòng đăng nhập lại.');
                     return;
                 }
-    
+
                 const response = await axiosInstance.get(`/orders/detail/${orderId}?language=${language}`, {
                     headers: {
                         Authorization: `Bearer ${token}`,
                         'Content-Type': 'application/json',
                     },
                 });
-    
+
                 const orderData = response.data.order;
                 const linkPayment = response.data.payment?.link; // 👈 lấy link từ payment
-    
+
                 console.log('Order Detail Response:', response.data);
-    
+
                 // Gộp link vào order để dễ dùng
                 setOrder({
                     ...orderData,
@@ -64,16 +65,16 @@ const Payment = () => {
             } catch (err) {
                 console.error('Lỗi khi lấy thông tin đơn hàng:', err);
                 setError('Có lỗi xảy ra khi lấy thông tin đơn hàng.');
-            }finally{
+            } finally {
                 setLoading(false);
             }
         };
-    
+
         if (orderId) {
             fetchOrderDetails();
         }
     }, [orderId]);
-    
+
 
     if (loading) {
         return (
@@ -116,38 +117,41 @@ const Payment = () => {
         try {
             const token = await AsyncStorage.getItem('access_token');
             if (!token) {
-                Alert.alert('Lỗi', 'Không tìm thấy token đăng nhập, vui lòng đăng nhập lại.');
+                console.log('Lỗi', 'Không tìm thấy token đăng nhập, vui lòng đăng nhập lại.');
                 return;
             }
-    
+
             if (!order || !order.orderId) {
-                Alert.alert('Lỗi', 'Không tìm thấy thông tin đơn hàng.');
+                useAlertStore.getState().showAlert(
+                    t('android.mess.title8'),
+                    t('android.mess.notFound')
+                );
                 return;
             }
-    
+
             // 👉 Nếu đã có link thanh toán, chỉ cần mở
             if (order.linkPayment) {
                 Linking.openURL(order.linkPayment);
                 return;
             }
-            
-    
+
+
             const headers = {
                 Authorization: `Bearer ${token}`,
                 'Content-Type': 'application/json',
             };
-    
+
             // Xác nhận đơn hàng
             const confirmResponse = await axiosInstance.post(
                 `/orders/confirm`,
                 { userId: order.userId, orderId: order.orderId },
                 { headers }
             );
-    
+
             if (confirmResponse.status !== 200) {
                 throw new Error('Lỗi khi xác nhận đơn hàng');
             }
-    
+
             // Tạo thanh toán
             const paymentUrl = `/payment/create/${paymentMethod}`;
             const paymentResponse = await axiosInstance.post(
@@ -155,24 +159,27 @@ const Payment = () => {
                 { orderId: order.orderId, userId: order.userId, type: 'ANDROID' },
                 { headers }
             );
-    
+
             if (paymentResponse.status === 200) {
                 const data = paymentResponse.data;
-    
+
                 if (data.linkPayment) {
                     Linking.openURL(data.linkPayment);
                 } else {
                     navigation.navigate('OrderComplete');
                 }
-    
+
             } else {
                 navigation.navigate('OrderFailed');
                 throw new Error('Lỗi khi tạo thanh toán');
             }
-    
+
         } catch (error) {
             console.error('Lỗi đặt hàng:', error);
-            Alert.alert('Lỗi', 'Có lỗi xảy ra, vui lòng thử lại sau.');
+            useAlertStore.getState().showAlert(
+                t('android.mess.title8'),
+                t('error')
+            );
         } finally {
             setLoading(false);
         }
@@ -184,12 +191,14 @@ const Payment = () => {
         try {
             const token = await AsyncStorage.getItem('access_token');
             if (!token) {
-                Alert.alert('Lỗi', 'Không tìm thấy token đăng nhập, vui lòng đăng nhập lại.');
-                return;
+                console.log('Lỗi', 'Không tìm thấy token đăng nhập, vui lòng đăng nhập lại.'); return;
             }
 
             if (!order || !order.orderId) {
-                Alert.alert('Lỗi', 'Không tìm thấy thông tin đơn hàng.');
+                useAlertStore.getState().showAlert(
+                    t('android.mess.title8'),
+                    t('android.mess.notFound')
+                );
                 return;
             }
 
@@ -240,56 +249,50 @@ const Payment = () => {
             }
         } catch (error) {
             console.error('Lỗi đặt hàng:', error);
-            Alert.alert('Lỗi', 'Có lỗi xảy ra, vui lòng thử lại sau.');
+            useAlertStore.getState().showAlert(
+                t('android.mess.title8'),
+                t('android.mess.notFound')
+            );
         }
     };
 
 
     // Gọi API pause_order khi rời khỏi trang hoặc back
-    const handlePauseOrder = async () => {
-        Alert.alert(
-            'Xác nhận',
-            'Bạn có chắc chắn muốn tạm dừng thanh toán không?',
-            [
-                {
-                    text: 'Hủy',
-                    style: 'cancel',
-                },
-                {
-                    text: 'Đồng ý',
-                    onPress: async () => {
-                        setLoading(true);
-                        try {
-                            const token = await AsyncStorage.getItem('access_token');
-                            if (!token || !order?.orderId || !order?.userId) return;
+   const handlePauseOrder = async () => {
+    useAlertStore.getState().showAlert(
+        t('common.confirm'),
+        t('pause.confirm_message'),
+        async () => {
+            setLoading(true);
+            try {
+                const token = await AsyncStorage.getItem('access_token');
+                if (!token || !order?.orderId || !order?.userId) return;
 
-                            await axiosInstance.post(
-                                '/orders/pause_order',
-                                { orderId: order.orderId, userId: order.userId },
-                                {
-                                    headers: {
-                                        Authorization: `Bearer ${token}`,
-                                        'Content-Type': 'application/json',
-                                    },
-                                }
-                            );
+                await axiosInstance.post(
+                    '/orders/pause_order',
+                    { orderId: order.orderId, userId: order.userId },
+                    {
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                            'Content-Type': 'application/json',
+                        },
+                    }
+                );
 
-                            setIdOrderPause(order.orderId);
-                            await Promise.all([ensureActiveCart(), fetchCartItem()]);
+                setIdOrderPause(order.orderId);
+                await Promise.all([ensureActiveCart(), fetchCartItem()]);
 
-                            console.log('✅ Pause order thành công');
-                            navigation.goBack();
-                        } catch (error) {
-                            console.error('❌ Lỗi khi gọi pause_order:', error);
-                        } finally {
-                            setLoading(false);
-                        }
-                    },
-                },
-            ],
-            { cancelable: true }
-        );
-    };
+                console.log('✅ Pause order thành công');
+                navigation.goBack();
+            } catch (error) {
+                console.error('❌ Lỗi khi gọi pause_order:', error);
+            } finally {
+                setLoading(false);
+            }
+        },
+        undefined // ❌ không cần hàm `onCancel`
+    );
+};
 
     const handleCancel = async () => {
         setLoading(true);
@@ -504,21 +507,11 @@ const Payment = () => {
                     <TouchableOpacity
                         style={[styles.orderButton1, loading && { opacity: 0.5 }]}
                         onPress={() => {
-                            Alert.alert(
-                                'Xác nhận hủy đơn',
-                                'Bạn có chắc chắn muốn hủy thanh toán đơn hàng này không?',
-                                [
-                                    {
-                                        text: 'Không',
-                                        style: 'cancel',
-                                    },
-                                    {
-                                        text: 'Hủy đơn',
-                                        style: 'destructive',
-                                        onPress: () => handleCancel(),
-                                    },
-                                ],
-                                { cancelable: true }
+                            useAlertStore.getState().showAlert(
+                                t('order.cancel_title'),
+                                t('order.cancel_message'),
+                                () => handleCancel(),
+                                undefined
                             );
                         }}
                         disabled={loading}
@@ -637,7 +630,7 @@ const styles = StyleSheet.create({
         color: '#E53935',
         textAlign: 'right',
     },
-    
+
 
     /* Tổng cộng */
     footer: {

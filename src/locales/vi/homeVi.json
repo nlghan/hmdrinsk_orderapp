@@ -31,7 +31,9 @@
         "refunded_status": "Trạng thái hoàn tiền",
         "normal_order": "Cá nhân",
         "group_order": "Nhóm",
-        "otherItems": "sản phẩm khác"
+        "otherItems": "sản phẩm khác",
+        "confirm_reorder": "Bạn có chắc chắn muốn mua lại đơn hàng này không?",
+        "confirm_invoice": "bạn muốn nhận hóa đơn của đơn hàng này?"
     },
     "favourite": {
         "title": "Yêu thích",
@@ -229,7 +231,15 @@
             "success": "Thanh toán thành công",
             "error": "Thanh toán thất bại"
         },
-        "noNote": "Không có ghi chú"
+        "noNote": "Không có ghi chú",
+        "cancel_title": "Xác nhận hủy đơn",
+        "cancel_message": "Bạn có chắc chắn muốn hủy đơn hàng này không?",
+        "cancel_reason_required": "Vui lòng chọn lý do hủy đơn.",
+        "token_missing": "Vui lòng đăng nhập lại.",
+        "user_missing": "Không thể xác định UserId.",
+        "cancel_success_log": "Hủy đơn hàng thành công:",
+        "cancel_error_log": "Lỗi khi hủy đơn hàng:",
+        "cancel_once_only": "Chỉ được gửi yêu cầu hủy đơn một lần."
     },
     "pay": "Thanh toán",
     "paymentMethod": "Phương thức thanh toán",
@@ -440,7 +450,10 @@
         "addCmt": "Thêm đánh giá",
         "editCmt": "Chỉnh sửa đánh giá",
         "confirmDelete": "Xóa đánh giá",
-        "areYouSure": "Bạn chắn chắn muốn xóa đánh giá này?"
+        "areYouSure": "Bạn chắn chắn muốn xóa đánh giá này?",
+        "confirmBlock": "Chặn thành viên",
+        "confirm": "Xác nhận",
+        "success": "Thành công"
     },
     "productContent": {
         "page": "Trang",
@@ -632,13 +645,42 @@
             "error9": "Không thể tạo đơn nhóm",
             "title9": "Xác nhận xoá thành viên",
             "check10": "Bạn có chắc muốn xoá {{name}} khỏi nhóm?",
-            "successKick": "Xóa thành viên thành công"
+            "successKick": "Xóa thành viên thành công",
+            "error10": "Không thể xóa món",
+            "error11": "Không thể tìm thấy giỏ hàng",
+            "error12": "Không tìm thấy nhóm",
+            "title10": "Thiếu địa chỉ",
+            "mess10": "Vui lòng cập nhật địa chỉ giao hàng trước khi tiếp tục.",
+            "notFound": "Không tìm thấy thông tin đơn hàng"
         },
         "detail": {
             "infoGroup": "Thông tin nhóm đặt hàng",
             "nameGroup": "Tên nhóm",
             "typeGroup": "Loại thanh toán",
             "create": "Tạo đơn nhóm"
+        },
+        "group": {
+            "confirmRestoreBlock": "Bạn có chắc muốn bỏ chặn {{name}} không?",
+            "restoreBlacklistSuccess": "Đã bỏ chặn thành viên.",
+            "restoreBlacklistFailed": "Bỏ chặn thất bại.",
+            "missingInfoToUnblock": "Thiếu thông tin để bỏ chặn thành viên.",
+            "missingInfoToKick": "Thiếu thông tin để xoá thành viên.",
+            "kickFailed": "Xoá thành viên thất bại.",
+            "askBlockMember": "Bạn có muốn chặn {{name}} sau khi xoá?",
+            "blacklistActivated": "Đã chặn thành viên.",
+            "blockFailed": "Chặn thành viên thất bại.",
+            "blacklist": "Danh sách chặn",
+            "blockAt": "Bị chặn lúc",
+            "unblock": "Bỏ chặn",
+            "confirmDeleteGroupTitle": "Xác nhận xoá nhóm",
+            "confirmDeleteGroupMessage": "Bạn có chắc muốn xoá đơn hàng nhóm này không?",
+            "deleteGroupSuccess": "Nhóm đã được xoá.",
+            "deleteGroupFailed": "Xoá nhóm thất bại.",
+            "confirmLeaveGroupTitle": "Xác nhận rời nhóm",
+            "confirmLeaveGroupMessage": "Bạn có chắc muốn rời khỏi nhóm này?",
+            "leaveGroupSuccess": "Bạn đã rời khỏi nhóm.",
+            "leaveGroupFailed": "Rời nhóm thất bại.",
+            "unorderedMembersMessage": "Một số thành viên chưa thêm đồ uống. Bạn có muốn tiếp tục thanh toán không?"
         }
     },
     "chat": {
@@ -647,5 +689,8 @@
         "withShipper": "Liên hệ với nhân viên",
         "input": "Nhập tin nhắn...",
         "disable": "Chỉ liên hệ khi đơn hàng đang trong quá trình giao"
+    },
+    "pause": {
+        "confirm_message": "Bạn có chắc chắn muốn tạm dừng thanh toán không?"
     }
 }

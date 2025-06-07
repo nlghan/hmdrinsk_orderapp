@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../navigation/RootStackParamList";
 import { FONTFAMILY } from "../theme/theme";
+import DotLoading from "../components/DotLoading";
 
 const LanguageChange = () => {
   const { language, setLanguage } = useCategoryStore();
@@ -56,8 +57,17 @@ const LanguageChange = () => {
 
       {/* 🔄 Overlay Loading */}
       {loading && (
-        <View style={styles.loadingOverlay}>
-          <ActivityIndicator size="large" color="#FFF" />
+        <View style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.3)',  // Overlay tối mờ
+          justifyContent: 'center',
+          zIndex: 999,  // Đảm bảo overlay nằm trên tất cả
+        }}>
+          <DotLoading title={''} />
         </View>
       )}
     </View>
@@ -79,7 +89,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 24,
-    fontFamily:FONTFAMILY.lobster_regular,
+    fontFamily: FONTFAMILY.lobster_regular,
     marginBottom: 20,
   },
   button: {
@@ -95,7 +105,7 @@ const styles = StyleSheet.create({
   },
   text: {
     fontSize: 24,
-    fontFamily:FONTFAMILY.dongle_bold,
+    fontFamily: FONTFAMILY.dongle_bold,
     color: "#333",
   },
   // 🔄 Overlay Loading

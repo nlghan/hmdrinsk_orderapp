@@ -10,6 +10,7 @@ import EmptyListAnimation from '../components/EmptyListAnimation';
 import Icon from "react-native-vector-icons/MaterialIcons";
 import { RootStackParamList } from "../navigation/RootStackParamList";
 import { FONTFAMILY } from '../theme/theme';
+import { useAlertStore } from '../store/alertStore';
 
 const WaitingOrder = () => {
     type ProductItem = {
@@ -64,21 +65,21 @@ const WaitingOrder = () => {
     useEffect(() => {
         const intervals: NodeJS.Timeout[] = [];
         const expiredOrders: Set<string> = new Set();
-    
+
         waitingOrders.forEach(order => {
             const [datePart, timePart] = order.dateOders.split(' ');
             const [year, month, day] = datePart.split('-').map(Number);
             const [hour, minute, second] = timePart.split(':').map(Number);
-    
+
             const localOrderTime = new Date(year, month - 1, day, hour, minute, second).getTime();
             const endTime = localOrderTime + 30 * 60 * 1000;
-    
+
             const updateCountdown = () => {
                 const now = Date.now();
                 const timeLeft = Math.max(endTime - now, 0);
-    
+
                 setCountdowns(prev => ({ ...prev, [order.orderId]: timeLeft }));
-    
+
                 if (timeLeft <= 0 && !expiredOrders.has(order.orderId)) {
                     expiredOrders.add(order.orderId); // Đánh dấu đơn này đã xử lý
                     checkTimeOrder(); // Gọi check 1 lần
@@ -87,17 +88,17 @@ const WaitingOrder = () => {
                     }, 500);
                 }
             };
-    
+
             updateCountdown(); // lần đầu
             const interval = setInterval(updateCountdown, 1000);
             intervals.push(interval);
         });
-    
+
         return () => {
             intervals.forEach(clearInterval);
         };
     }, [waitingOrders.length]); // 👈 chỉ chạy lại khi số lượng đơn thay đổi
-    
+
 
     const formatPrice = (price: number) => {
         return (price).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
@@ -133,7 +134,19 @@ const WaitingOrder = () => {
     };
 
     const handleRestoreOrder = (orderId: string) => {
-        Alert.alert('Mua lại', `Bạn có chắc chắn muốn mua lại đơn hàng ${orderId} không?`);
+        const handleRestoreOrder = (orderId: string) => {
+            useAlertStore.getState().showAlert(
+                t('history.reorder'),
+                t('history.confirm_reorder'),
+                () => {
+                    // TODO: Gọi API mua lại đơn hàng ở đây
+                    console.log('✅ Mua lại đơn hàng:', orderId);
+                },
+                () => {
+                    console.log('❌ Đã hủy mua lại');
+                }
+            );
+        };
     };
 
     // Function to format the countdown time
