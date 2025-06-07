@@ -13,6 +13,7 @@ import { RootStackParamList } from "../navigation/RootStackParamList";
 import NotificationPopup from '../components/NotificationPopup';
 import { FONTFAMILY } from '../theme/theme';
 import DropDownPicker from 'react-native-dropdown-picker';
+import { useAlertStore } from '../store/alertStore';
 
 interface Order {
     orderId: number;
@@ -140,96 +141,68 @@ const MyOrderDetails = () => {
         loadRequestSentStatus();
     }, [order?.orderId]);
 
+
     const handleCancelOrder = async (reason: string) => {
         if (!reason) {
-            setCancelError(
-                language === 'EN'
-                    ? 'Please select a reason for cancellation.'
-                    : 'Vui lòng chọn lý do hủy đơn.'
-            );
+            setCancelError(t('order.cancel_reason_required'));
             return;
         }
 
         try {
-            // Hiển thị hộp thoại xác nhận
-            const confirm = await new Promise((resolve) => {
-                Alert.alert(
-                    language === 'EN' ? 'Confirm Order Cancellation' : 'Xác nhận hủy đơn',
-                    language === 'EN'
-                        ? 'Are you sure you want to cancel this order?'
-                        : 'Bạn có chắc chắn muốn hủy đơn hàng này?',
-                    [
-                        {
-                            text: language === 'EN' ? 'No' : 'Không',
-                            onPress: () => resolve(false),
-                            style: 'cancel',
-                        },
-                        {
-                            text: language === 'EN' ? 'Yes' : 'Có',
-                            onPress: () => resolve(true),
-                        },
-                    ]
+            const confirm = await new Promise<boolean>((resolve) => {
+                useAlertStore.getState().showAlert(
+                    t('order.cancel_title'),
+                    t('order.cancel_message'),
+                    () => resolve(true),
+                    () => resolve(false)
                 );
             });
 
-            if (confirm) {
-                // Lấy token từ AsyncStorage
-                const token = await AsyncStorage.getItem('access_token');
-                if (!token) {
-                    setCancelError(
-                        language === 'EN'
-                            ? 'Please log in again.'
-                            : 'Vui lòng đăng nhập lại.'
-                    );
-                    return;
-                }
-                if (!userId) {
-                    setCancelError(
-                        language === 'EN'
-                            ? 'Unable to identify UserId.'
-                            : 'Không thể xác định UserId.'
-                    );
-                    return;
-                }
-
-                // Gửi yêu cầu hủy đơn
-                const response = await axiosInstance.post(
-                    `/orders/reason-cancel`,
-                    {
-                        orderId: order?.orderId,
-                        userId,
-                        cancelReason: reason,
-                    },
-                    {
-                        headers: {
-                            Authorization: `Bearer ${token}`,
-                            'Content-Type': 'application/json',
-                        },
-                    }
-                );
-
-                console.log(
-                    language === 'EN' ? 'Order canceled successfully:' : 'Hủy đơn hàng thành công:',
-                    { status: response.status, data: response.data }
-                );
-                setCancelError(null);
-                setIsRequestSent(true);
-                await AsyncStorage.setItem(`cancelRequest_${order?.orderId}`, 'true');
-                fetchOrderDetails();
-            } else {
+            if (!confirm) {
                 setCancelReason('');
                 setIsReasonSelected(false);
+                return;
             }
+
+            const token = await AsyncStorage.getItem('access_token');
+            if (!token) {
+                setCancelError(t('order.token_missing'));
+                return;
+            }
+
+            if (!userId) {
+                setCancelError(t('order.user_missing'));
+                return;
+            }
+
+            const response = await axiosInstance.post(
+                `/orders/reason-cancel`,
+                {
+                    orderId: order?.orderId,
+                    userId,
+                    cancelReason: reason,
+                },
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        'Content-Type': 'application/json',
+                    },
+                }
+            );
+
+            console.log(t('order.cancel_success_log'), {
+                status: response.status,
+                data: response.data,
+            });
+
+            setCancelError(null);
+            setIsRequestSent(true);
+            await AsyncStorage.setItem(`cancelRequest_${order?.orderId}`, 'true');
+            fetchOrderDetails();
+
         } catch (error) {
-            console.error(
-                language === 'EN' ? 'Error canceling order:' : 'Lỗi khi hủy đơn hàng:',
-                error
-            );
-            setCancelError(
-                language === 'EN'
-                    ? 'Cancellation request can only be sent once.'
-                    : 'Chỉ được gửi yêu cầu hủy đơn một lần.'
-            );
+            console.error(t('order.cancel_error_log'), error);
+            setCancelError(t('order.cancel_once_only'));
         }
     };
 

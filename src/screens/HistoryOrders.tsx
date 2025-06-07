@@ -11,6 +11,7 @@ import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from "@react-navigation/stack";
 import { RootStackParamList } from "../navigation/RootStackParamList";
 import styles from '../styles/orderHistoryStyle'
+import { useAlertStore } from '../store/alertStore';
 
 const HistoryOrders = () => {
     type ProductItem = {
@@ -103,11 +104,31 @@ const HistoryOrders = () => {
     };
 
     const handleRestoreOrder = (orderId: string) => {
-        Alert.alert('Mua lại', `Bạn có chắc chắn muốn mua lại đơn hàng ${orderId} không?`);
+        const handleRestoreOrder = (orderId: string) => {
+            useAlertStore.getState().showAlert(
+                t('history.reorder'),
+                t('history.confirm_reorder'),
+                () => {
+                    // TODO: Gọi API mua lại đơn hàng ở đây
+                    console.log('✅ Mua lại đơn hàng:', orderId);
+                },
+                () => {
+                    console.log('❌ Đã hủy mua lại');
+                }
+            );
+        };
     };
 
     const handlePrint = (orderId: string) => {
-        Alert.alert('In hóa đơn', `Đang tạo hóa đơn cho đơn hàng ${orderId}`);
+        useAlertStore.getState().showAlert(
+            t('history.print_invoice'),
+            t('history.confirm_invoice'),
+            () => {
+                // TODO: Gọi xử lý in hóa đơn tại đây
+                console.log('🖨️ In hóa đơn:', orderId);
+            }
+            // Không cần onCancel
+        );
     };
 
     const formatPrice = (price: number) => {

@@ -138,8 +138,7 @@ const { language} = useCategoryStore();
             useAlertStore.getState().showAlert(
               t('common.noti'),
               t('android.mess.error4'),
-              () => { }, // không cần xử lý OK
-              () => { }  // không cần xử lý Cancel
+            
             );
 
           }

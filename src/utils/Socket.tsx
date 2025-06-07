@@ -45,7 +45,7 @@ const useWebSocket = (userId: number) => {
                     return;
                 }
                 const encodedToken = encodeURIComponent(token);
-                const ws = new WebSocket(`ws://192.168.9.196:1010/ws-raw?token=${encodedToken}&userId=${userId}`);
+                const ws = new WebSocket(`ws://192.168.1.24:1010/ws-raw?token=${encodedToken}&userId=${userId}`);
                 socketRef.current = ws;
 
                 ws.onopen = () => {
@@ -73,7 +73,7 @@ const useWebSocket = (userId: number) => {
                         console.log('📩 Message from server:', message);
 
                         if (
-                            ['NEW_NOTIFICATION', 'NEW_GROUP_JOIN', 'MEMBER_LEFT_GROUP', 'MEMBER_KICKED'].includes(message.type)
+                            ['NEW_NOTIFICATION', 'UPDATE_CART_LEADER', 'NEW_GROUP_JOIN', 'MEMBER_LEFT_GROUP', 'MEMBER_KICKED'].includes(message.type)
                         ) {
                             setNotifications(prev => {
                                 const isDuplicate = prev.some(noti => noti.time === message.time);
@@ -89,7 +89,7 @@ const useWebSocket = (userId: number) => {
                         }
 
                         if (
-                            ['NEW_GROUP_JOIN', 'MEMBER_LEFT_GROUP', 'MEMBER_KICKED', 'UPDATE_CART', 'CHECKOUT'].includes(message.type)
+                            ['NEW_GROUP_JOIN', 'UPDATE_CART_LEADER', 'MEMBER_LEFT_GROUP', 'MEMBER_KICKED', 'UPDATE_CART', 'CHECKOUT'].includes(message.type)
                         ) {
                             // debounce gọi fetchCartItem
                             if (fetchCartItemDebounceRef.current) {

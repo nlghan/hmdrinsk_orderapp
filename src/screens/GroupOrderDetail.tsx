@@ -46,8 +46,8 @@ interface GroupOrder {
 const GroupOrderDetail = () => {
     const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
     const { t } = useTranslation();
-    const { groupCartData, fetchCartItem, checkGroupCart, groupOrderCount  } = useCartStore();
-     const setGroupOrderCount = useCartStore((state) => state.setGroupOrderCount);
+    const { groupCartData, fetchCartItem, checkGroupCart, groupOrderCount } = useCartStore();
+    const setGroupOrderCount = useCartStore((state) => state.setGroupOrderCount);
 
     const groupInfo = groupCartData?.crudGroupOrderResponse;
     const members = groupCartData?.crudGroupOrderResponseList || [];
@@ -79,10 +79,10 @@ const GroupOrderDetail = () => {
         const memberId = member.userId;
         const token = await AsyncStorage.getItem('access_token');
 
-        if (!groupOrderId || !leaderId || !memberId) {
+        if (!groupOrderId || !leaderId || !memberId || !token) {
             useAlertStore.getState().showAlert(
-                t('common.error'),
-                t('group.missingInfoToKick')
+                t('android.mess.title8'),
+                t('android.group.missingInfoToKick')
             );
             return;
         }
@@ -90,37 +90,91 @@ const GroupOrderDetail = () => {
         useAlertStore.getState().showAlert(
             t('android.mess.title9'),
             t('android.mess.check10', { name: member.name }),
-            async () => {
-                try {
-                    console.log('Gọi API xoá:', { groupOrderId, leaderId, memberId });
-
-                    await axiosInstance.delete(
-                        `/group-order/delete-member/${groupOrderId}/${leaderId}/${memberId}`,
-                        {
-                            headers: {
-                                Authorization: `Bearer ${token}`,
-                            },
-                        }
-                    );
-
-                    useAlertStore.getState().showAlert(
-                        t('common.noti'),
-                        t('android.mess.successKick')
-                    );
-
-                    fetchGroupOrders();
-                } catch (error) {
-                    console.error('Lỗi khi xoá thành viên:', error);
-
-                    useAlertStore.getState().showAlert(
-                        t('common.error'),
-                        t('group.kickFailed')
-                    );
-                }
+            () => {
+                void handleDeleteAndAskBlock(memberId, leaderId, groupOrderId, token, member.name);
             },
-            undefined // Không có xử lý cho nút Cancel
+            () => { }
         );
     };
+
+    // Hàm xử lý xóa rồi hỏi chặn
+    const handleDeleteAndAskBlock = async (
+        memberId: number,
+        leaderId: number,
+        groupOrderId: number,
+        token: string,
+        memberName: string
+    ) => {
+        try {
+            // Gọi API xóa thành viên
+            await axiosInstance.delete(
+                `/group-order/delete-member/${groupOrderId}/${leaderId}/${memberId}`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
+
+            // Hỏi có muốn chặn thành viên sau khi xoá
+            useAlertStore.getState().showAlert(
+                t('common.confirm'),
+                t('android.group.askBlockMember', { name: memberName }),
+                () => {
+                    void handleBlacklistMember(memberId, leaderId, groupOrderId, token);
+                },
+                () => { } // Không làm gì nếu hủy
+            );
+
+            fetchGroupOrders();
+        } catch (error) {
+            console.error('Lỗi khi xoá thành viên:', error);
+            useAlertStore.getState().showAlert(
+                t('android.mess.title8'),
+                t('android.group.kickFailed')
+            );
+        }
+    };
+
+    // Hàm xử lý chặn thành viên
+    const handleBlacklistMember = async (
+        memberId: number,
+        leaderId: number,
+        groupOrderId: number,
+        token: string
+    ) => {
+        try {
+            await axiosInstance.put(
+                `/group-order/activate-blacklist`,
+                {
+                    groupOrderId,
+                    leaderId,
+                    userId: memberId,
+                },
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        'Content-Type': 'application/json',
+                    },
+                }
+            );
+
+            useAlertStore.getState().showAlert(
+                t('common.noti'),
+                t('android.group.blacklistActivated')
+            );
+
+            fetchGroupOrders();
+        } catch (error) {
+            console.error('Lỗi khi chặn thành viên:', error);
+            useAlertStore.getState().showAlert(
+                t('android.mess.title8'),
+                t('android.group.blockFailed')
+            );
+        }
+    };
+
+
 
 
     const [groupOrders, setGroupOrders] = useState<GroupOrder[]>([]);
@@ -179,13 +233,31 @@ const GroupOrderDetail = () => {
         const token = await AsyncStorage.getItem('access_token');
 
         if (!newSize || !newQuantity) {
-            Alert.alert('Lỗi', 'Vui lòng chọn size và nhập số lượng.');
+            useAlertStore.getState().showAlert(
+                t('android.mess.title8'),
+                t('android.mess.check6')
+            );
+
+            // Tự ẩn alert sau 2 giây
+            setTimeout(() => {
+                useAlertStore.getState().hideAlert();
+            }, 1500);
+            setIsLoading(false);
             return;
         }
 
         const quantityNumber = parseInt(newQuantity, 10);
         if (isNaN(quantityNumber) || quantityNumber <= 0) {
-            Alert.alert('Lỗi', 'Số lượng phải lớn hơn 0.');
+            useAlertStore.getState().showAlert(
+                t('android.mess.title8'),
+                t('cart.statusErr5')
+            );
+
+            // Tự ẩn alert sau 2 giây
+            setTimeout(() => {
+                useAlertStore.getState().hideAlert();
+            }, 1500);
+            setIsLoading(false);
             setIsFocused(true);
             return;
         }
@@ -287,13 +359,29 @@ const GroupOrderDetail = () => {
 
             const responseData = error?.response?.data;
 
-            if (typeof responseData === 'string' && responseData === 'Quantity is greater than stock') {
-                Alert.alert('Hết hàng', 'Số lượng vượt quá tồn kho. Vui lòng nhập lại.');
+            if (typeof responseData === 'string' && responseData === 'Out of stock') {
+                useAlertStore.getState().showAlert(
+                    t('android.mess.title8'),
+                    t('cart.statusErr2')
+                );
+
+                // Tự ẩn alert sau 2 giây
+                setTimeout(() => {
+                    useAlertStore.getState().hideAlert();
+                }, 2500);
+                setIsLoading(false);
+            }
+
+            else if (typeof responseData === 'string' && responseData === 'Quantity is greater than stock') {
+                useAlertStore.getState().showAlert(
+                    t('android.mess.title8'),
+                    t('cart.messErr1')
+                );
+                setIsLoading(false);
                 quantityInputRef.current?.focus();
                 return;
             }
 
-            Alert.alert('Hết hàng', `Hết sản phẩm kích thước này. Vui lòng chọn lại`);
         } finally {
             setIsLoading(false);
         }
@@ -330,7 +418,13 @@ const GroupOrderDetail = () => {
             console.log('✅ Đã xóa sản phẩm');
         } catch (error) {
             console.log('❌ Lỗi xóa món:', error);
-            Alert.alert('Lỗi', 'Không thể xóa món. Vui lòng thử lại.');
+            useAlertStore.getState().showAlert(
+                t('android.mess.title8'),
+                t('android.mess.error10')
+            );
+            setTimeout(() => {
+                useAlertStore.getState().hideAlert();
+            }, 2500);
         }
     };
 
@@ -341,7 +435,18 @@ const GroupOrderDetail = () => {
             const isSelf = member.userId === userId;
 
             if (!member.crudCartGroupResponse?.cartGroupId) {
-                Alert.alert('Lỗi', 'Không tìm thấy giỏ hàng của thành viên.');
+                useAlertStore.getState().showAlert(
+                    t('android.mess.title8'),
+                    t('android.mess.error11')
+                );
+
+                // Tự ẩn alert sau 2 giây
+                setTimeout(() => {
+                    useAlertStore.getState().hideAlert();
+                }, 2000);
+                setIsLoading(false);
+                setIsFocused(true);
+                return;
                 return;
             }
 
@@ -385,7 +490,13 @@ const GroupOrderDetail = () => {
             console.log('✅ Đã xóa toàn bộ món');
         } catch (error) {
             console.log('❌ Lỗi khi xóa toàn bộ món:', error);
-            Alert.alert('Lỗi', 'Không thể xóa món. Vui lòng thử lại.');
+            useAlertStore.getState().showAlert(
+                t('android.mess.title8'),
+                t('android.mess.error10')
+            );
+            setTimeout(() => {
+                useAlertStore.getState().hideAlert();
+            }, 2500);
         }
     };
 
@@ -475,6 +586,21 @@ const GroupOrderDetail = () => {
                     >
                         <Icon name="arrow-back" size={24} color="black" />
                     </TouchableOpacity>
+
+                    {isLeader &&
+                        <TouchableOpacity
+                            onPress={() =>
+                                navigation.navigate('BlackList', {
+                                    groupOrderId: groupCartData!.crudGroupOrderResponse.groupOrderId!,
+                                })
+
+                            }
+                            style={styles.backButton1}
+                        >
+                            <Icon name="menu" size={24} color="black" />
+                        </TouchableOpacity>}
+
+
                 </ImageBackground>
 
                 <Modal visible={showOptionModal} transparent animationType="fade" onRequestClose={() => setShowOptionModal(false)}>
@@ -546,7 +672,13 @@ const GroupOrderDetail = () => {
                                             currentAddress,
                                         });
                                     } else {
-                                        Alert.alert('Lỗi', 'Không tìm thấy mã nhóm');
+                                        useAlertStore.getState().showAlert(
+                                            t('android.mess.title8'),
+                                            t('android.mess.error12')
+                                        );
+                                        setTimeout(() => {
+                                            useAlertStore.getState().hideAlert();
+                                        }, 2500);
                                     }
                                 }
                             }}
@@ -657,11 +789,11 @@ const GroupOrderDetail = () => {
                                 {isLeader && member.userId !== userId && (
                                     <TouchableOpacity
                                         onPress={() => handleKickMember(member)}
-                                        style={{ alignSelf: 'center', marginTop: 6, width:'100%' }}
+                                        style={{ alignSelf: 'center', marginTop: 6, width: '100%' }}
                                     >
                                         <Text style={{
                                             color: 'red', fontSize: 22,
-                                            fontFamily: FONTFAMILY.dongle_bold, textAlign:'center'
+                                            fontFamily: FONTFAMILY.dongle_bold, textAlign: 'center'
                                         }}>{t('android.deleteBtn')}</Text>
                                     </TouchableOpacity>
                                 )}
@@ -679,78 +811,86 @@ const GroupOrderDetail = () => {
                 <TouchableOpacity
                     style={styles.nextButton1}
                     onPress={() => {
+                        const groupOrderId = groupInfo?.groupOrderId;
+
+                        if (!groupOrderId || !userId) return;
+
                         if (isLeader) {
-                            Alert.alert(
-                                'Xác nhận xoá nhóm',
-                                'Bạn có chắc muốn xoá đơn hàng nhóm này không?',
-                                [
-                                    { text: 'Hủy', style: 'cancel' },
-                                    {
-                                        text: 'Xoá nhóm',
-                                        style: 'destructive',
-                                        onPress: async () => {
-                                            try {
-                                                const token = await AsyncStorage.getItem('access_token');
-                                                const groupOrderId = groupInfo?.groupOrderId;
-
-                                                await axiosInstance.delete(
-                                                    `/group-order/delete/${groupOrderId}/${userId}`,
-                                                    {
-                                                        headers: {
-                                                            Authorization: `Bearer ${token}`,
-                                                        },
-                                                    }
-                                                );
-
-                                                Alert.alert('Thành công', 'Nhóm đã được xoá');
-                                                navigation.navigate('GroupOrderList');
-                                            } catch (err) {
-                                                console.error('Lỗi khi xoá nhóm:', err);
+                            useAlertStore.getState().showAlert(
+                                t('android.group.confirmDeleteGroupTitle'),
+                                t('android.group.confirmDeleteGroupMessage'),
+                                async () => {
+                                    try {
+                                        const token = await AsyncStorage.getItem('access_token');
+                                        await axiosInstance.delete(
+                                            `/group-order/delete/${groupOrderId}/${userId}`,
+                                            {
+                                                headers: {
+                                                    Authorization: `Bearer ${token}`,
+                                                },
                                             }
-                                        },
-                                    },
-                                ],
-                                { cancelable: true }
+                                        );
+
+                                        useAlertStore.getState().showAlert(
+                                            t('common.success'),
+                                            t('android.group.deleteGroupSuccess')
+                                        );
+
+                                        navigation.navigate('GroupOrderList');
+                                    } catch (err) {
+                                        console.error('Lỗi khi xoá nhóm:', err);
+                                        useAlertStore.getState().showAlert(
+                                            t('android.mess.title8'),
+                                            t('android.group.deleteGroupFailed')
+                                        );
+                                    }
+                                }
                             );
-                            console.log('Xóa đơn hàng nhóm');
                         } else {
-                            // TODO: Gọi API rời khỏi nhóm
-                            Alert.alert(
-                                'Xác nhận rời nhóm',
-                                'Bạn có chắc muốn rời khỏi nhóm này?',
-                                [
-                                    { text: 'Hủy', style: 'cancel' },
-                                    {
-                                        text: 'Rời nhóm',
-                                        style: 'destructive',
-                                        onPress: async () => {
-                                            try {
-                                                const token = await AsyncStorage.getItem('access_token');
-                                                const userId = typeof rawUserId === 'string' ? parseInt(rawUserId, 10) : Number(rawUserId);
+                            useAlertStore.getState().showAlert(
+                                t('android.group.confirmLeaveGroupTitle'),
+                                t('android.group.confirmLeaveGroupMessage'),
+                                async () => {
+                                    try {
+                                        const token = await AsyncStorage.getItem('access_token');
+                                        const parsedUserId = typeof rawUserId === 'string' ? parseInt(rawUserId, 10) : Number(rawUserId);
 
-                                                await axiosInstance.put(
-                                                    `/group-order/leave/${groupInfo?.groupOrderId}/${userId}`,
-                                                    {},
-                                                    {
-                                                        headers: {
-                                                            Authorization: `Bearer ${token}`,
-                                                        },
-                                                    }
-                                                );
-
-                                                fetchGroupOrders();
-                                                setGroupOrderCount(Math.max(0, groupOrderCount - 1));
-                                                navigation.navigate('GroupOrderList');
-                                            } catch (err) {
-                                                console.error('Lỗi khi rời nhóm:', err);
+                                        await axiosInstance.put(
+                                            `/group-order/leave/${groupOrderId}/${parsedUserId}`,
+                                            {},
+                                            {
+                                                headers: {
+                                                    Authorization: `Bearer ${token}`,
+                                                },
                                             }
-                                        },
-                                    },
-                                ],
-                                { cancelable: true }
-                            );
-                            console.log('Rời khỏi đơn hàng nhóm');
+                                        );
 
+                                        fetchGroupOrders();
+                                        setGroupOrderCount(Math.max(0, groupOrderCount - 1));
+
+                                        useAlertStore.getState().showAlert(
+                                            t('common.success'),
+                                            t('android.group.leaveGroupSuccess')
+                                        );
+
+                                        setTimeout(() => {
+                                            useAlertStore.getState().hideAlert();
+                                        }, 2500);
+
+                                        navigation.navigate('GroupOrderList');
+
+                                    } catch (err) {
+                                        console.error('Lỗi khi rời nhóm:', err);
+                                        useAlertStore.getState().showAlert(
+                                            t('android.mess.title8'),
+                                            t('group.leaveGroupFailed')
+                                        );
+                                        setTimeout(() => {
+                                            useAlertStore.getState().hideAlert();
+                                        }, 2500);
+                                    }
+                                }
+                            );
                         }
                     }}
                 >
@@ -758,8 +898,6 @@ const GroupOrderDetail = () => {
                         {isLeader ? t('android.delete_group_order') : t('android.leave_group_order')}
                     </Text>
                 </TouchableOpacity>
-
-
 
 
             </ScrollView>
@@ -772,7 +910,13 @@ const GroupOrderDetail = () => {
                             const groupOrderId = groupCartData?.crudGroupOrderResponse.groupOrderId ?? 0;
 
                             if (!address.trim()) {
-                                Alert.alert('❗ Thiếu địa chỉ', 'Vui lòng cập nhật địa chỉ giao hàng trước khi tiếp tục.');
+                                useAlertStore.getState().showAlert(
+                                    t('android.mess.title10'),
+                                    t('android.mess.mess10')
+                                );
+                                setTimeout(() => {
+                                    useAlertStore.getState().hideAlert();
+                                }, 2500);
                                 return;
                             }
 
@@ -781,24 +925,18 @@ const GroupOrderDetail = () => {
                             );
 
                             if (hasEmptyMember) {
-                                Alert.alert(
-                                    'Thành viên chưa đặt món',
-                                    'Một số thành viên chưa thêm đồ uống. Bạn có muốn tiếp tục thanh toán không?',
-                                    [
-                                        { text: 'Huỷ', style: 'cancel' },
-                                        {
-                                            text: 'Tiếp tục',
-                                            style: 'default',
-                                            onPress: () => {
-                                                navigation.navigate('Preview', {
-                                                    groupOrderId,
-                                                    currentAddress: address,
-                                                });
-                                            },
-                                        },
-                                    ],
-                                    { cancelable: true }
+                                useAlertStore.getState().showAlert(
+                                    t('common.noti'),
+                                    t('android.group.unorderedMembersMessage'),
+                                    () => {
+                                        navigation.navigate('Preview', {
+                                            groupOrderId,
+                                            currentAddress: address,
+                                        });
+                                    },
+                                    () => { }
                                 );
+
                             } else {
                                 navigation.navigate('Preview', {
                                     groupOrderId,
@@ -809,9 +947,6 @@ const GroupOrderDetail = () => {
                     >
                         <Text style={styles.nextText}>{t('android.next')}</Text>
                     </TouchableOpacity>
-
-
-
 
                 </View>}
 

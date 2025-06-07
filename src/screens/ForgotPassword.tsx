@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ActivityIndicator, StyleSheet, Alert, Animated, Easing } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ActivityIndicator, StyleSheet,  Animated, Easing } from 'react-native';
 import axiosInstance from '../utils/axiosInstance';
 import { useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';

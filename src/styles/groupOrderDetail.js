@@ -118,6 +118,7 @@ const styles = StyleSheet.create({
     container: { paddingBottom: 20, backgroundColor: '#fff' },
     banner: { height: 200, justifyContent: 'flex-end', padding: 16 },
     backButton: { position: 'absolute', top: 16, left: 16, backgroundColor: 'rgba(255,255,255,0.8)', padding: 8, borderRadius: 24 },
+    backButton1: { position: 'absolute', top: 16, right: 16, backgroundColor: 'rgba(255,255,255,0.8)', padding: 8, borderRadius: 24 },
     title: { fontSize: 20, fontWeight: 'bold', color: '#000' },
     optionRow: { flexDirection: 'row', justifyContent: 'space-around', marginTop: -30, marginBottom: 16, marginHorizontal: 16 },
     optionBox: { backgroundColor: '#fff', borderRadius: 12, padding: 12, width: '45%', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', elevation: 3 },
