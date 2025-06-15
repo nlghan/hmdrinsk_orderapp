@@ -375,9 +375,8 @@ const Cart = () => {
 
     const handleCreateOrder = async () => {
         try {
-            setIsLoading(true); // 👉 Bắt đầu loading
+            setIsLoading(true);
 
-            // Nếu đã có đơn hàng bị pause thì tiếp tục
             if (idOrderPause && idCartPause) {
                 console.log("🔁 Resume paused order:", idOrderPause);
                 useCartStore.getState().cart = [];
@@ -386,16 +385,23 @@ const Cart = () => {
                 navigation.navigate('Payment', { orderId: idOrderPause });
                 return;
             }
+
             const result = await createOrder(note);
             console.log("📦 createOrder result:", result);
 
-
             if (!result.orderId) {
                 const { errorCode, errorData } = result;
-
+                console.error("❌ Error creating order:", errorCode, " - ", errorData);
                 switch (errorCode) {
                     case 'STOCK_ERROR':
-                        showNotification(String(t('cart.notEnoughProduct', errorData)));
+                        showNotification(
+                            t('cart.notEnoughProduct', {
+                                product: errorData.product,
+                                size: errorData.size,
+                                requested: errorData.requested,
+                                available: errorData.available
+                            })
+                        );
                         break;
                     case 'Distance exceeded, please update address':
                         showNotification(t('cart.distanceExceeded'));
@@ -440,9 +446,10 @@ const Cart = () => {
         } catch (error) {
             console.error("❌ Error creating order:", error);
         } finally {
-            setIsLoading(false); // 👉 Kết thúc loading bất kể thành công hay thất bại
+            setIsLoading(false);
         }
     };
+
 
 
 
