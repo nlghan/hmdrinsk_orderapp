@@ -1,5 +1,6 @@
 import { StyleSheet, Dimensions } from 'react-native';
 import { COLORS, FONTFAMILY } from '../theme/theme';
+import { scale, verticalScale, moderateScale, moderateVerticalScale } from 'react-native-size-matters';
 
 const { height, width } = Dimensions.get('window');
 const imageWidth = Math.min(height * 0.5, width * 0.8);
@@ -235,8 +236,8 @@ export default StyleSheet.create({
         left: 0,
         right: 0,
         backgroundColor: 'white',
-        paddingVertical: 20,
-        paddingHorizontal: 10,
+        paddingBottom: scale(37),
+        paddingHorizontal: scale(10),
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',

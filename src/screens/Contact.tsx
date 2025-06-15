@@ -8,7 +8,7 @@ import { useNavigation } from "@react-navigation/native";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from "../navigation/RootStackParamList";
-
+import { scale } from 'react-native-size-matters';
 
 const Contact: React.FC = () => {
   const [formData, setFormData] = useState({
@@ -151,6 +151,7 @@ const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
     padding: 20,
+    paddingBottom: scale(50),
     backgroundColor: '#fff',
   },
   sectionTitle: {

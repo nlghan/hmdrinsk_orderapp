@@ -1,12 +1,14 @@
 import { View, Animated, Text, Image, ActivityIndicator, ScrollView, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
 import React, { useEffect, useState, useRef } from 'react';
-import { RouteProp, useRoute } from '@react-navigation/native';
+import { RouteProp, useRoute, useNavigation } from '@react-navigation/native';
 import axiosInstance from '../utils/axiosInstance';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { RootStackParamList } from '../navigation/RootStackParamList';
+import { StackNavigationProp } from '@react-navigation/stack';
 import { useCategoryStore } from '../store/store';
 import { useTranslation } from 'react-i18next';
-import { FONTFAMILY } from '../theme/theme';
+import { COLORS, FONTFAMILY } from '../theme/theme';
+import Icon from 'react-native-vector-icons/MaterialIcons';
 
 export type NewDetailsRouteProp = RouteProp<RootStackParamList, 'NewDetails'>;
 
@@ -39,7 +41,7 @@ const NewDetails = () => {
   const [voucher, setVoucher] = useState<Voucher | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
+  const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
   const [isVoucherClaimed, setIsVoucherClaimed] = useState(false);
   const { language, userId } = useCategoryStore();
 
@@ -124,6 +126,11 @@ const NewDetails = () => {
     <ScrollView style={styles.container}>
       {post ? (
         <View>
+          <View>
+            <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+              <Icon name="arrow-back" size={24} color={COLORS.primaryGreenHex} />
+            </TouchableOpacity>
+          </View>
           {post.url ? <Image source={{ uri: post.url }} style={styles.image} /> : <Text>Hình ảnh không có sẵn</Text>}
           <Text style={styles.title}>{post.title}</Text>
           <Text style={styles.date}>{t('common.dateCreate')}: {post.dateCreated}</Text>
@@ -202,7 +209,7 @@ const NewDetails = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { padding: 20 },
+  container: { padding: 20, marginBottom: 20 },
   image: { width: '100%', height: 300, resizeMode: 'cover', marginBottom: 10 },
   title: {
     fontSize: 30,
@@ -211,7 +218,16 @@ const styles = StyleSheet.create({
     lineHeight: 30,
     textAlign: 'center'
   },
- 
+  backButton: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    zIndex: 10,
+    backgroundColor: 'rgb(255, 255, 255)',
+    padding: 8,
+    borderRadius: 50,
+    elevation: 3,
+  },
   voucherInfo: {
     flex: 1,
   },
@@ -232,9 +248,9 @@ const styles = StyleSheet.create({
     backgroundColor: "rgb(114, 170, 164)",
     borderRadius: 8,
     textAlign: "center",
-    color:'#fff',
+    color: '#fff',
     fontFamily: FONTFAMILY.dongle_regular,
-    fontSize:24,
+    fontSize: 24,
     lineHeight: 22
   },
   voucherTitle: {
@@ -248,7 +264,8 @@ const styles = StyleSheet.create({
     padding: 13,
     borderRadius: 8,
     marginBottom: 40,
-    marginTop:10,
+    paddingBottom: 20,
+    marginTop: 10,
     marginHorizontal: 10, // Giảm khoảng cách hai bên
     width: "100%",  // Giới hạn chiều rộng không quá lớn
     shadowColor: "#000",
@@ -278,12 +295,12 @@ const styles = StyleSheet.create({
     fontFamily: FONTFAMILY.dongle_bold,
     color: "#ff4500",
     marginBottom: 5,
-    lineHeight:20,
+    lineHeight: 20,
   },
   voucherText: {
     fontSize: 22,
     fontFamily: FONTFAMILY.dongle_regular,
-    lineHeight:20,
+    lineHeight: 20,
     color: "#333",
     marginBottom: 3,
     marginRight: 5,

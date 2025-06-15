@@ -1,5 +1,6 @@
 import { StyleSheet } from 'react-native';
 import { FONTFAMILY } from '../theme/theme';
+import { scale, verticalScale, moderateScale, moderateVerticalScale } from 'react-native-size-matters';
 
 const reviewStyles = StyleSheet.create({
     container: {
@@ -13,7 +14,7 @@ const reviewStyles = StyleSheet.create({
         padding: 16,
         borderBottomWidth: 1,
         borderBottomColor: '#ddd',
-        gap: 40
+        gap: scale(15)
     },
     backButton: {
         padding: 8,

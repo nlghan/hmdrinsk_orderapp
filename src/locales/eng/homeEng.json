@@ -26,6 +26,7 @@
     "payment": "Payment",
     "print_invoice": "Print Invoice",
     "normal_order": "Mine",
+    "leader": "Leader:",
     "group_order": "Group",
     "otherItems": "other products",
     "confirm_reorder": "Are you sure you want to reorder order?",

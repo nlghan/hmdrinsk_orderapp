@@ -53,7 +53,7 @@ const News = () => {
       );
 
       setPosts((prevPosts) => {
-        const newPosts = response.data.listPosts.filter(
+        const newPosts = (response?.data?.body.listPosts || []).filter(
           (newPost) => !prevPosts.some((post) => post.postId === newPost.postId)
         );
         return page === 1 ? newPosts : [...prevPosts, ...newPosts];
@@ -159,7 +159,7 @@ const News = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f9f9f9' },
+  container: { flex: 1, backgroundColor: '#f9f9f9'},
   headerContainer: {
     paddingHorizontal: 14,
     paddingTop: 25,

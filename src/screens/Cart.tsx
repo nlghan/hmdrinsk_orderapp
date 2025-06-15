@@ -29,6 +29,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import axiosInstance from '../utils/axiosInstance';
 import Loading from '../components/DotLoading';
 import { useAlertStore } from '../store/alertStore';
+import { scale, verticalScale, moderateScale, moderateVerticalScale } from 'react-native-size-matters';
 LogBox.ignoreLogs(['new NativeEventEmitter']); // Ignore log notification by message
 LogBox.ignoreAllLogs();
 

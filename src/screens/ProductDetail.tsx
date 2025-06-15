@@ -276,7 +276,7 @@ const ProductDetail = () => {
             keyboardVerticalOffset={0} // tuỳ chỉnh nếu header cao
         >
             <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-                <View style={{ flex: 1 }}>
+                <View style={{ flex: 1}}>
                     {loading && (
                         <View style={{
                             position: 'absolute',

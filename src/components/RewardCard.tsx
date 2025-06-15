@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { COLORS, FONTFAMILY } from '../theme/theme';
+import { scale, verticalScale, moderateScale, moderateVerticalScale } from 'react-native-size-matters';
 
 interface RewardCardProps {
   icon: string;   // Tên icon từ MaterialCommunityIcons
@@ -44,7 +45,7 @@ const styles = StyleSheet.create({
     marginRight: 6,
   },
   title: {
-    fontSize: 22,
+    fontSize: scale(20),
     fontFamily: FONTFAMILY.dongle_bold,
     color: '#7B614F',
     textTransform: 'uppercase',
@@ -58,8 +59,8 @@ const styles = StyleSheet.create({
   arrow: {
     alignSelf: 'flex-end',
     position: 'absolute',
-    right: 8,
-    top: 8,
+    right: scale(2),
+    top: scale(13),
   },
 });
 
