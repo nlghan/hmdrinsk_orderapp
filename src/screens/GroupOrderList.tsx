@@ -22,6 +22,11 @@ import Loading from '../components/Loading';
 import EditGroupNameModal from '../components/EditGroupNameModal';
 import { useAlertStore } from '../store/alertStore';
 import Notification from '../components/Notification';
+import JoinGroupInput from '../components/JoinGroupInput';
+import { Animated, Easing } from 'react-native';
+import { useRef } from 'react';
+import axios from 'axios';
+
 
 
 interface GroupOrder {
@@ -37,6 +42,7 @@ interface GroupOrder {
     status: string;
     typePayment: string;
     dateCreated: string;
+    code: string
 }
 
 const GroupOrderList: React.FC = () => {
@@ -262,6 +268,107 @@ const GroupOrderList: React.FC = () => {
         }
     };
 
+    const [showQR, setShowQR] = useState(false);
+    const [qrCode, setQrCode] = useState('');
+
+
+    const joinGroupByCode = async (code: string) => {
+        const userId = typeof rawUserId === 'string' ? parseInt(rawUserId, 10) : Number(rawUserId);
+        if (!code || isNaN(userId)) return;
+
+        try {
+            const token = await AsyncStorage.getItem('access_token');
+
+            console.log('📤 Sending join-group request:', {
+                userId,
+                code,
+                typePayment: 'CASH',
+            });
+
+            const response = await axiosInstance.post(
+                '/group-order/join-group',
+                {
+                    userId,
+                    code,
+                    typePayment: 'CASH',
+                },
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        'Content-Type': 'application/json',
+                    },
+                }
+            );
+
+            console.log('✅ Tham gia nhóm thành công:', response.data);
+            fetchGroupOrders();
+
+            if (groupOrderCount === 0) {
+
+                setGroupOrderCount(1);
+
+            } else {
+                setGroupOrderCount(groupOrderCount + 1);
+            }
+
+            useAlertStore.getState().showAlert(
+                t('common.noti'),
+                t('android.mess.sucess4')
+            );
+
+            // Tự động đóng alert sau 3 giây và chuyển sang GroupOrderList
+            setTimeout(() => {
+                useAlertStore.getState().hideAlert();
+                navigation.navigate('GroupOrderList');
+            }, 3000);
+
+        } catch (err) {
+            if (axios.isAxiosError(err)) {
+                console.error('❌ Lỗi từ server:', {
+                    message: err.message,
+                    status: err.response?.status,
+                    data: err.response?.data,
+                    headers: err.response?.headers,
+                });
+            } else {
+                console.error('❌ Lỗi không xác định khi gọi API:', err);
+            }
+
+            useAlertStore.getState().showAlert(
+                t('common.noti'),
+                t('android.mess.error4')
+            );
+        }
+    };
+
+
+    const handleCheckJoinCode = (code: string) => {
+        if (!code.trim()) {
+            setNotification({ message: 'Vui lòng nhập mã nhóm', visible: true });
+            return;
+        }
+        joinGroupByCode(code.trim());
+    };
+
+    const [showJoinInput, setShowJoinInput] = useState(false);
+    const animatedHeight = useRef(new Animated.Value(0)).current;
+    useEffect(() => {
+        Animated.timing(animatedHeight, {
+            toValue: showJoinInput ? 1 : 0,
+            duration: 250,
+            useNativeDriver: false,
+            easing: Easing.out(Easing.ease),
+        }).start();
+    }, [showJoinInput]);
+    const animatedStyle = {
+        height: animatedHeight.interpolate({
+            inputRange: [0, 1],
+            outputRange: [0, 60], // Chiều cao bạn muốn khi mở ra
+        }),
+        opacity: animatedHeight,
+        overflow: 'hidden' as 'hidden',
+    };
+
 
 
     const renderGroupOrder = ({ item }: { item: GroupOrder }) => {
@@ -286,13 +393,22 @@ const GroupOrderList: React.FC = () => {
                                 <Image source={require("../assets/app_images/avtgroup.jpeg")} style={styles.avatar} />
                                 <Text style={styles.groupNameText}> {item.nameGroup}</Text>
                                 {item.isLeader && (
-                                    <TouchableOpacity onPress={() => {
-                                        setEditingGroup(item);
-                                        setNewGroupName(item.nameGroup);
-                                    }}>
-                                        <Icon name="edit" size={20} color="#FF9800" />
-                                    </TouchableOpacity>
+                                    <>
+                                        <TouchableOpacity onPress={() => {
+                                            setEditingGroup(item);
+                                            setNewGroupName(item.nameGroup);
+                                        }}>
+                                            <Icon name="edit" size={20} color="#FF9800" />
+                                        </TouchableOpacity>
+                                        <TouchableOpacity onPress={() => {
+                                            setQrCode(item.code); // lấy mã nhóm
+                                            setShowQR(true);
+                                        }}>
+                                            <Icon name="qr-code" size={20} color="#2196F3" style={{ marginLeft: 8 }} />
+                                        </TouchableOpacity>
+                                    </>
                                 )}
+
                             </View>
                         </View>
                         <Text style={[styles.groupOrderInfo, getStatusStyle(item.status)]}>
@@ -321,7 +437,16 @@ const GroupOrderList: React.FC = () => {
                     <Icon name="arrow-back" size={20} color="#FF9800" />
                 </TouchableOpacity>
                 <Text style={styles.headerTitle}>{t('android.groupOrderList')}</Text>
+                <TouchableOpacity onPress={() => setShowJoinInput(prev => !prev)}>
+                    <Icon name="group-add" size={20} color="#FF9800" />
+                </TouchableOpacity>
             </View>
+
+            <Animated.View style={[animatedStyle]}>
+                <JoinGroupInput onCheckCode={handleCheckJoinCode} />
+            </Animated.View>
+
+
 
             {loading ? (
                 <View style={styles.loadingOverlay}>
@@ -346,6 +471,7 @@ const GroupOrderList: React.FC = () => {
                 onCancel={() => setEditingGroup(null)}
                 onSave={handleSaveGroupName}
             />
+
 
         </View>
     );
@@ -372,7 +498,7 @@ const styles = StyleSheet.create({
     boldText: { fontWeight: '600', color: '#222' },
     groupHeaderLeft: { flexDirection: 'row', alignItems: 'center' },
     avatar: { width: 40, height: 40, borderRadius: 20, marginRight: 10 },
-    groupNameText: { fontSize: 22, color: '#333', marginRight: 8, fontFamily: FONTFAMILY.lobster_regular },
+    groupNameText: { fontSize: 20, color: '#333', marginRight: 8, fontFamily: FONTFAMILY.lobster_regular },
     swipeActions: {
         backgroundColor: 'transparent',
         padding: 10,
@@ -389,11 +515,11 @@ const styles = StyleSheet.create({
     },
 
     header: {
-        flexDirection: "row", justifyContent: "center", alignItems: "center",
+        flexDirection: "row", justifyContent: "space-between", alignItems: "center",
         marginBottom: 20, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: "#E0E0E0",
     },
     backIcon: {
-        position: "absolute", left: 5, padding: 8, borderRadius: 10,
+
         backgroundColor: "#FFF", shadowColor: "#000", shadowOffset: { width: 0, height: 2 },
     },
     headerTitle: { fontSize: 24, fontFamily: FONTFAMILY.lobster_regular, color: "#333" },
