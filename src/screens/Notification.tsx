@@ -65,6 +65,9 @@ const getTranslatedMessage = (message: string, language: string) => {
   if (message === 'Đơn hàng của bạn đã bị hủy') {
     return 'Your order has been canceled';
   }
+  if (message === 'Đơn hàng của bạn đã bắt đầu giao') {
+    return 'Your order has started shipping';
+  }
 
   if (message === 'Tài khoản của bạn đã đăng nhập ở nơi khác') {
     return 'Your account has been logged in from another device';

@@ -987,21 +987,15 @@ export const useCartStore = create<CartStore>()(
           const voucherId = selectedVoucher.selectedVoucherId || "string";
           const pointCoinUse = coin || 0;
 
-          console.log("🧾 userId:", userId);
-          console.log("🛒 currentCartId:", currentCartId);
-
           const response = await axiosInstance.post(
             '/orders/create',
             { userId, cartId: currentCartId, voucherId, pointCoinUse, note, language },
             { headers: { Authorization: `Bearer ${accessToken}` } }
           );
-          console.log("📦 API response data:", response.data);
-          console.log("📦 API response body type:", typeof response.data.body);
-
 
           const body = response.data.body;
 
-          // ❗ Nếu body là string (lỗi), thì ném về catch
+          // ❗ Nếu body là string (tức là lỗi trả về)
           if (typeof body === 'string') {
             throw { response: { status: 400, data: body } };
           }
@@ -1011,7 +1005,6 @@ export const useCartStore = create<CartStore>()(
           if (!orderId) {
             return { orderId: null, errorCode: 'INVALID_ORDER_ID', errorData: null };
           }
-
 
           set({
             order,
@@ -1030,28 +1023,29 @@ export const useCartStore = create<CartStore>()(
           return { orderId: String(orderId), errorCode: null, errorData: null };
 
         } catch (error: any) {
-          console.error("❌ createOrder error:", error);
-
           if (error?.response?.status === 400) {
             const message = error.response.data;
 
-            // 📌 Lỗi hết hàng
-            const stockRegex = /Not enough product for (.+), size (.+)\. Requested quantity: (\d+), Available: (\d+)/;
-            if (typeof message === 'string' && stockRegex.test(message)) {
+            // 📌 Lỗi hết hàng        
+            if (typeof message === 'string') {
+              const stockRegex = /Not enough product for (.+), size (.+)\. Requested: (\d+), Available: (\d+)/;
               const matches = message.match(stockRegex);
-              return {
-                orderId: null,
-                errorCode: 'STOCK_ERROR',
-                errorData: {
-                  product: matches?.[1],
-                  size: matches?.[2],
-                  requested: matches?.[3],
-                  available: matches?.[4],
-                }
-              };
+              if (matches) {
+                return {
+                  orderId: null,
+                  errorCode: 'STOCK_ERROR',
+                  errorData: {
+                    product: matches[1],
+                    size: matches[2],
+                    requested: matches[3],
+                    available: matches[4],
+                  }
+                };
+              }
             }
 
-            // 📌 Các lỗi khác
+
+            // 📌 Các lỗi string khác từ backend
             return { orderId: null, errorCode: message, errorData: null };
           }
 
@@ -1062,6 +1056,7 @@ export const useCartStore = create<CartStore>()(
           return { orderId: null, errorCode: 'UNKNOWN', errorData: null };
         }
       },
+
 
 
       addToCart: async (proId: number, size: string, quantity: number, language: string) => {

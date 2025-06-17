@@ -1,4 +1,5 @@
 import { StyleSheet } from 'react-native';
+import { scale } from 'react-native-size-matters';
 import {
     BORDERRADIUS,
     COLORS,
@@ -48,8 +49,8 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     image: {
-        width: 100,
-        height: 100,
+        width: scale(100),
+        height: scale(100),
         borderRadius: BORDERRADIUS.radius_15,
         marginRight: 10,
     },
@@ -70,13 +71,13 @@ const styles = StyleSheet.create({
         marginTop: 5,
     },
     sizeText: {
-        fontSize: 24,
+        fontSize: scale(22),
         fontFamily:FONTFAMILY.dongle_regular,
         lineHeight:20,
         color: COLORS.secondaryDarkHex,
     },
     discountPrice: {
-        fontSize: 28,
+        fontSize: scale(24),
         fontFamily:FONTFAMILY.dongle_bold,
         color: 'red',
         alignItems: 'flex-end',
@@ -91,7 +92,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: 5,
         paddingVertical: 5,
         gap: 5,
-       
+        marginLeft: scale(-35),
     },
     quantityButton: {
         backgroundColor: '#f0d9b5',
@@ -169,7 +170,8 @@ const styles = StyleSheet.create({
         backgroundColor: '#fff',
         padding: SPACING.space_8,
         borderRadius: BORDERRADIUS.radius_20,
-        height:80
+        height:80,
+        marginBottom: scale(20)
     },
 
     selectAll: {

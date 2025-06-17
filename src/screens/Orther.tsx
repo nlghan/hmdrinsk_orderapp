@@ -12,6 +12,8 @@ import NotificationPopup from '../components/NotificationPopup';
 import { useNotification } from '../components/NotificationContext';
 import { FONTFAMILY } from "../theme/theme";
 import ConfirmModal from "../components/ConfirmModal";
+import { scale } from "react-native-size-matters";
+import Header from '../components/Header';
 
 const Other = () => {
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
@@ -41,11 +43,24 @@ const Other = () => {
   };
   return (
     <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
+           <Header
+          style={{
+            paddingHorizontal: 14,
+            paddingVertical:10,
+            paddingBottom: 10,
+            backgroundColor: 'white',
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.2,
+            shadowRadius: 4,
+            elevation: 5,
+          }}
+        />
       {/* <NotificationPopup userId={userId ?? 0} /> */}
       <View style={styles.container}>
         <Notification message={notification.message} visible={notification.visible} onHide={() => setNotification({ ...notification, visible: false })} />
         {/* Tiện ích */}
-        <Text style={styles.title}>{t('information.other')}</Text>
+        {/* <Text style={styles.title}>{t('information.other')}</Text> */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>{t('features')}</Text>
           <View style={styles.centered}>
@@ -149,7 +164,7 @@ const Other = () => {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>{t('features.support')}</Text>
           <View style={styles.list}>
-            <TouchableOpacity style={styles.listItem} onPress={() => setShowConfirmModal(true)}>
+            {/* <TouchableOpacity style={styles.listItem} onPress={() => setShowConfirmModal(true)}>
               <MaterialIcons name="star" style={styles.icon} size={24} />
               <Text style={styles.textOther}>{t('about.stat4')}</Text>
               <MaterialIcons name="arrow-forward-ios" style={styles.iconrow} size={18} />
@@ -162,7 +177,7 @@ const Other = () => {
                 setShowConfirmModal(false);
                 navigation.goBack(); // hoặc hành động bạn muốn thực hiện
               }}
-            />
+            /> */}
 
             <TouchableOpacity style={styles.listItem} onPress={() => navigation.navigate('Contact')}>
               <MaterialIcons name="comment" style={styles.icon} size={24} />
@@ -343,7 +358,7 @@ const styles = StyleSheet.create({
   },
   textSubOther: {
     fontFamily: FONTFAMILY.dongle_regular,
-    fontSize: 14,
+    fontSize: scale(12),
     color: "#333",
   }
 });

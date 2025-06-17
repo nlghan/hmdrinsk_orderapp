@@ -27,7 +27,7 @@ import axiosInstance from '../utils/axiosInstance';
 import Notification from '../components/Notification';
 import Alert from '../components/Alert';
 import GlobalAlert from './GlobalAlert';
-
+import { scale, verticalScale, moderateScale, moderateVerticalScale } from 'react-native-size-matters';
 
 const Home = () => {
   const { data, insertFavoriteItem } = useCategoryStore();
