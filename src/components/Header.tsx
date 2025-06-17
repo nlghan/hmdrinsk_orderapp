@@ -19,7 +19,7 @@ interface Notification {
     message: string;
     time: string;
     isRead: boolean;
-    shipmentId: number;
+    shipmentId: number|undefined;
     total: number;
 }
 

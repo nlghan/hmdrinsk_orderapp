@@ -1,14 +1,12 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import {
   View,
   Text,
   TouchableOpacity,
   FlatList,
-  Modal,
   StyleSheet,
-  ActivityIndicator,
+  Image,
 } from "react-native";
-import Icon from "react-native-vector-icons/Ionicons";
 import IconM from "react-native-vector-icons/MaterialIcons";
 import { useNavigation } from "@react-navigation/native";
 import { RouteProp, useRoute } from "@react-navigation/native";
@@ -18,21 +16,20 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from "../navigation/RootStackParamList";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTranslation } from 'react-i18next';
-import { Image } from "react-native";
 import { FONTFAMILY } from "../theme/theme";
 import { useCartStore } from "../store/useCartStore";
 import { useCategoryStore } from '../store/store';
-
-
 
 interface Notification {
   id: string;
   message: string;
   time: string;
   isRead: boolean;
-  shipmentId: number;
+  shipmentId?: number | undefined;
   groupOrderId: number;
 }
+
+type NotificationScreenRouteProp = RouteProp<RootStackParamList, "Notification">;
 
 const getTranslatedMessage = (message: string, language: string) => {
   if (language !== 'EN') return message;
@@ -76,120 +73,143 @@ const getTranslatedMessage = (message: string, language: string) => {
   return message;
 };
 
-type NotificationScreenRouteProp = RouteProp<RootStackParamList, "Notification">;
-
 const NotificationScreen: React.FC = () => {
+  console.log('Notification re-render');
   const route = useRoute<NotificationScreenRouteProp>();
   const userId = route.params?.userId || 0;
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
   const socketNotifications = UseWebSocket(userId);
   const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [unreadCount, setUnreadCount] = useState<number>(0);
-  const [showNotifications, setShowNotifications] = useState<boolean>(true);
-  const modalRef = useRef(null);
-  const { language, logout } = useCategoryStore();
+  const { language } = useCategoryStore();
   const { t } = useTranslation();
   const groupCartId = useCartStore((state) => state.groupCartId);
 
-  const fetchNotifications = async () => {
+  const notificationsRef = useRef<Notification[]>([]);
+  notificationsRef.current = notifications;
+
+  const unreadCount = useMemo(() => notifications.filter((n) => !n.isRead).length, [notifications]);
+
+  const fetchNotifications = useCallback(async () => {
     if (!userId) return;
     const token = await AsyncStorage.getItem('access_token');
     try {
       const response = await axiosInstance.get(`/notifications/user/${userId}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          Accept: 'application/json',
-          'Content-Type': 'application/json'
-        },
+        headers: { Authorization: `Bearer ${token}` },
       });
-      const data: Notification[] = response.data.body?.notifications;
+      const data: Notification[] = response.data.body?.notifications || [];
       setNotifications(data);
-      setUnreadCount(data?.filter((noti) => !noti.isRead).length);
     } catch (error) {
       console.error("Lỗi khi lấy danh sách thông báo:", error);
     }
-  };
-
-
-  useEffect(() => {
-    fetchNotifications();
   }, [userId]);
 
   useEffect(() => {
-    if (socketNotifications.length > 0) {
-      const newNotification =
-        socketNotifications[socketNotifications.length - 1];
-      if (
-        newNotification &&
-        typeof newNotification === "object" &&
-        "message" in newNotification
-      ) {
-        fetchNotifications();
-      } else {
-        console.error("Dữ liệu thông báo không hợp lệ:", newNotification);
-      }
-    }
-  }, [socketNotifications]);
+    fetchNotifications();
+  }, [fetchNotifications]);
 
-  const handleNotificationClick = async (
+  useEffect(() => {
+    if (socketNotifications.length === 0) return;
+    const newNotification = socketNotifications[socketNotifications.length - 1];
+
+    if (
+      newNotification &&
+      typeof newNotification === "object" &&
+      "message" in newNotification
+    ) {
+      // Kiểm tra notifications hiện tại từ ref để tránh re-render khi notifications thay đổi
+      if (!notificationsRef.current.find(n => Number(n.id) === Number(newNotification.id))) {
+        fetchNotifications();
+      }
+    } else {
+      console.error("Dữ liệu thông báo không hợp lệ:", newNotification);
+    }
+  }, [socketNotifications, fetchNotifications]);
+
+  const handleNotificationClick = useCallback(async (
     notificationId: string,
-    shipmentId: number | null,
+    shipmentId: number | undefined,
     groupOrderId?: number,
     message?: string
   ) => {
     try {
       const token = await AsyncStorage.getItem('access_token');
-
       await axiosInstance.put(`/notifications/read/${notificationId}`, {}, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          Accept: 'application/json',
-          'Content-Type': 'application/json',
-        },
+        headers: { Authorization: `Bearer ${token}` },
       });
-
       fetchNotifications();
 
-      // ✅ Không điều hướng nếu là thông báo đăng nhập từ nơi khác
-      if (message === 'Tài khoản của bạn đã đăng nhập ở nơi khác') {
-        return;
-      }
+      if (message === 'Tài khoản của bạn đã đăng nhập ở nơi khác') return;
 
-      // Điều hướng tùy loại thông báo
       if (shipmentId === null && groupOrderId) {
         navigation.navigate("GroupOrderDetail", { groupOrderId });
       } else if (shipmentId !== null) {
-        navigation.navigate("MyOrderDetails", { shipmentId: shipmentId });
+        navigation.navigate("MyOrderDetails", { shipmentId: shipmentId ?? 0 });
       }
-
     } catch (error) {
       console.error("Lỗi khi đánh dấu thông báo là đã đọc:", error);
     }
-  };
+  }, [fetchNotifications, navigation]);
 
-
-
-  const handleMarkAllAsRead = async () => {
+  const handleMarkAllAsRead = useCallback(async () => {
     if (unreadCount === 0) return;
     try {
       const token = await AsyncStorage.getItem('access_token');
       await axiosInstance.put(`/notifications/read/all/${userId}`, {}, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          Accept: 'application/json',
-          'Content-Type': 'application/json',
-        },
+        headers: { Authorization: `Bearer ${token}` },
       });
       fetchNotifications();
     } catch (error) {
       console.error("Lỗi khi đánh dấu tất cả thông báo là đã đọc:", error);
     }
-  };
-  useEffect(() => {
-    console.log("📢 Notifications đã cập nhật:", notifications);
-  }, [notifications]);
-  console.log("📌 showNotifications:", showNotifications);
+  }, [unreadCount, userId, fetchNotifications]);
 
+  // Memoize renderItem callback, tránh tạo function inline
+  const renderItem = useCallback(({ item }: { item: Notification }) => (
+    <NotificationItem
+      item={item}
+      onPress={handleNotificationClick}
+      groupCartId={groupCartId}
+      language={language}
+    />
+  ), [handleNotificationClick, groupCartId, language]);
+
+  // Tách component NotificationItem ra ngoài, dùng React.memo với props cụ thể
+  type NotificationItemProps = {
+    item: Notification;
+    onPress: (
+      notificationId: string,
+      shipmentId: number | undefined,
+      groupOrderId?: number,
+      message?: string
+    ) => void;
+    groupCartId?: number |null;
+    language: string;
+  };
+
+  const NotificationItem = React.memo(({ item, onPress, groupCartId, language }: NotificationItemProps) => {
+    // Callback handlePress cũng memo để tránh tạo lại mỗi lần render
+    const handlePress = useCallback(() => {
+      onPress(item.id, item.shipmentId, groupCartId ?? undefined, item.message);
+    }, [onPress, item.id, item.shipmentId, groupCartId, item.message]);
+
+    return (
+      <TouchableOpacity
+        style={[styles.notificationItem, item.isRead && styles.read]}
+        onPress={handlePress}
+      >
+        <View style={styles.notificationContent}>
+          <Image
+            source={require("../assets/app_images/logomini.png")}
+            style={styles.avatar}
+          />
+          <View style={styles.textContainer}>
+            <Text style={styles.message}>{getTranslatedMessage(item.message, language)}</Text>
+            <Text style={styles.time}>{item.time}</Text>
+          </View>
+        </View>
+      </TouchableOpacity>
+    );
+  });
 
   return (
     <View style={styles.container}>
@@ -200,7 +220,7 @@ const NotificationScreen: React.FC = () => {
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{t('common.noti')}</Text>
         <TouchableOpacity
-          style={[styles.markAllButton, unreadCount === 0 && styles.markAllButton]}
+          style={[styles.markAllButton, unreadCount === 0 && styles.disabledButton]}
           onPress={handleMarkAllAsRead}
           disabled={unreadCount === 0}
         >
@@ -212,35 +232,13 @@ const NotificationScreen: React.FC = () => {
       <FlatList
         data={notifications}
         keyExtractor={(item) => item.id.toString()}
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            style={[styles.notificationItem, item.isRead && styles.read]}
-            onPress={() =>
-              handleNotificationClick(
-                item.id,
-                item.shipmentId,
-                groupCartId ?? undefined,
-                item.message
-              )
-            }
-
-          >
-            <View style={styles.notificationContent}>
-              <Image
-                source={require("../assets/app_images/logomini.png")}
-                style={styles.avatar}
-              />
-
-              <View style={styles.textContainer}>
-                <Text style={styles.message}>{getTranslatedMessage(item.message, language)}</Text>
-                <Text style={styles.time}>{item.time}</Text>
-              </View>
-            </View>
-          </TouchableOpacity>
-        )}
-        showsVerticalScrollIndicator={false} // Ẩn thanh cuộn dọc
-        showsHorizontalScrollIndicator={false} // Ẩn thanh cuộn ngang (nếu có)
+        renderItem={renderItem}
+        showsVerticalScrollIndicator={false}
+        showsHorizontalScrollIndicator={false}
         ListEmptyComponent={<Text style={styles.emptyText}>{t('common.noNoti')}</Text>}
+        initialNumToRender={10}
+        maxToRenderPerBatch={10}
+        windowSize={7}
       />
     </View>
   );
@@ -249,7 +247,7 @@ const NotificationScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#FAFAFA", // Màu nền sáng hiện đại
+    backgroundColor: "#FAFAFA",
     paddingHorizontal: 12,
     paddingTop: 20,
   },
@@ -265,7 +263,6 @@ const styles = StyleSheet.create({
   textContainer: {
     flex: 1,
   },
-
   header: {
     flexDirection: "row",
     justifyContent: "center",
@@ -283,7 +280,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFF",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
-
   },
   headerTitle: {
     fontSize: 24,
@@ -297,15 +293,9 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
-
-  },
-  markAllText: {
-    color: "white",
-    fontWeight: "bold",
-    fontSize: 16,
   },
   disabledButton: {
-    backgroundColor: "white",
+    backgroundColor: "#f0f0f0",
   },
   notificationItem: {
     padding: 15,
@@ -334,7 +324,6 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontFamily: FONTFAMILY.dongle_light,
     color: "#757575",
-
   },
   emptyText: {
     textAlign: "center",

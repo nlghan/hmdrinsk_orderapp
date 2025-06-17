@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, Image, TouchableOpacity, ScrollView, TextInput, ActivityIndicator, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard, Animated, Alert } from 'react-native';
 import { useRoute, useNavigation, RouteProp } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
@@ -96,7 +96,12 @@ const ProductDetail = () => {
 
     // const formatPrice = (price: number) => price.toLocaleString() + "đ";
 
-    const handleSizeSelection = (size: string) => {
+    const availableVariants = useMemo(() => {
+        // Lọc những biến thể còn hàng
+        return product.listProductVariants.filter(v => v.stock > 0);
+    }, [product.listProductVariants]);
+
+    const handleSizeSelection = useCallback((size: string) => {
         const variant = product.listProductVariants.find(v => v.size === size);
         if (!variant) {
             showNotification("⚠️ Kích thước sản phẩm không hợp lệ!");
@@ -106,10 +111,48 @@ const ProductDetail = () => {
             showNotification("⚠️ Sản phẩm đã hết hàng!");
             return;
         }
-        setSelectedSize(size);
-        setSelectedStock(variant.stock);
-        setSelectedPrice(variant.price);
-    };
+
+        // Chỉ cập nhật khi khác giá trị hiện tại để tránh re-render vô ích
+        setSelectedSize(prevSize => {
+            if (prevSize === size) return prevSize;
+            return size;
+        });
+
+        setSelectedStock(prevStock => {
+            if (prevStock === variant.stock) return prevStock;
+            return variant.stock;
+        });
+
+        setSelectedPrice(prevPrice => {
+            if (prevPrice === variant.price) return prevPrice;
+            return variant.price;
+        });
+    }, [product.listProductVariants]);
+
+    // Khi render nút size, có thể memo danh sách nút
+    const sizeButtons = useMemo(() => {
+        return ['S', 'M', 'L'].map(size => {
+            const variant = product.listProductVariants.find(v => v.size === size);
+            const isDisabled = !variant || variant.stock <= 0;
+            return (
+                <TouchableOpacity
+                    key={size}
+                    style={[
+                        productDetail.sizeButton,
+                        selectedSize === size && productDetail.selectedSize,
+                        isDisabled && { backgroundColor: '#ddd', borderColor: '#ccc' }
+                    ]}
+                    onPress={() => {
+                        if (!isDisabled) handleSizeSelection(size);
+                    }}
+                    disabled={isDisabled}
+                >
+                    <Text style={{ color: isDisabled ? '#999' : '#000', fontFamily: FONTFAMILY.dongle_regular, fontSize: 24 }}>{size}</Text>
+                </TouchableOpacity>
+            );
+        });
+    }, [product.listProductVariants, selectedSize, handleSizeSelection]);
+
 
     const handleFavoritePress = async () => {
         if (!userId) {
@@ -199,19 +242,6 @@ const ProductDetail = () => {
 
         return () => clearInterval(interval); // Dọn dẹp interval khi unmount
     }, [product.productImageResponseList]);
-
-    // useEffect(() => {
-    //     const preloadMainImage = async () => {
-    //         try {
-    //             await Image.prefetch(product.productImageResponseList[0]?.linkImage);
-    //         } catch (e) {
-    //             console.warn("Không tải được ảnh chính");
-    //         }
-    //         setIsLoadingImages(false);
-    //     };
-
-    //     preloadMainImage();
-    // }, []);
 
     useEffect(() => {
         if (!product?.productImageResponseList?.length) return;
@@ -400,27 +430,7 @@ const ProductDetail = () => {
                                     )}
                                 </Text>
                                 <View style={productDetail.sizeOptions}>
-                                    {['S', 'M', 'L'].map((size) => {
-                                        const variant = product.listProductVariants.find((v) => v.size === size);
-                                        const isDisabled = !variant || (variant.stock !== undefined && variant.stock <= 0); // Kiểm tra stock chính xác
-
-                                        return (
-                                            <TouchableOpacity
-                                                key={size}
-                                                style={[
-                                                    productDetail.sizeButton,
-                                                    selectedSize === size && productDetail.selectedSize,
-                                                    isDisabled && { backgroundColor: '#ddd', borderColor: '#ccc' }
-                                                ]}
-                                                onPress={() => {
-                                                    if (!isDisabled) handleSizeSelection(size);
-                                                }}
-                                                disabled={isDisabled} // Đảm bảo nút bị disable khi stock = 0
-                                            >
-                                                <Text style={{ color: isDisabled ? '#999' : '#000', fontFamily: FONTFAMILY.dongle_regular, fontSize: 24 }}>{size}</Text>
-                                            </TouchableOpacity>
-                                        );
-                                    })}
+                                   {sizeButtons}
                                 </View>
                             </View>
 

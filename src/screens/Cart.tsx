@@ -57,6 +57,7 @@ const groupCartItems = (cart: CartItem[]) => {
 };
 
 const Cart = () => {
+    
     const { cart, fetchCartItem, setCoin, createOrder, idCartPause, idOrderPause, currentCartId } = useCartStore();  // Add createOrder from store
     const [useShopeeXu, setUseShopeeXu] = useState(false);
     const { data, userId, fetchUserCoin } = useCategoryStore();
@@ -300,6 +301,7 @@ const Cart = () => {
             >
                 <View style={styles.cartItem}>
                     <View style={styles.productContainer}>
+                        
                         <Image
                             source={{ uri: item[0].imageUrl }}
                             style={{

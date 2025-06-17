@@ -64,13 +64,25 @@ const Preview = () => {
         try {
             const accessToken = await AsyncStorage.getItem('access_token');
 
-            await axiosInstance.post(
+            console.log('POST /group-order/confirm');
+            console.log('Body:', {});
+            console.log('Params:', {
+                groupId: groupOrderId,
+                leaderId: userId,
+                language: language,
+            });
+            console.log('Headers:', {
+                Authorization: `Bearer ${accessToken}`,
+            });
+
+            const response = await axiosInstance.post(
                 `/group-order/confirm`,
-                {}, // body rỗng
+                {},
                 {
                     params: {
                         groupId: groupOrderId,
-                        leaderId: userId, // lấy từ store
+                        leaderId: userId,
+                        language: language
                     },
                     headers: {
                         Authorization: `Bearer ${accessToken}`,
@@ -78,22 +90,45 @@ const Preview = () => {
                 }
             );
 
-            // Chuyển sang màn hình chọn phương thức thanh toán
+            // Nếu response trả về string "Outside of working hours." (status 200)
+            if (response.data === 'Outside of working hours.') {
+                useAlertStore.getState().showAlert(
+                    t('android.mess.title8'),
+                    'Cửa hàng đóng cửa. Vui lòng quay lại vào 8h sáng mai.'
+                );
+                return;
+            }
+
+            // Thành công
             setModalVisible(false);
-            navigation.navigate('ChoosePay', { groupOrderId, }
+            navigation.navigate('ChoosePay', { groupOrderId });
 
-
-            )
-        } catch (error) {
+        } catch (error: any) {
             console.error('Failed to confirm order:', error);
-            useAlertStore.getState().showAlert(
-                t('android.mess.title8'),
-                t('error')
-            );
+
+            const status = error?.response?.status;
+            const message = error?.response?.data;
+
+            if (
+                status === 404 &&
+                message === 'Outside of working hours.'
+            ) {
+                useAlertStore.getState().showAlert(
+                    t('android.mess.title8'),
+                    'Cửa hàng đóng cửa. Vui lòng quay lại vào 8h sáng mai.'
+                );
+            } else {
+                useAlertStore.getState().showAlert(
+                    t('android.mess.title8'),
+                    t('error')
+                );
+            }
         } finally {
             setProcessing(false);
         }
     };
+
+
 
 
     if (loading)

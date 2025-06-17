@@ -11,6 +11,8 @@ interface NotificationWS {
     groupOrderId?: number;
     message: string;
     time: string;
+    type?: string;
+    id: number;
 }
 
 const useWebSocket = (userId: number) => {
@@ -45,7 +47,7 @@ const useWebSocket = (userId: number) => {
                     return;
                 }
                 const encodedToken = encodeURIComponent(token);
-                const ws = new WebSocket(`ws://192.168.1.24:1010/ws-raw?token=${encodedToken}&userId=${userId}`);
+                const ws = new WebSocket(`ws://192.168.1.2:1010/ws-raw?token=${encodedToken}&userId=${userId}`);
                 socketRef.current = ws;
 
                 ws.onopen = () => {
@@ -79,6 +81,7 @@ const useWebSocket = (userId: number) => {
                                 const isDuplicate = prev.some(noti => noti.time === message.time);
                                 if (isDuplicate) return prev;
                                 return [...prev, {
+                                    id: message.id,
                                     userId: message.userId,
                                     shipmentId: message.shipmentId,
                                     groupOrderId: message.groupOrderId,
