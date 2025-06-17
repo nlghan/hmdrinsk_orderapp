@@ -400,12 +400,7 @@ const GroupOrderList: React.FC = () => {
                                         }}>
                                             <Icon name="edit" size={20} color="#FF9800" />
                                         </TouchableOpacity>
-                                        <TouchableOpacity onPress={() => {
-                                            setQrCode(item.code); // lấy mã nhóm
-                                            setShowQR(true);
-                                        }}>
-                                            <Icon name="qr-code" size={20} color="#2196F3" style={{ marginLeft: 8 }} />
-                                        </TouchableOpacity>
+
                                     </>
                                 )}
 

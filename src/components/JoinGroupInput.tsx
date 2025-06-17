@@ -21,12 +21,7 @@ const JoinGroupInput: React.FC<JoinGroupInputProps> = ({ onCheckCode }) => {
 
     return (
         <View style={styles.joinContainer}>
-            <TouchableOpacity
-                    style={styles.iconButton1}
-                  
-                >
-                    <Icon name="qr-code-scanner" size={22} color="#888" />
-                </TouchableOpacity>
+    
             <TextInput
                 style={styles.input}
                 placeholder="Nhập mã nhóm"
@@ -61,7 +56,7 @@ const styles = StyleSheet.create({
     input: {
         flex: 1,
         paddingVertical: 10,
-        paddingLeft: 50,
+        paddingLeft: 16,
         paddingRight: 40, // chừa chỗ cho icon
         fontSize: 16,
         color: '#333',
