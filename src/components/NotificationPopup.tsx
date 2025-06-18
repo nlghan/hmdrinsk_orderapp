@@ -10,11 +10,12 @@ import { RootStackParamList } from '../navigation/RootStackParamList';
 
 type NotificationWS = {
     userId: number;
-    shipmentId?: number;
+   shipmentId?: number | undefined;
     groupOrderId?: number;
     message: string;
     time: string;
     type?: string;
+    id: number;
 };
 
 interface NotificationPopupProps {
@@ -68,6 +69,7 @@ const getTranslatedMessage = (message: string, language: string) => {
 };
 
 const NotificationPopup: React.FC<NotificationPopupProps> = ({ userId }) => {
+  
     const socketNotifications = useWebSocket(userId);
     const { setSocketNotifications, triggerRefresh } = useCountStore();
     const [notifications, setNotifications] = useState<NotificationWS[]>([]);
@@ -80,15 +82,13 @@ const NotificationPopup: React.FC<NotificationPopupProps> = ({ userId }) => {
 
     useEffect(() => {
         if (socketNotifications.length === 0) return;
-        
+
         const newNotification = socketNotifications[socketNotifications.length - 1];
-        const newNotificationTime = Number(newNotification.time);
 
         if (
-            lastNotificationTime.current !== newNotificationTime &&
-            !notifications.some(noti => Number(noti.time) === newNotificationTime)
+            newNotification &&
+            !notifications.some(noti => noti.id === newNotification.id)
         ) {
-            lastNotificationTime.current = newNotificationTime;
             const updatedNotifications = [...notifications, newNotification];
             setNotifications(updatedNotifications);
             setSocketNotifications(updatedNotifications);
@@ -100,6 +100,7 @@ const NotificationPopup: React.FC<NotificationPopupProps> = ({ userId }) => {
             }
         }
     }, [socketNotifications, setSocketNotifications]);
+
 
     const handleLogout = () => {
         logout();
@@ -135,7 +136,7 @@ const NotificationPopup: React.FC<NotificationPopupProps> = ({ userId }) => {
                         <Text style={styles.title}>{t('common.noti')}</Text>
                         <FlatList
                             data={notifications}
-                            keyExtractor={(item, index) => index.toString()}
+                           keyExtractor={(item, index) => (item?.id ? item.id.toString() : `notification-${index}`)}
                             renderItem={({ item }) => (
                                 <View style={styles.notificationItem}>
                                     <Text style={styles.message}>
@@ -144,6 +145,7 @@ const NotificationPopup: React.FC<NotificationPopupProps> = ({ userId }) => {
                                 </View>
                             )}
                         />
+
                         <TouchableOpacity style={styles.closeButton} onPress={closeModal}>
                             <Text style={styles.closeButtonText}>{t('close')}</Text>
                         </TouchableOpacity>

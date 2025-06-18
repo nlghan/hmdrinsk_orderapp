@@ -44,22 +44,32 @@ const News = () => {
       setFilteredPosts(posts); // Hiển thị tất cả nếu không chọn tab nào
     }
   };
-
   const fetchPosts = async (page: number) => {
     try {
       setLoading(true);
-      const response = await axiosInstance.get<{ listPosts: Post[]; totalPages: number }>(
+      const response = await axiosInstance.get<{
+        headers: any;
+        body: {
+          listPosts: Post[];
+          totalPages: number;
+          currentPage: number;
+          total: number;
+          limit: number;
+        };
+      }>(
         `/post/view/all/desc?page=${page}&limit=${postsPerPage}&language=${language}`
       );
 
+      const { listPosts, totalPages } = response.data.body;
+
       setPosts((prevPosts) => {
-        const newPosts = (response?.data?.body.listPosts || []).filter(
+        const newPosts = listPosts.filter(
           (newPost) => !prevPosts.some((post) => post.postId === newPost.postId)
         );
         return page === 1 ? newPosts : [...prevPosts, ...newPosts];
       });
 
-      setTotalPages(response.data.totalPages);
+      setTotalPages(totalPages);
     } catch (error) {
       console.error("Error fetching posts:", error);
     } finally {
@@ -90,19 +100,19 @@ const News = () => {
 
   return (
     <View style={styles.container}>
-     <Header
-          style={{
-            paddingHorizontal: 14,
-            paddingVertical:10,
-            paddingBottom: 10,
-            backgroundColor: 'white',
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 2 },
-            shadowOpacity: 0.2,
-            shadowRadius: 4,
-            elevation: 5,
-          }}
-        />
+      <Header
+        style={{
+          paddingHorizontal: 14,
+          paddingVertical: 10,
+          paddingBottom: 10,
+          backgroundColor: 'white',
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.2,
+          shadowRadius: 4,
+          elevation: 5,
+        }}
+      />
       <View style={styles.flatlistContainer}>
         <Text style={styles.header}>{t('posts1')}</Text>
         <View style={styles.tab}>
@@ -209,7 +219,7 @@ const styles = StyleSheet.create({
     resizeMode: 'cover',
   },
   date: { fontSize: 18, color: '#666', marginTop: 5, fontFamily: FONTFAMILY.dongle_light },
-  title: { fontSize: 22, textAlign: 'center', fontFamily: FONTFAMILY.dongle_bold, lineHeight: 25},
+  title: { fontSize: 22, textAlign: 'center', fontFamily: FONTFAMILY.dongle_bold, lineHeight: 25 },
   description: { fontSize: 20, color: 'gray', marginTop: 4, textAlign: 'center', fontFamily: FONTFAMILY.dongle_regular },
   button: {
     marginTop: 8,

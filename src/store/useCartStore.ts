@@ -583,7 +583,7 @@ export const useCartStore = create<CartStore>()(
 
             const updatedCartItems = listCartItemGroup.map((item: { imageUrl: any; proName: any; quantity: any; itemPrice: any; totalPrice: any; size: any; }) => ({
               ...item,
-              imageUrl: item.imageUrl || '',
+              imageUrl: item.imageUrl?.replace(/^.*?:\s*/, '') || '',
               proName: item.proName,
               quantity: item.quantity,
               itemPrice: item.itemPrice,
@@ -622,7 +622,7 @@ export const useCartStore = create<CartStore>()(
 
           const updatedCartItems = (response.data.listCartItemResponses ?? []).map(item => ({
             ...item,
-            imageUrl: item.imageUrl || '',
+             imageUrl: item.imageUrl?.replace(/^.*?:\s*/, '') || '',
           }));
 
           set({
@@ -638,7 +638,6 @@ export const useCartStore = create<CartStore>()(
           throw error;
         }
       },
-
 
 
       handleRestoreOrder: (orderId: number, userId: number): void => {

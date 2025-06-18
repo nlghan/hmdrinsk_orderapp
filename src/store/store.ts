@@ -204,7 +204,7 @@ export const useCategoryStore = create<CategoryStore>()(
           console.log(`🌍 [fetchPosts] Fetching with language: ${lang}`);
           const response = await axiosInstance.get(`/post/view/all/desc?page=1&limit=4&language=${lang}`);
           set((state) => ({
-            data: { ...state.data, posts: response.data.listPosts || [] },
+            data: { ...state.data, posts: response.data.body.listPosts || [] },
           }));          
         } catch (error) {
           console.error("❌ [fetchPosts] Error fetching posts:", error);

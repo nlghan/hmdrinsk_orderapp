@@ -2,27 +2,36 @@ import { create } from 'zustand';
 
 interface NotificationWS {
   userId: number;
-  shipmentId: number;
+  shipmentId?: number | undefined;
+  groupOrderId?: number;
   message: string;
   time: string;
+  type?: string;
+  id: number;
 }
 
 interface CountStore {
   socketNotifications: NotificationWS[];
-  refreshTrigger: number; // Trigger để kích hoạt fetch lại
+  refreshTrigger: number;
   setSocketNotifications: (notifications: NotificationWS[]) => void;
-  triggerRefresh: () => void; // Hàm để kích hoạt fetch lại
+  triggerRefresh: () => void;
 }
 
-export const useCountStore = create<CountStore>((set) => ({
+export const useCountStore = create<CountStore>((set, get) => ({
   socketNotifications: [],
   refreshTrigger: 0,
-  setSocketNotifications: (notifications) =>
-    set({
-      socketNotifications: notifications.slice(-50), // Giới hạn tối đa 50 thông báo để tối ưu
-    }),
+  setSocketNotifications: (notifications) => {
+    const newNotifications = notifications.slice(-50);
+    const oldNotifications = get().socketNotifications;
+
+    // So sánh nhanh id từng item để tránh cập nhật không cần thiết
+    const isEqual = oldNotifications.length === newNotifications.length &&
+      oldNotifications.every((item, idx) => item.id === newNotifications[idx].id);
+
+    if (isEqual) return; // Không cập nhật nếu dữ liệu giống nhau
+
+    set({ socketNotifications: newNotifications });
+  },
   triggerRefresh: () =>
-    set((state) => ({
-      refreshTrigger: state.refreshTrigger + 1, // Tăng trigger để kích hoạt useEffect
-    })),
+    set((state) => ({ refreshTrigger: state.refreshTrigger + 1 })),
 }));

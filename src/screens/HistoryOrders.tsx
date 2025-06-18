@@ -186,7 +186,7 @@ const HistoryOrders = () => {
                         <Text style={styles.boldText1}>{t('history.order_date')}</Text> {orderDate}
                     </Text>
                     <Text style={styles.boldText2}>
-                        <Text style={styles.boldText1}>{t('history.leader')}</Text> {leaderName}
+                        <Text style={styles.boldText1}>{t('android.status_label.leader')}</Text> {leaderName}
                     </Text>
                 </View>
             </TouchableOpacity>

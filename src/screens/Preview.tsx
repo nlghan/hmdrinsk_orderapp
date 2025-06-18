@@ -64,13 +64,25 @@ const Preview = () => {
         try {
             const accessToken = await AsyncStorage.getItem('access_token');
 
-            await axiosInstance.post(
+            console.log('POST /group-order/confirm');
+            console.log('Body:', {});
+            console.log('Params:', {
+                groupId: groupOrderId,
+                leaderId: userId,
+                language: language,
+            });
+            console.log('Headers:', {
+                Authorization: `Bearer ${accessToken}`,
+            });
+
+            const response = await axiosInstance.post(
                 `/group-order/confirm`,
-                {}, // body rỗng
+                {},
                 {
                     params: {
                         groupId: groupOrderId,
-                        leaderId: userId, // lấy từ store
+                        leaderId: userId,
+                        language: language
                     },
                     headers: {
                         Authorization: `Bearer ${accessToken}`,
@@ -78,22 +90,45 @@ const Preview = () => {
                 }
             );
 
-            // Chuyển sang màn hình chọn phương thức thanh toán
+            // Nếu response trả về string "Outside of working hours." (status 200)
+            if (response.data === 'Outside of working hours.') {
+                useAlertStore.getState().showAlert(
+                    t('android.mess.title8'),
+                    'Cửa hàng đóng cửa. Vui lòng quay lại vào 8h sáng mai.'
+                );
+                return;
+            }
+
+            // Thành công
             setModalVisible(false);
-            navigation.navigate('ChoosePay', { groupOrderId, }
+            navigation.navigate('ChoosePay', { groupOrderId });
 
-
-            )
-        } catch (error) {
+        } catch (error: any) {
             console.error('Failed to confirm order:', error);
-            useAlertStore.getState().showAlert(
-                t('android.mess.title8'),
-                t('error')
-            );
+
+            const status = error?.response?.status;
+            const message = error?.response?.data;
+
+            if (
+                status === 404 &&
+                message === 'Outside of working hours.'
+            ) {
+                useAlertStore.getState().showAlert(
+                    t('android.mess.title8'),
+                    'Cửa hàng đóng cửa. Vui lòng quay lại vào 8h sáng mai.'
+                );
+            } else {
+                useAlertStore.getState().showAlert(
+                    t('android.mess.title8'),
+                    t('error')
+                );
+            }
         } finally {
             setProcessing(false);
         }
     };
+
+
 
 
     if (loading)
@@ -110,12 +145,13 @@ const Preview = () => {
             </View>
         );
 
-    const { crudCartGroupResponse, deliveryFee, groupMemberDiscount, quantity } = data;
+    const { crudCartGroupResponse, deliveryFeeNew, deliveryFeeOld, groupMemberDiscount, quantity } = data;
     const items = data.crudCartGroupResponse.flatMap((group: any) => group.listCartItemGroup || []);
 
     const subtotal = items.reduce((sum: number, item: any) => sum + item.totalPrice, 0);
     const discount3 = subtotal >= 40000 ? Math.floor(subtotal * 0.05) : 0;
-    const finalTotal = subtotal + deliveryFee - groupMemberDiscount;
+    const discounts = groupMemberDiscount + deliveryFeeOld;
+    const finalTotal = subtotal + deliveryFeeNew - groupMemberDiscount;
 
     return (
         <View style={styles.container}>
@@ -170,7 +206,12 @@ const Preview = () => {
 
                     <View style={styles.section}>
                         <Text style={styles.sectionTitle}>Phí giao hàng</Text>
-                        <Text style={styles.sectionValue}>{deliveryFee.toLocaleString()}đ</Text>
+                        <Text style={styles.sectionValue}>{deliveryFeeOld.toLocaleString()}đ</Text>
+                    </View>
+
+                     <View style={styles.section}>
+                        <Text style={styles.sectionTitle}>🏷️ Giảm giá phí giao hàng đơn nhóm</Text>
+                        <Text style={styles.discountValue}>{deliveryFeeNew.toLocaleString()}đ</Text>
                     </View>
 
                     <View style={styles.discountRow}>
@@ -187,7 +228,7 @@ const Preview = () => {
                     </View>
 
                     <Text style={styles.savedText}>
-                        🎉 Bạn tiết kiệm được {groupMemberDiscount.toLocaleString()}đ!
+                        🎉 Bạn tiết kiệm được {discounts.toLocaleString()}đ!
                     </Text>
                 </View>
             </ScrollView>
