@@ -92,6 +92,12 @@ const styles = StyleSheet.create({
         fontSize: 28,
         color: '#e74c3c',
     },
+        moreText: {
+        fontSize: 16,
+        color: '#888',
+        marginTop: 4,
+        fontStyle: 'italic',
+    },
     buttonContainer: {
         flexDirection: 'row',
         marginTop: 10,
@@ -178,7 +184,18 @@ const styles = StyleSheet.create({
         fontWeight: '600',
         color: '#000',
     },
-
+    card1: {
+        backgroundColor: 'white',
+        padding: 12,
+        borderRadius: 10,
+        marginBottom: 10,
+        marginHorizontal: 5,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 3 },
+        shadowOpacity: 0.2,
+        shadowRadius: 5,
+        elevation: 4,
+    },
 
 }
 )

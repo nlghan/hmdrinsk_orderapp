@@ -21,6 +21,7 @@ import styles from '../styles/previewStyles'
 import { RootStackParamList } from '../navigation/RootStackParamList';
 import { useAlertStore } from '../store/alertStore';
 import { useTranslation } from 'react-i18next';
+import Loading from '../components/DotLoading';
 
 type PreviewRouteProp = RouteProp<RootStackParamList, 'Preview'>;
 
@@ -33,6 +34,7 @@ const Preview = () => {
     const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
 
     const [loading, setLoading] = useState(true);
+    const [isLoading, setIsLoading] = useState(true);
     const [data, setData] = useState<any>(null);
     const [modalVisible, setModalVisible] = useState(false);
     const [processing, setProcessing] = useState(false);
@@ -60,6 +62,7 @@ const Preview = () => {
     }, []);
 
     const handleOrderConfirm = async () => {
+
         setProcessing(true);
         try {
             const accessToken = await AsyncStorage.getItem('access_token');
@@ -125,6 +128,7 @@ const Preview = () => {
             }
         } finally {
             setProcessing(false);
+
         }
     };
 

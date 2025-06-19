@@ -156,27 +156,28 @@ const EditGroupAddress = () => {
     fetchProvinces();
   }, []);
 
-  useEffect(() => {
-    const fullAddress = route.params?.currentAddress ?? '';
-    if (fullAddress && provinceItems.length > 0) {
-      const parts = fullAddress.split(',').map((p) => p.trim());
-      if (parts.length === 4) {
-        const location = parts[0];
-        const wardName = parts[1];
-        const districtName = parts[2];
-        const provinceName = parts[3];
+useEffect(() => {
+  const fullAddress = route.params?.currentAddress ?? '';
+  if (fullAddress && provinceItems.length > 0) {
+    const parts = fullAddress.split(',').map((p) => p.trim());
 
-        const provinceItem = provinceItems.find((item) => item.label === provinceName);
-        if (provinceItem) {
-          const provinceId = provinceItem.value;
-          setProvince(provinceId);
-          setLocationDetail(location);
-          setSelectedDistrictName(districtName);
-          setSelectedWardName(wardName); // 👈 Thêm dòng này
-        }
+    // Xử lý chỉ khi đủ 4 phần: street, ward, district, city
+    if (parts.length === 4) {
+      const [street, wardName, districtName, cityName] = parts;
+
+      setLocationDetail(street);
+      setSelectedWardName(wardName);
+      setSelectedDistrictName(districtName);
+
+      const provinceItem = provinceItems.find((item) => item.label === cityName);
+      if (provinceItem) {
+        setProvince(provinceItem.value);
       }
     }
-  }, [provinceItems]);
+  }
+}, [provinceItems]);
+
+
 
 
   useEffect(() => {
@@ -213,18 +214,38 @@ const EditGroupAddress = () => {
   const { groupCartData, fetchCartItem, checkGroupCart } = useCartStore();
 
   const handleSave = async () => {
-    if (!locationDetail || !province || !district || !ward) {
-      showNotification(t('android.mess.check6'))
-      return;
-    }
+  let finalProvince = province;
+  let finalDistrict = district;
+  let finalWard = ward;
 
-    const fullAddress = `${locationDetail}, ${getLabelFromValue(
-      wardItems,
-      ward
-    ) || ward}, ${getLabelFromValue(districtItems, district)}, ${getLabelFromValue(
-      provinceItems,
-      province
-    )}`;
+  // nếu province/district/ward chưa có value, cố gắng tìm từ tên đã chọn sẵn
+  if (!finalProvince && selectedDistrictName) {
+    const item = provinceItems.find((item) => item.label === route.params?.currentAddress?.split(',').pop()?.trim());
+    if (item) finalProvince = item.value;
+  }
+
+  if (!finalDistrict && selectedDistrictName) {
+    const item = districtItems.find((item) => item.label === selectedDistrictName);
+    if (item) finalDistrict = item.value;
+  }
+
+  if (!finalWard && selectedWardName) {
+    const item = wardItems.find((item) => item.label === selectedWardName);
+    if (item) finalWard = item.value;
+  }
+
+  if (!locationDetail || !finalProvince || !finalDistrict || !finalWard) {
+    showNotification(t('android.mess.check6'));
+    return;
+  }
+
+  const fullAddress = `${locationDetail}, ${getLabelFromValue(
+    wardItems,
+    finalWard
+  )}, ${getLabelFromValue(
+    districtItems,
+    finalDistrict
+  )}, ${getLabelFromValue(provinceItems, finalProvince)}`;
 
     try {
       const token = await AsyncStorage.getItem('access_token');
@@ -252,12 +273,22 @@ const EditGroupAddress = () => {
       );
       showNotification(t('adroid.mess.sucess5'));
       fetchCartItem();
+        if (route.params?.onGoBack) {
+    route.params.onGoBack(); // gọi hàm callback cập nhật
+  }
       navigation.goBack();
     } catch (error) {
       console.error('❌ Lỗi khi cập nhật địa chỉ:', error);
       showNotification(t('adroid.mess.error8'));
     }
   };
+
+useEffect(() => {
+  if (route.params?.autoSave) {
+    // Gọi handleSave tự động nếu có yêu cầu từ GroupDetails
+    handleSave();
+  }
+}, []);
 
 
   const handleCancel = () => {
@@ -267,9 +298,13 @@ const EditGroupAddress = () => {
   return (
     <SafeAreaView style={{ flex: 1 }}>
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}
       >
+            <ScrollView
+      contentContainerStyle={{ flexGrow: 1 }}
+      keyboardShouldPersistTaps="handled"
+    >
         <View style={styles.container}>
           <Notification message={notification.message} visible={notification.visible} onHide={() => setNotification({ ...notification, visible: false })} />
           <NotificationPopup userId={userId ?? 0} />
@@ -347,6 +382,7 @@ const EditGroupAddress = () => {
             </TouchableOpacity>
           </View>
         </View>
+        </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
 
