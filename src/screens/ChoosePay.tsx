@@ -6,6 +6,7 @@ import {
     FlatList,
     Image,
     Linking,
+    ActivityIndicator
 } from 'react-native';
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
@@ -17,6 +18,7 @@ import { useCategoryStore } from '../store/store';
 import { useCartStore } from '../store/useCartStore';
 import Notification from '../components/Notification';
 import { useTranslation } from 'react-i18next';
+import Loading from '../components/DotLoading';
 
 type PaymentMethod = {
     id: string;
@@ -39,7 +41,8 @@ const ChoosePay = () => {
     const { groupOrderId } = route.params;
     const { userId, language } = useCategoryStore();
     const rawUserId = useCategoryStore.getState().userId;
-
+    const [loading, setLoading] = useState(false);
+    const [confirming, setConfirming] = useState(false); // 👈 loading khi xác nhận thanh toán
     const [selectedMethod, setSelectedMethod] = useState<string | null>(null);
     const setHasRejectedGroupCart = useCartStore((state) => state.setHasRejectedGroupCart);
     const ensureActiveCart = useCartStore((state) => state.ensureActiveCart);
@@ -54,12 +57,26 @@ const ChoosePay = () => {
         setTimeout(() => setNotification({ ...notification, visible: false }), 3000);
     };
 
+    React.useEffect(() => {
+        const init = async () => {
+            try {
+                const accessToken = await AsyncStorage.getItem('access_token');
+                if (!accessToken) throw new Error('Missing token');
+            } catch (e) {
+                console.log('❌ Lỗi khởi tạo ChoosePay:', e);
+            } finally {
+                setLoading(false); // ✅ Kết thúc loading
+            }
+        };
+        init();
+    }, []);
+
     const handleConfirmPayment = async () => {
         if (!selectedMethod) {
             showNotification(t('aandroid.mess.checck9'));
             return;
         }
-
+        setConfirming(true);
         try {
             const accessToken = await AsyncStorage.getItem('access_token');
             const leaderId = typeof rawUserId === 'string' ? parseInt(rawUserId, 10) : Number(rawUserId);
@@ -132,11 +149,18 @@ const ChoosePay = () => {
                 console.error('📩 Chi tiết lỗi từ server:', error.response.data);
             }
             navigation.navigate('OrderFailed');
+        } finally {
+            setConfirming(false);
         }
     };
 
 
-
+    if (loading || confirming)
+        return (
+            <View style={styles.center}>
+                <ActivityIndicator size="large" color="#4CAF50" />
+            </View>
+        );
 
     return (
         <View style={styles.container}>

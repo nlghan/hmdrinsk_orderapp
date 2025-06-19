@@ -38,6 +38,8 @@ export type RootStackParamList = {
   EditGroupAddress: {
     groupOrderId: number;
     currentAddress?: string;
+    onGoBack?: () => void;
+    autoSave?: boolean;
   };
   Preview: { groupOrderId: number; currentAddress: string };
   ChoosePay: { groupOrderId: number }; // ✅ Thêm dòng này

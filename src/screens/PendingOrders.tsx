@@ -118,9 +118,9 @@ const PendingOrder = () => {
                     Authorization: `Bearer ${token}`,
                 },
             });
-
             const listShipments = res.data?.listShipment || [];
             setGroupOrders(listShipments);
+            console.log('Group orders fetched:', listShipments);
         } catch (e) {
             console.error("fetchGroupOrders error:", e);
             setError(t('history.fetch_error'));
@@ -169,21 +169,11 @@ const PendingOrder = () => {
                 onPress={() => navigation.navigate('OrderGroupDetail', { groupOrderId: item.orderId })}
                 style={{ marginBottom: 12 }}
             >
-                <View style={{
-                    backgroundColor: '#fff',
-                    padding: 16,
-                    borderRadius: 12,
-                    shadowColor: '#000',
-                    shadowOffset: { width: 0, height: 2 },
-                    shadowOpacity: 0.1,
-                    shadowRadius: 4,
-                    elevation: 3,
-                    borderWidth: 1,
-                    borderColor: '#e0e0e0',
-                }}>
-                    <Text style={{ fontWeight: 'bold', fontSize: 16, marginBottom: 8 }}>
-                        {t('history.group_order')} #{item.shipmentId}
+                <View style={styles.card1}>
+                    <Text style={styles.orderId}>
+                        <Text style={styles.boldText}>{t('history.group_order')}</Text> #{item.shipmentId}
                     </Text>
+                    <View style={styles.info}>
                     <Text style={styles.infoText}>
                         {t('history.shipper')} <Text style={styles.bold}>{item.nameShipper}</Text>
                     </Text>
@@ -199,7 +189,7 @@ const PendingOrder = () => {
                     <Text style={styles.infoText}>
                         {t('history.order_date')} <Text style={styles.bold}>{item.dateCreated}</Text>
                     </Text>
-                   
+                   </View>
                 </View>
             </TouchableOpacity>
         );

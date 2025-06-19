@@ -6,7 +6,7 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import styles from '../styles/groupOrderDetail';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, RouteProp } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../navigation/RootStackParamList';
 import Header from '../components/Header';
@@ -43,6 +43,7 @@ interface GroupOrder {
     dateCreated: string;
     link: string
 }
+
 const GroupOrderDetail = () => {
     const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
     const { t } = useTranslation();
@@ -57,6 +58,12 @@ const GroupOrderDetail = () => {
     const currentMember = members.find(member => member.userId === userId);
     const isLeader = currentMember?.isLeader;
 
+    const [formData, setFormData] = useState({
+        street: "",
+        ward: "",
+        district: "",
+        city: "",
+    });
 
     const formatPrice = (price: number) => {
         return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
@@ -199,9 +206,55 @@ const GroupOrderDetail = () => {
         }
     };
 
+    const fetchUserInfo = async () => {
+        try {
+            const token = await AsyncStorage.getItem("access_token");
+
+            const response = await axiosInstance.get(`/user/info/${userId}`, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+
+            const userInfo = response.data;
+
+            let addressParts = (userInfo.address || "")
+                .split(",")
+                .map((part: string) => part.trim());
+
+            const [street, ward, district, city] = addressParts.map((part: string) =>
+                part && part !== "None" && part !== "null" ? part : ""
+            );
+
+            const newFormData = { street, ward, district, city };
+            setFormData(newFormData);
+
+            // Nếu chưa có address trong groupCartData => gọi autoSave
+            const groupOrderId = groupCartData?.crudGroupOrderResponse.groupOrderId;
+            const savedAddress = groupCartData?.crudGroupOrderResponse.address?.trim();
+
+            if (!savedAddress && groupOrderId !== undefined) {
+                const currentAddress = [street, ward, district, city]
+                    .filter(Boolean)
+                    .join(", ");
+
+                navigation.navigate("EditGroupAddress", {
+                    groupOrderId,
+                    currentAddress,
+                    autoSave: true,
+                    onGoBack: async () => {
+                        await fetchCartItem(); // cập nhật groupCartData
+                    },
+                });
+            }
+        } catch (err) {
+            console.log("❌ Lỗi khi lấy thông tin người dùng:", err);
+        }
+    };
+
+
     // Gọi một lần khi load màn hình
     useEffect(() => {
         fetchGroupOrders();
+        fetchUserInfo();
     }, []);
 
     const [editModalVisible, setEditModalVisible] = useState(false);
@@ -661,15 +714,32 @@ const GroupOrderDetail = () => {
 
                         <TouchableOpacity
                             style={styles.detailRow1}
-                            onPress={() => {
+                            onPress={async () => {
                                 if (isLeader) {
                                     const groupOrderId = groupCartData?.crudGroupOrderResponse.groupOrderId;
-                                    const currentAddress = groupCartData?.crudGroupOrderResponse.address || '';
+                                    const savedAddress = groupCartData?.crudGroupOrderResponse.address?.trim();
 
-                                    if (groupOrderId !== undefined) {
+                                    // Nếu địa chỉ hiện tại chưa có, tạo từ formData
+                                    if (!savedAddress && groupOrderId !== undefined) {
+                                        const currentAddress = [formData?.street, formData?.ward, formData?.district, formData?.city]
+                                            .filter(Boolean)
+                                            .join(', ');
+
                                         navigation.navigate('EditGroupAddress', {
                                             groupOrderId,
                                             currentAddress,
+                                            autoSave: true, // đánh dấu rằng cần tự động lưu formData này
+                                            onGoBack: async () => {
+                                                await fetchCartItem();
+                                            },
+                                        });
+                                    } else if (groupOrderId !== undefined) {
+                                        navigation.navigate('EditGroupAddress', {
+                                            groupOrderId,
+                                            currentAddress: savedAddress,
+                                            onGoBack: async () => {
+                                                await fetchCartItem();
+                                            },
                                         });
                                     } else {
                                         useAlertStore.getState().showAlert(
@@ -684,15 +754,20 @@ const GroupOrderDetail = () => {
                             }}
                         >
 
+
                             <View style={styles.detailRows}>
                                 <Icon name="pin-drop" size={20} color="green" />
                                 <Text style={styles.detailText}>
                                     {groupCartData?.crudGroupOrderResponse.address?.trim()
                                         ? groupCartData.crudGroupOrderResponse.address
-                                        : t('android.noAddress')}
+                                        : formData?.street?.trim()
+                                            ? `${formData.street}, ${formData.ward}, ${formData.district}, ${formData.city}`
+                                            : t('android.noAddress')}
                                 </Text>
+
                                 <Icon name="chevron-right" size={20} />
                             </View>
+
 
 
                         </TouchableOpacity>
@@ -906,7 +981,12 @@ const GroupOrderDetail = () => {
                     <TouchableOpacity
                         style={styles.nextButton}
                         onPress={() => {
-                            const address = groupCartData?.crudGroupOrderResponse.address || '';
+                            const address = groupCartData?.crudGroupOrderResponse.address?.trim()
+                                ? groupCartData.crudGroupOrderResponse.address
+                                : formData?.street?.trim()
+                                    ? `${formData.street}, ${formData.ward}, ${formData.district}, ${formData.city}`
+                                    : '';
+
                             const groupOrderId = groupCartData?.crudGroupOrderResponse.groupOrderId ?? 0;
 
                             if (!address.trim()) {
