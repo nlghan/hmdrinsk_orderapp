@@ -7,7 +7,6 @@ import {
   StyleSheet,
   Image,
   TouchableOpacity,
-  Linking,
 } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import axiosInstance from '../utils/axiosInstance';
@@ -48,9 +47,9 @@ interface GroupOrder {
   status: string;
   link: string;
   note: string;
-  orderDate: string
-  deadlinePayment: string
-  typeGroupOrder: string
+  orderDate: string;
+  deadlinePayment: string;
+  typeGroupOrder: string;
 }
 
 const OrderGroupDetail = () => {
@@ -67,12 +66,10 @@ const OrderGroupDetail = () => {
   const [shipmentDetail, setShipmentDetail] = useState<any>(null);
   const [paymentDetail, setPaymentDetail] = useState<any>(null);
 
-
   const formatPrice = (price: number | null | undefined) => {
     if (typeof price !== 'number' || isNaN(price)) return '0đ';
     return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.') + 'đ';
   };
-
 
   const statusMapVN: Record<string, string> = {
     COMPLETED: 'Hoàn tất',
@@ -106,12 +103,11 @@ const OrderGroupDetail = () => {
           note: mainInfo.note,
           orderDate: mainInfo.orderDate,
           deadlinePayment: mainInfo.deadlinePayment,
-          typeGroupOrder: mainInfo.typeGroupOrder
+          typeGroupOrder: mainInfo.typeGroupOrder,
         });
 
-        setShipmentDetail(data.shipmentGroupDetail);
-        setPaymentDetail(data.paymentDetail);
-
+        setShipmentDetail(data.shipmentGroupDetail || null);
+        setPaymentDetail(data.paymentDetail || null);
 
         const memberList = data.listMemberDetail.map((member: any) => ({
           memberId: member.memberId,
@@ -136,7 +132,6 @@ const OrderGroupDetail = () => {
     fetchGroupOrderDetails();
   }, [groupOrderId]);
 
-
   if (loading) return <ActivityIndicator size="large" color="#FF9800" />;
   if (error) return <Text style={{ color: 'red', textAlign: 'center' }}>{error}</Text>;
 
@@ -151,7 +146,7 @@ const OrderGroupDetail = () => {
         </View>
       </View>
 
-
+      {/* Group Info */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>{t('android.detail.infoGroup')}</Text>
         <View style={styles.detailRow}>
@@ -163,45 +158,53 @@ const OrderGroupDetail = () => {
           <Text style={styles.value}>{groupOrder?.nameLeader}</Text>
         </View>
         <View style={styles.detailRow}>
-          <Text style={styles.label}>{t('phone')}:</Text>
-          <Text style={styles.value}>{shipmentDetail?.phoneNumber}</Text>
-        </View>
-        <View style={styles.detailRow}>
           <Text style={styles.label}>{t('android.detail.typeGroup')}:</Text>
           <Text style={styles.value}>{groupOrder?.typeGroupOrder}</Text>
         </View>
         <View style={styles.detailRow}>
+          <Text style={styles.label}>{t('note')}:</Text>
+          <Text style={styles.value}>{groupOrder?.note || 'Không có ghi chú'}</Text>
+        </View>
+        <View style={styles.detailRow}>
+          <Text style={styles.label}>{t('deadlinePayment')}:</Text>
+          <Text style={styles.value}>{groupOrder?.deadlinePayment}</Text>
+        </View>
+        <View style={styles.detailRow}>
           <Text style={styles.label}>{t('common.status')}:</Text>
-          <Text style={styles.value}>{language === 'VN' ? statusMapVN[groupOrder?.status || ''] || groupOrder?.status : groupOrder?.status}</Text>
+          <Text style={styles.value}>
+            {language === 'VN' ? statusMapVN[groupOrder?.status || ''] || groupOrder?.status : groupOrder?.status}
+          </Text>
         </View>
         <View style={styles.detailRow}>
           <Text style={styles.label}>{t('address')}:</Text>
-
         </View>
         <View style={styles.detailRow}>
-          <Text style={styles.value}>{groupOrder?.address}</Text>
+          <Text style={styles.value}>{groupOrder?.address || 'Không có địa chỉ'}</Text>
         </View>
-
       </View>
 
-
+      {/* Shipment Info */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>{t('orderContent.deliveryInfo')}</Text>
         <View style={styles.detailRow}>
           <Text style={styles.label}>{t('history.shipper')}</Text>
-          <Text style={styles.value}>{shipmentDetail?.nameShipper}</Text>
+          <Text style={styles.value}>{shipmentDetail?.nameShipper || 'Không có'}</Text>
         </View>
-
+        <View style={styles.detailRow}>
+          <Text style={styles.label}>{t('phone')}</Text>
+          <Text style={styles.value}>{shipmentDetail?.phoneNumber || 'Không có'}</Text>
+        </View>
         <View style={styles.detailRow}>
           <Text style={styles.label}>{t('history.delivery_date')}</Text>
-          <Text style={styles.value}>{shipmentDetail?.dateShipped}</Text>
+          <Text style={styles.value}>{shipmentDetail?.dateShipped || 'Không có'}</Text>
         </View>
         <View style={styles.detailRow}>
-          <Text style={styles.label}>{t('common.status')}:</Text>
-          <Text style={styles.value}>{shipmentDetail?.status}</Text>
+          <Text style={styles.label}>{t('common.status')}</Text>
+          <Text style={styles.value}>{shipmentDetail?.status || 'Không có'}</Text>
         </View>
       </View>
 
+      {/* Payment Info */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>{t('infoPayment')}</Text>
         <View style={styles.detailRow}>
@@ -210,44 +213,47 @@ const OrderGroupDetail = () => {
         </View>
         <View style={styles.detailRow}>
           <Text style={styles.label}>{t('paymentMethod')}:</Text>
-          <Text style={styles.value}>{paymentDetail?.paymentMethod}</Text>
+          <Text style={styles.value}>{paymentDetail?.paymentMethod || 'Không có'}</Text>
         </View>
         <View style={styles.detailRow}>
           <Text style={styles.label}>{t('common.status')}:</Text>
-          <Text style={styles.value}>{paymentDetail?.statusPayment}</Text>
+          <Text style={styles.value}>{paymentDetail?.statusPayment || 'Không có'}</Text>
         </View>
-
       </View>
 
+      {/* Member Orders */}
       <View style={styles.section}>
-         <Text style={styles.sectionTitle}>{t('common.proList')}</Text>
+        <Text style={styles.sectionTitle}>{t('common.proList')}</Text>
         {members.map((member) => (
           <View key={member.memberId} style={styles.section}>
-            <Text style={styles.subTitle}>{member.name} {member.isLeader ? `(${t('android.status_label.leader')})` : ''}</Text>
+            <Text style={styles.subTitle}>
+              {member.name} {member.isLeader ? `(${t('android.status_label.leader')})` : ''}
+            </Text>
             <Text style={styles.text}>{t('orderContent.price')}: {formatPrice(member.amount)}</Text>
-            {/* <Text style={styles.text}>{t('paymentMethod')}: {member.typePayment}</Text>
-            <Text style={styles.text}>{t('common.status')}: {language === 'VN' ? statusMapVN[member.status] || member.status : member.status}</Text> */}
-            {member.cartItems.map((item) => (
-              <View key={item.cartItemGroupId} style={styles.itemBox}>
-                <Image source={{ uri: item.imageUrl }} style={styles.image} />
-                <View style={styles.itemInfo}>
-                  <Text style={styles.itemName}>{item.proName}</Text>
-                  <Text style={styles.itemDetail}>{t('quantity')}: {item.quantity}</Text>
-                  <Text style={styles.itemDetail}>{t('size')}: {item.size}</Text>
-                  <Text style={styles.itemPrice}>{formatPrice(item.totalPrice)}</Text>
+            {member.cartItems.length === 0 ? (
+              <Text style={{ fontStyle: 'italic', marginLeft: 10, color: 'gray' }}>
+                {t('history.empty_list')}
+              </Text>
+            ) : (
+              member.cartItems.map((item) => (
+                <View key={item.cartItemGroupId} style={styles.itemBox}>
+                  <Image source={{ uri: item.imageUrl }} style={styles.image} />
+                  <View style={styles.itemInfo}>
+                    <Text style={styles.itemName}>{item.proName}</Text>
+                    <Text style={styles.itemDetail}>{t('quantity')}: {item.quantity}</Text>
+                    <Text style={styles.itemDetail}>{t('size')}: {item.size}</Text>
+                    <Text style={styles.itemPrice}>{formatPrice(item.totalPrice)}</Text>
+                  </View>
                 </View>
-              </View>
-            ))}
+              ))
+            )}
           </View>
         ))}
-
       </View>
-
-
-
     </ScrollView>
   );
 };
+
 
 const styles = StyleSheet.create({
   container: {

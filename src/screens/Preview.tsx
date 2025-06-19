@@ -215,7 +215,7 @@ const Preview = () => {
 
                      <View style={styles.section}>
                         <Text style={styles.sectionTitle}>🏷️ Giảm giá phí giao hàng đơn nhóm</Text>
-                        <Text style={styles.discountValue}>{deliveryFeeNew.toLocaleString()}đ</Text>
+                        <Text style={styles.discountValue}>-{deliveryFeeOld.toLocaleString()}đ</Text>
                     </View>
 
                     <View style={styles.discountRow}>

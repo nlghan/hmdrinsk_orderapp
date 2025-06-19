@@ -295,12 +295,12 @@ const HistoryOrders = () => {
                                                     <TouchableOpacity onPress={() => navigation.navigate('ChatWithShipper', { shipmentId: Number(item.shipment?.shipmentId) })} style={styles.button}>
                                                         <Text style={styles.buttonText}>{t('chat.title')}</Text>
                                                     </TouchableOpacity>
-                                                    <TouchableOpacity onPress={() => handleRestoreOrder(item.orderId)} style={styles.button}>
+                                                    {/* <TouchableOpacity onPress={() => handleRestoreOrder(item.orderId)} style={styles.button}>
                                                         <Text style={styles.buttonText}>{t('history.reorder')}</Text>
                                                     </TouchableOpacity>
                                                     <TouchableOpacity onPress={() => handlePrint(item.orderId)} style={styles.button}>
                                                         <Text style={styles.buttonText}>{t('history.print_invoice')}</Text>
-                                                    </TouchableOpacity>
+                                                    </TouchableOpacity> */}
                                                 </View>
                                             </View>
                                         </TouchableOpacity>
