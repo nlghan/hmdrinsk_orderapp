@@ -1,6 +1,7 @@
 import axios, { AxiosRequestConfig, AxiosResponse, InternalAxiosRequestConfig } from 'axios';
 import { AxiosHeaders } from 'axios';
 
+
 const BASE_URL = 'http://192.168.9.195:1010/api';
 
 const axiosInstance = axios.create({
