@@ -47,7 +47,7 @@ const useWebSocket = (userId: number) => {
                     return;
                 }
                 const encodedToken = encodeURIComponent(token);
-                const ws = new WebSocket(`ws://192.168.1.16:1010/ws-raw?token=${encodedToken}&userId=${userId}`);
+                const ws = new WebSocket(`ws://192.168.9.195:1010/ws-raw?token=${encodedToken}&userId=${userId}`);
                 socketRef.current = ws;
 
                 ws.onopen = () => {
