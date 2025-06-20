@@ -205,6 +205,27 @@ const GroupOrderDetail = () => {
             console.error('Lỗi khi tải danh sách nhóm:', error);
         }
     };
+    const autoSaveAddress = async (groupOrderId: number, address: string) => {
+        try {
+            const token = await AsyncStorage.getItem("access_token");
+            await axiosInstance.post(
+                `/group-order/update-address`,
+                {
+                    groupOrderId,
+                    address,
+                },
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        "Content-Type": "application/json",
+                    },
+                }
+            );
+            console.log("✅ Đã tự động lưu địa chỉ:", address);
+        } catch (error) {
+            console.error("❌ Lỗi khi auto save địa chỉ:", error);
+        }
+    };
 
     const fetchUserInfo = async () => {
         try {

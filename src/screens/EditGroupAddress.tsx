@@ -156,26 +156,26 @@ const EditGroupAddress = () => {
     fetchProvinces();
   }, []);
 
-useEffect(() => {
-  const fullAddress = route.params?.currentAddress ?? '';
-  if (fullAddress && provinceItems.length > 0) {
-    const parts = fullAddress.split(',').map((p) => p.trim());
+  useEffect(() => {
+    const fullAddress = route.params?.currentAddress ?? '';
+    if (fullAddress && provinceItems.length > 0) {
+      const parts = fullAddress.split(',').map((p) => p.trim());
 
-    // Xử lý chỉ khi đủ 4 phần: street, ward, district, city
-    if (parts.length === 4) {
-      const [street, wardName, districtName, cityName] = parts;
+      // Xử lý chỉ khi đủ 4 phần: street, ward, district, city
+      if (parts.length === 4) {
+        const [street, wardName, districtName, cityName] = parts;
 
-      setLocationDetail(street);
-      setSelectedWardName(wardName);
-      setSelectedDistrictName(districtName);
+        setLocationDetail(street);
+        setSelectedWardName(wardName);
+        setSelectedDistrictName(districtName);
 
-      const provinceItem = provinceItems.find((item) => item.label === cityName);
-      if (provinceItem) {
-        setProvince(provinceItem.value);
+        const provinceItem = provinceItems.find((item) => item.label === cityName);
+        if (provinceItem) {
+          setProvince(provinceItem.value);
+        }
       }
     }
-  }
-}, [provinceItems]);
+  }, [provinceItems]);
 
 
 
@@ -214,38 +214,38 @@ useEffect(() => {
   const { groupCartData, fetchCartItem, checkGroupCart } = useCartStore();
 
   const handleSave = async () => {
-  let finalProvince = province;
-  let finalDistrict = district;
-  let finalWard = ward;
+    let finalProvince = province;
+    let finalDistrict = district;
+    let finalWard = ward;
 
-  // nếu province/district/ward chưa có value, cố gắng tìm từ tên đã chọn sẵn
-  if (!finalProvince && selectedDistrictName) {
-    const item = provinceItems.find((item) => item.label === route.params?.currentAddress?.split(',').pop()?.trim());
-    if (item) finalProvince = item.value;
-  }
+    // nếu province/district/ward chưa có value, cố gắng tìm từ tên đã chọn sẵn
+    if (!finalProvince && selectedDistrictName) {
+      const item = provinceItems.find((item) => item.label === route.params?.currentAddress?.split(',').pop()?.trim());
+      if (item) finalProvince = item.value;
+    }
 
-  if (!finalDistrict && selectedDistrictName) {
-    const item = districtItems.find((item) => item.label === selectedDistrictName);
-    if (item) finalDistrict = item.value;
-  }
+    if (!finalDistrict && selectedDistrictName) {
+      const item = districtItems.find((item) => item.label === selectedDistrictName);
+      if (item) finalDistrict = item.value;
+    }
 
-  if (!finalWard && selectedWardName) {
-    const item = wardItems.find((item) => item.label === selectedWardName);
-    if (item) finalWard = item.value;
-  }
+    if (!finalWard && selectedWardName) {
+      const item = wardItems.find((item) => item.label === selectedWardName);
+      if (item) finalWard = item.value;
+    }
 
-  if (!locationDetail || !finalProvince || !finalDistrict || !finalWard) {
-    showNotification(t('android.mess.check6'));
-    return;
-  }
+    if (!locationDetail || !finalProvince || !finalDistrict || !finalWard) {
+      showNotification(t('android.mess.check6'));
+      return;
+    }
 
-  const fullAddress = `${locationDetail}, ${getLabelFromValue(
-    wardItems,
-    finalWard
-  )}, ${getLabelFromValue(
-    districtItems,
-    finalDistrict
-  )}, ${getLabelFromValue(provinceItems, finalProvince)}`;
+    const fullAddress = `${locationDetail}, ${getLabelFromValue(
+      wardItems,
+      finalWard
+    )}, ${getLabelFromValue(
+      districtItems,
+      finalDistrict
+    )}, ${getLabelFromValue(provinceItems, finalProvince)}`;
 
     try {
       const token = await AsyncStorage.getItem('access_token');
@@ -273,9 +273,9 @@ useEffect(() => {
       );
       showNotification(t('adroid.mess.sucess5'));
       fetchCartItem();
-        if (route.params?.onGoBack) {
-    route.params.onGoBack(); // gọi hàm callback cập nhật
-  }
+      if (route.params?.onGoBack) {
+        route.params.onGoBack(); // gọi hàm callback cập nhật
+      }
       navigation.goBack();
     } catch (error) {
       console.error('❌ Lỗi khi cập nhật địa chỉ:', error);
@@ -283,12 +283,12 @@ useEffect(() => {
     }
   };
 
-useEffect(() => {
-  if (route.params?.autoSave) {
-    // Gọi handleSave tự động nếu có yêu cầu từ GroupDetails
-    handleSave();
-  }
-}, []);
+  useEffect(() => {
+    if (route.params?.autoSave) {
+      // Gọi handleSave tự động nếu có yêu cầu từ GroupDetails
+      handleSave();
+    }
+  }, []);
 
 
   const handleCancel = () => {
@@ -301,87 +301,87 @@ useEffect(() => {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}
       >
-            <ScrollView
-      contentContainerStyle={{ flexGrow: 1 }}
-      keyboardShouldPersistTaps="handled"
-    >
-        <View style={styles.container}>
-          <Notification message={notification.message} visible={notification.visible} onHide={() => setNotification({ ...notification, visible: false })} />
-          <NotificationPopup userId={userId ?? 0} />
+        <ScrollView
+          contentContainerStyle={{ flexGrow: 1 }}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View style={styles.container}>
+            <Notification message={notification.message} visible={notification.visible} onHide={() => setNotification({ ...notification, visible: false })} />
+            <NotificationPopup userId={userId ?? 0} />
 
-          <View style={styles.header}>
-            <TouchableOpacity style={styles.backIcon} onPress={handleCancel}>
-              <Icon name="arrow-back" size={20} color="#FF9800" />
-            </TouchableOpacity>
-            <Text style={styles.headerTitle}>{t('android.groupOrderList')}</Text>
+            <View style={styles.header}>
+              <TouchableOpacity style={styles.backIcon} onPress={handleCancel}>
+                <Icon name="arrow-back" size={20} color="#FF9800" />
+              </TouchableOpacity>
+              <Text style={styles.headerTitle}>{t('android.groupOrderList')}</Text>
+            </View>
+
+            {/* Các dropdown giữ nguyên như cũ */}
+            <Text style={styles.label}>{t('information.city')}</Text>
+            <DropDownPicker
+              open={provinceOpen}
+              value={province}
+              items={provinceItems}
+              setOpen={setProvinceOpen}
+              setValue={(callback) => {
+                const selectedValue = callback(province);
+                handleProvinceChange(selectedValue);
+                return selectedValue;
+              }}
+              setItems={setProvinceItems}
+              zIndex={3000}
+              zIndexInverse={1000}
+              containerStyle={styles.dropDownContainer}
+            />
+
+            <Text style={styles.label}>{t('information.district')}</Text>
+            <DropDownPicker
+              open={districtOpen}
+              value={district}
+              items={districtItems}
+              setOpen={setDistrictOpen}
+              setValue={(callback) => {
+                const selectedValue = callback(district);
+                handleDistrictChange(selectedValue);
+                return selectedValue;
+              }}
+              setItems={setDistrictItems}
+              zIndex={2000}
+              zIndexInverse={2000}
+              containerStyle={styles.dropDownContainer}
+            />
+
+            <Text style={styles.label}>{t('information.ward')}</Text>
+            <DropDownPicker
+              open={wardOpen}
+              value={ward}
+              items={wardItems}
+              setOpen={setWardOpen}
+              setValue={setWard}
+              setItems={setWardItems}
+              zIndex={1000}
+              zIndexInverse={3000}
+              containerStyle={styles.dropDownContainer}
+            />
+
+            <Text style={styles.label}>{t('information.detailAddress')}</Text>
+            <TextInput
+              placeholder={t('information.detailAddress')}
+              placeholderTextColor="#999"
+              style={styles.input}
+              value={locationDetail}
+              onChangeText={setLocationDetail}
+            />
+
+            <View style={styles.actionButtons}>
+              <TouchableOpacity style={styles.cancelButton} onPress={handleCancel}>
+                <Text style={styles.cancelButtonText}>{t('order.orderDetail.cancel')}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
+                <Text style={styles.saveButtonText}>{t('android.saveBtn')}</Text>
+              </TouchableOpacity>
+            </View>
           </View>
-
-          {/* Các dropdown giữ nguyên như cũ */}
-          <Text style={styles.label}>{t('information.city')}</Text>
-          <DropDownPicker
-            open={provinceOpen}
-            value={province}
-            items={provinceItems}
-            setOpen={setProvinceOpen}
-            setValue={(callback) => {
-              const selectedValue = callback(province);
-              handleProvinceChange(selectedValue);
-              return selectedValue;
-            }}
-            setItems={setProvinceItems}
-            zIndex={3000}
-            zIndexInverse={1000}
-            containerStyle={styles.dropDownContainer}
-          />
-
-          <Text style={styles.label}>{t('information.district')}</Text>
-          <DropDownPicker
-            open={districtOpen}
-            value={district}
-            items={districtItems}
-            setOpen={setDistrictOpen}
-            setValue={(callback) => {
-              const selectedValue = callback(district);
-              handleDistrictChange(selectedValue);
-              return selectedValue;
-            }}
-            setItems={setDistrictItems}
-            zIndex={2000}
-            zIndexInverse={2000}
-            containerStyle={styles.dropDownContainer}
-          />
-
-          <Text style={styles.label}>{t('information.ward')}</Text>
-          <DropDownPicker
-            open={wardOpen}
-            value={ward}
-            items={wardItems}
-            setOpen={setWardOpen}
-            setValue={setWard}
-            setItems={setWardItems}
-            zIndex={1000}
-            zIndexInverse={3000}
-            containerStyle={styles.dropDownContainer}
-          />
-
-          <Text style={styles.label}>{t('information.detailAddress')}</Text>
-          <TextInput
-            placeholder={t('information.detailAddress')}
-            placeholderTextColor="#999"
-            style={styles.input}
-            value={locationDetail}
-            onChangeText={setLocationDetail}
-          />
-
-          <View style={styles.actionButtons}>
-            <TouchableOpacity style={styles.cancelButton} onPress={handleCancel}>
-              <Text style={styles.cancelButtonText}>{t('order.orderDetail.cancel')}</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
-              <Text style={styles.saveButtonText}>{t('android.saveBtn')}</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
